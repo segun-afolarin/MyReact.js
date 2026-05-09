@@ -1,4 +1,4 @@
-import Navbar from "../components/layout/Navbars";
+import Navbars from "../components/layout/Navbars";
 import Footer from "../components/footer/Footer";
 
 import PageHero from "../components/ui/PageHero";
@@ -11,7 +11,7 @@ import faqHero from "../assets/about-hero.jpg";
 const FAQPage = () => {
   return (
     <div className="bg-[#F5F5F5] min-h-screen overflow-hidden">
-      <Navbar />
+      <Navbars />
 
       <PageHero
         badge="FAQ"

@@ -1,4 +1,4 @@
-import Navbar from "../components/layout/Nav";
+import Nav from "../components/layout/Nav";
 import Footer from "../components/footer/Footer";
 
 import PageHero from "../components/ui/PageHero";
@@ -14,7 +14,7 @@ import docsHero from "../assets/about-hero.jpg";
 const DocumentationPage = () => {
   return (
     <div className="bg-[#F5F5F5] min-h-screen overflow-hidden">
-      <Navbar />
+      <Nav />
 
       <PageHero
         badge="Documentation"

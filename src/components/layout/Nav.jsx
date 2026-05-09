@@ -40,7 +40,7 @@ const navLinks = [
   },
 ];
 
-const Navbar = () => {
+const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const [scrolled, setScrolled] = useState(false);
@@ -455,4 +455,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Nav;

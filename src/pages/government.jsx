@@ -25,7 +25,7 @@ import {
   Briefcase,
 } from "lucide-react";
 
-import Navbar from "../components/layout/Navbas";
+import Navbars from "../components/layout/Navbas";
 import Footer from "../components/footer/Footer";
 
 import authImage from "../assets/about-hero.jpg";
@@ -65,7 +65,7 @@ const NationAuraAuth = () => {
       overflow-hidden
       "
     >
-      <Navbar />
+      <Navbars />
 
       <section
         className="
