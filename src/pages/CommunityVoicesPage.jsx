@@ -3,10 +3,10 @@ import Footer from "../components/footer/Footer";
 
 import PageHero from "../components/ui/PageHero";
 
-import VoicesGrid from "../components/voices/VoicesGrid";
-import VoicesStats from "../components/voices/VoicesStats";
-import VoicesStory from "../components/voices/VoicesStory";
-import VoicesCTA from "../components/voices/VoicesCTA";
+import VoicesGrid from "../components/Voices/VoicesGrid";
+import VoicesStats from "../components/Voices/VoicesStats";
+import VoicesStory from "../components/Voices/VoicesStory";
+import VoicesCTA from "../components/Voices/VoicesCTA";
 
 import voicesHero from "../assets/about-hero.jpg";
 
