@@ -10,7 +10,18 @@ import { Link } from "react-router-dom";
 
 const CommunityCTA = () => {
   return (
-    <section className="relative px-6 lg:px-12 pb-32 overflow-hidden">
+    <section
+      className="
+        relative
+        overflow-hidden
+        px-4
+        sm:px-6
+        lg:px-12
+        pb-20
+        sm:pb-24
+        lg:pb-32
+      "
+    >
 
       {/* BACKGROUND */}
       <div
@@ -18,7 +29,8 @@ const CommunityCTA = () => {
           absolute
           inset-0
           bg-[linear-gradient(to_right,#22c55e08_1px,transparent_1px),linear-gradient(to_bottom,#22c55e08_1px,transparent_1px)]
-          bg-[size:90px_90px]
+          bg-[size:60px_60px]
+          sm:bg-[size:90px_90px]
         "
       />
 
@@ -29,8 +41,12 @@ const CommunityCTA = () => {
           top-0
           left-1/2
           -translate-x-1/2
-          w-[700px]
-          h-[700px]
+          w-[320px]
+          h-[320px]
+          sm:w-[500px]
+          sm:h-[500px]
+          lg:w-[700px]
+          lg:h-[700px]
           bg-green-200/30
           rounded-full
           blur-3xl
@@ -102,10 +118,18 @@ const CommunityCTA = () => {
         <div
           className="
             absolute
-            -top-40
-            -right-40
-            w-[500px]
-            h-[500px]
+            -top-20
+            -right-20
+            sm:-top-32
+            sm:-right-32
+            lg:-top-40
+            lg:-right-40
+            w-[250px]
+            h-[250px]
+            sm:w-[380px]
+            sm:h-[380px]
+            lg:w-[500px]
+            lg:h-[500px]
             bg-green-500/10
             rounded-full
             blur-3xl
@@ -126,10 +150,18 @@ const CommunityCTA = () => {
 
           className="
             absolute
-            top-20
-            right-20
-            w-40
-            h-40
+            top-10
+            right-4
+            sm:top-16
+            sm:right-10
+            lg:top-20
+            lg:right-20
+            w-24
+            h-24
+            sm:w-32
+            sm:h-32
+            lg:w-40
+            lg:h-40
             bg-gradient-to-br
             from-green-300/20
             to-emerald-400/10
@@ -143,8 +175,9 @@ const CommunityCTA = () => {
           className="
             relative
             z-10
-            p-8
-            md:p-14
+            p-5
+            sm:p-8
+            md:p-12
             lg:p-20
           "
         >
@@ -155,13 +188,14 @@ const CommunityCTA = () => {
               flex
               flex-col
               xl:flex-row
-              gap-16
+              gap-12
+              lg:gap-16
               justify-between
             "
           >
 
             {/* LEFT SIDE */}
-            <div className="max-w-4xl">
+            <div className="max-w-4xl w-full">
 
               {/* BADGE */}
               <motion.div
@@ -172,22 +206,27 @@ const CommunityCTA = () => {
                 className="
                   inline-flex
                   items-center
-                  gap-3
+                  gap-2
+                  sm:gap-3
                   border
                   border-green-500/20
                   bg-green-500/5
-                  px-5
-                  py-3
-                  text-green-700
-                  text-sm
+                  px-4
+                  sm:px-5
+                  py-2.5
+                  sm:py-3
+                  text-[11px]
+                  sm:text-sm
                   font-bold
                   uppercase
-                  tracking-[0.2em]
-                  mb-8
+                  tracking-[0.18em]
+                  text-green-700
+                  mb-6
+                  sm:mb-8
                 "
               >
 
-                <FiTrendingUp />
+                <FiTrendingUp className="text-base" />
 
                 NationAura Vision
 
@@ -196,12 +235,13 @@ const CommunityCTA = () => {
               {/* HEADING */}
               <h2
                 className="
-                  text-4xl
+                  text-[2.2rem]
+                  leading-[1]
                   sm:text-5xl
-                  lg:text-7xl
+                  lg:text-6xl
+                  xl:text-7xl
                   font-black
                   tracking-tight
-                  leading-[0.95]
                   text-black
                   max-w-5xl
                 "
@@ -226,8 +266,11 @@ const CommunityCTA = () => {
               {/* DESCRIPTION */}
               <p
                 className="
-                  mt-10
-                  text-lg
+                  mt-6
+                  sm:mt-8
+                  lg:mt-10
+                  text-base
+                  sm:text-lg
                   md:text-xl
                   text-gray-600
                   leading-relaxed
@@ -244,9 +287,12 @@ const CommunityCTA = () => {
               {/* FEATURES */}
               <div
                 className="
-                  mt-10
+                  mt-8
+                  sm:mt-10
                   flex
-                  flex-wrap
+                  flex-col
+                  sm:flex-row
+                  sm:flex-wrap
                   gap-4
                 "
               >
@@ -270,9 +316,13 @@ const CommunityCTA = () => {
                       border
                       border-black/10
                       bg-[#fafafa]
-                      px-5
-                      py-4
+                      px-4
+                      sm:px-5
+                      py-3
+                      sm:py-4
                       shadow-sm
+                      w-full
+                      sm:w-auto
                     "
                   >
 
@@ -280,6 +330,7 @@ const CommunityCTA = () => {
                       className="
                         w-10
                         h-10
+                        min-w-[40px]
                         bg-gradient-to-br
                         from-green-500
                         to-emerald-600
@@ -297,6 +348,8 @@ const CommunityCTA = () => {
                       className="
                         text-black
                         font-semibold
+                        text-sm
+                        sm:text-base
                       "
                     >
                       {item}
@@ -315,13 +368,15 @@ const CommunityCTA = () => {
                 flex
                 flex-col
                 justify-center
-                gap-5
-                min-w-[280px]
+                gap-4
+                sm:gap-5
+                w-full
+                xl:max-w-[360px]
               "
             >
 
               {/* PRIMARY BUTTON */}
-              <Link to="/report">
+              <Link to="/report" className="w-full">
 
                 <motion.button
                   whileHover={{
@@ -341,11 +396,14 @@ const CommunityCTA = () => {
                     bg-gradient-to-r
                     from-green-600
                     to-emerald-600
-                    px-8
-                    py-5
+                    px-6
+                    sm:px-8
+                    py-4
+                    sm:py-5
                     text-white
                     font-bold
-                    text-lg
+                    text-base
+                    sm:text-lg
                     shadow-[0_20px_50px_rgba(34,197,94,0.35)]
                   "
                 >
@@ -385,7 +443,7 @@ const CommunityCTA = () => {
               </Link>
 
               {/* SECONDARY BUTTON */}
-              <Link to="/about">
+              <Link to="/about" className="w-full">
 
                 <motion.button
                   whileHover={{
@@ -402,11 +460,14 @@ const CommunityCTA = () => {
                     border
                     border-black/10
                     bg-white
-                    px-8
-                    py-5
+                    px-6
+                    sm:px-8
+                    py-4
+                    sm:py-5
                     text-black
                     font-bold
-                    text-lg
+                    text-base
+                    sm:text-lg
                     hover:border-green-500/30
                     hover:shadow-[0_15px_40px_rgba(34,197,94,0.12)]
                     transition-all
@@ -431,18 +492,21 @@ const CommunityCTA = () => {
                 }}
 
                 className="
-                  mt-6
+                  mt-4
+                  sm:mt-6
                   border
                   border-black/10
                   bg-[#fafafa]
-                  p-6
+                  p-5
+                  sm:p-6
                   shadow-[0_15px_40px_rgba(0,0,0,0.04)]
                 "
               >
 
                 <div
                   className="
-                    text-sm
+                    text-[11px]
+                    sm:text-sm
                     uppercase
                     tracking-[0.2em]
                     text-green-600
@@ -455,7 +519,8 @@ const CommunityCTA = () => {
 
                 <h3
                   className="
-                    text-2xl
+                    text-xl
+                    sm:text-2xl
                     font-black
                     text-black
                     leading-tight
