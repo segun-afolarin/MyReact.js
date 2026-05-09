@@ -41,7 +41,7 @@ const footerLinks = {
     },
     {
       name: "API Access",
-      path: "/api-access",
+      path: "/CitizenDashboard",
     },
     {
       name: "Support",
