@@ -12,6 +12,7 @@ import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home";
 import CommunityVoicesPage  from "./pages/CommunityVoicesPage"
 import PolicyPage from "./pages/PolicyPage";
+import CitizenDashboard from "./pages/CitizenDashboard"
 import AboutPage from "./pages/AboutPage";
 import Mission from "./pages/Mission";
 import Impact from "./pages/Impact";
@@ -81,6 +82,10 @@ function App() {
           <Route
             path="/contact"
             element={<ContactPage />}
+          />
+          <Route
+            path="/CitizenDashboard"
+            element={<CitizenDashboard />}
           />
           <Route
             path="/Signup"
