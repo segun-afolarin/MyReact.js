@@ -44,11 +44,15 @@ const DashboardSidebar = ({
     },
 
     {
-      title: "Submit Report",
+      title: "Live Reports",
       path: "/SubmitReport",
       icon: <FiFileText />,
     },
-
+    {
+      title: "Submit Report",
+      path: "/report",
+      icon: <FiFileText />,
+    },
     {
       title: "Reports Center",
       path: "/reports",

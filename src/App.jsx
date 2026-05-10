@@ -16,6 +16,7 @@ import CitizenDashboard from "./pages/CitizenDashboard"
 import AboutPage from "./pages/AboutPage";
 import SubmitReport from "./pages/SubmitReport"
 import Mission from "./pages/Mission";
+import ReportIncident from"./pages/ReportIncident";
 import Impact from "./pages/Impact";
 import Government from "./pages/government";
 import HelpCenter from "./pages/help-center";
@@ -43,6 +44,10 @@ function App() {
           <Route
             path="/policy"
             element={<PolicyPage />}
+          />
+          <Route
+            path="/report"
+            element={<ReportIncident />}
           />
           <Route
             path="/government"

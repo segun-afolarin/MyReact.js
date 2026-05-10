@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,42 +30,42 @@ const DashboardWelcome = ({
     },
   ];
 
- const heroContent = [
-  {
-    title1: "Welcome Back",
-    title2: "Afolarin",
-    paragraph:
-      "Your civic intelligence network is actively monitoring reports, infrastructure updates, and emergency alerts across Nigerian communities.",
-  },
+  const heroContent = [
+    {
+      title1: "Welcome Back",
+      title2: "Afolarin",
+      paragraph:
+        "Your civic intelligence network is actively monitoring reports, infrastructure updates, and emergency alerts across Nigerian communities.",
+    },
 
-  {
-    title1: "Smarter",
-    title2: "Civic Intelligence",
-    paragraph:
-      "Track infrastructure reports, monitor response efficiency, and improve transparency across communities in Nigeria.",
-  },
+    {
+      title1: "Smarter",
+      title2: "Civic Intelligence",
+      paragraph:
+        "Track infrastructure reports, monitor response efficiency, and improve transparency across communities in Nigeria.",
+    },
 
-  {
-    title1: "Real-Time",
-    title2: "Community Impact",
-    paragraph:
-      "Analyze live public reports, detect urgent issues faster, and empower citizens through AI-powered civic monitoring.",
-  },
+    {
+      title1: "Real-Time",
+      title2: "Community Impact",
+      paragraph:
+        "Analyze live public reports, detect urgent issues faster, and empower citizens through AI-powered civic monitoring.",
+    },
 
-  {
-    title1: "Nigeria Needs",
-    title2: "Your Voice",
-    paragraph:
-      "Every verified report you submit helps communities grow safer, cleaner, and more accountable. Real change starts with citizens who refuse to stay silent.",
-  },
+    {
+      title1: "Nigeria Needs",
+      title2: "Your Voice",
+      paragraph:
+        "Every verified report you submit helps communities grow safer, cleaner, and more accountable. Real change starts with citizens who refuse to stay silent.",
+    },
 
-  {
-    title1: "Keep Building",
-    title2: "The Future",
-    paragraph:
-      "Do not give up on Nigeria. Every action, report, and community insight you share is helping create a smarter and stronger nation for the next generation.",
-  },
-];
+    {
+      title1: "Keep Building",
+      title2: "The Future",
+      paragraph:
+        "Do not give up on Nigeria. Every action, report, and community insight you share is helping create a smarter and stronger nation for the next generation.",
+    },
+  ];
 
   const [currentHero, setCurrentHero] =
     useState(0);
@@ -301,8 +302,10 @@ const DashboardWelcome = ({
                       }}
                       className="block"
                     >
-                      {heroContent[currentHero]
-                        .title1}
+                      {
+                        heroContent[currentHero]
+                          .title1
+                      }
                     </motion.span>
 
                     <motion.span
@@ -331,8 +334,10 @@ const DashboardWelcome = ({
                       text-transparent
                       "
                     >
-                      {heroContent[currentHero]
-                        .title2}
+                      {
+                        heroContent[currentHero]
+                          .title2
+                      }
                     </motion.span>
                   </motion.h1>
 
@@ -476,7 +481,7 @@ const DashboardWelcome = ({
               "
             >
               {/* PRIMARY */}
-              <motion.button
+              <motion.div
                 whileHover={{
                   y: -2,
                   scale: 1.01,
@@ -484,75 +489,86 @@ const DashboardWelcome = ({
                 whileTap={{
                   scale: 0.98,
                 }}
-                className="
-                group
-                relative
-                overflow-hidden
-                h-13
-                px-6
-                bg-gradient-to-r
-                from-green-600
-                to-emerald-700
-                text-white
-                font-semibold
-                flex
-                items-center
-                justify-center
-                gap-3
-                shadow-[0_15px_40px_rgba(34,197,94,0.25)]
-                "
               >
-                <span
+                <Link
+                  to="/report"
                   className="
-                  absolute
-                  inset-0
-                  bg-white/10
-                  translate-x-[-100%]
-                  group-hover:translate-x-[100%]
-                  transition-all
-                  duration-1000
+                  group
+                  relative
+                  overflow-hidden
+                  h-13
+                  px-6
+                  bg-gradient-to-r
+                  from-green-600
+                  to-emerald-700
+                  text-white
+                  font-semibold
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  shadow-[0_15px_40px_rgba(34,197,94,0.25)]
                   "
-                />
+                >
+                  <span
+                    className="
+                    absolute
+                    inset-0
+                    bg-white/10
+                    translate-x-[-100%]
+                    group-hover:translate-x-[100%]
+                    transition-all
+                    duration-1000
+                    "
+                  />
 
-                Report Issue
+                  Report Issue
 
-                <FiArrowUpRight />
-              </motion.button>
+                  <FiArrowUpRight />
+                </Link>
+              </motion.div>
 
               {/* SECONDARY */}
-              <motion.button
+              <motion.div
                 whileHover={{
                   y: -2,
                 }}
                 whileTap={{
                   scale: 0.98,
                 }}
-                className={`
-                h-13
-                px-6
-                border
-                font-semibold
-                transition-all
-                duration-300
-                ${
-                  darkMode
-                    ? `
-                      border-white/10
-                      bg-white/[0.03]
-                      text-white
-                      hover:bg-white/[0.05]
-                    `
-                    : `
-                      border-gray-200
-                      bg-[#FAFAFA]
-                      text-black
-                      hover:bg-white
-                    `
-                }
-                `}
               >
-                Track Reports
-              </motion.button>
+                <Link
+                  to="/track"
+                  className={`
+                  h-13
+                  px-6
+                  border
+                  font-semibold
+                  transition-all
+                  duration-300
+                  flex
+                  items-center
+                  justify-center
+                  ${
+                    darkMode
+                      ? `
+                        border-white/10
+                        bg-white/[0.03]
+                        text-white
+                        hover:bg-white/[0.05]
+                      `
+                      : `
+                        border-gray-200
+                        bg-[#FAFAFA]
+                        text-black
+                        hover:bg-white
+                      `
+                  }
+                  `}
+                >
+                  Track Reports
+                </Link>
+              </motion.div>
             </motion.div>
           </div>
 

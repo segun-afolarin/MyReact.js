@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -699,34 +700,38 @@ const DashboardPageHeader = ({
               </div>
 
               {/* BUTTON */}
-              <motion.button
+              <motion.div
                 whileHover={{
                   scale: 1.02,
                 }}
                 whileTap={{
                   scale: 0.98,
                 }}
-                className="
-                w-full
-                h-14
-                flex
-                items-center
-                justify-center
-                gap-3
-                bg-green-500
-                text-white
-                font-black
-                uppercase
-                tracking-[0.15em]
-                transition-all
-                duration-300
-                hover:bg-green-400
-                "
               >
-                <FiTrendingUp />
+                <Link
+                  to="/report"
+                  className="
+                  w-full
+                  h-14
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  bg-green-500
+                  text-white
+                  font-black
+                  uppercase
+                  tracking-[0.15em]
+                  transition-all
+                  duration-300
+                  hover:bg-green-400
+                  "
+                >
+                  <FiTrendingUp />
 
-                Submit Report
-              </motion.button>
+                  Submit Report
+                </Link>
+              </motion.div>
             </div>
           </motion.div>
         </div>

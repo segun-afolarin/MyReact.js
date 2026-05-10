@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 
+import { useNavigate } from "react-router-dom";
+
 import {
   FiCloudRain,
   FiAlertTriangle,
@@ -14,9 +16,12 @@ import {
 const QuickReportActions = ({
   darkMode,
 }) => {
+  const navigate = useNavigate();
+
   const reportTypes = [
     {
       title: "Flooding",
+      category: "Flooding",
       description:
         "Report flooded roads, rising water levels, and dangerous drainage overflow instantly.",
       icon: FiCloudRain,
@@ -26,6 +31,7 @@ const QuickReportActions = ({
 
     {
       title: "Bad Roads",
+      category: "Bad Roads",
       description:
         "Help authorities detect potholes, damaged roads, and unsafe transport routes faster.",
       icon: FiAlertTriangle,
@@ -35,6 +41,7 @@ const QuickReportActions = ({
 
     {
       title: "Drain Blockage",
+      category: "Drain Blockage",
       description:
         "Prevent environmental damage by reporting blocked drainage systems in your area.",
       icon: FiDroplet,
@@ -44,6 +51,7 @@ const QuickReportActions = ({
 
     {
       title: "Power Failure",
+      category: "Power Failure",
       description:
         "Track blackout zones, damaged poles, and unstable electricity infrastructure.",
       icon: FiZap,
@@ -91,6 +99,7 @@ const QuickReportActions = ({
             sm:px-4
             py-2
             mb-4
+            backdrop-blur-xl
             ${
               darkMode
                 ? `
@@ -242,6 +251,7 @@ const QuickReportActions = ({
           sm:p-5
           w-full
           xl:max-w-[320px]
+          backdrop-blur-xl
           ${
             darkMode
               ? `
@@ -454,6 +464,22 @@ const QuickReportActions = ({
                   "
                 />
 
+                {/* HOVER GLOW */}
+                <div
+                  className="
+                  absolute
+                  inset-0
+                  opacity-0
+                  group-hover:opacity-100
+                  transition-all
+                  duration-500
+                  bg-gradient-to-br
+                  from-green-500/5
+                  via-transparent
+                  to-transparent
+                  "
+                />
+
                 {/* TOP */}
                 <div
                   className="
@@ -642,6 +668,14 @@ const QuickReportActions = ({
                   whileTap={{
                     scale: 0.98,
                   }}
+                  onClick={() =>
+                    navigate("/report", {
+                      state: {
+                        selectedCategory:
+                          item.category,
+                      },
+                    })
+                  }
                   className="
                   relative
                   z-10
@@ -666,6 +700,7 @@ const QuickReportActions = ({
                   duration-300
                   "
                 >
+                  {/* SHINE */}
                   <motion.div
                     animate={{
                       x: [
@@ -689,7 +724,7 @@ const QuickReportActions = ({
                     Start Report
                   </span>
 
-                  <FiArrowUpRight className="relative z-10" />
+                  <FiArrowUpRight className="relative z-10 text-base" />
                 </motion.button>
 
                 {/* BOTTOM LINE */}
