@@ -29,28 +29,42 @@ const DashboardWelcome = ({
     },
   ];
 
-  const heroContent = [
-    {
-      title1: "Welcome Back",
-      title2: "David A",
-      paragraph:
-        "Your civic intelligence network is actively monitoring reports, infrastructure updates, and emergency alerts across Nigerian communities.",
-    },
+ const heroContent = [
+  {
+    title1: "Welcome Back",
+    title2: "David A",
+    paragraph:
+      "Your civic intelligence network is actively monitoring reports, infrastructure updates, and emergency alerts across Nigerian communities.",
+  },
 
-    {
-      title1: "Smarter",
-      title2: "Civic Intelligence",
-      paragraph:
-        "Track infrastructure reports, monitor response efficiency, and improve transparency across communities in Nigeria.",
-    },
+  {
+    title1: "Smarter",
+    title2: "Civic Intelligence",
+    paragraph:
+      "Track infrastructure reports, monitor response efficiency, and improve transparency across communities in Nigeria.",
+  },
 
-    {
-      title1: "Real-Time",
-      title2: "Community Impact",
-      paragraph:
-        "Analyze live public reports, detect urgent issues faster, and empower citizens through AI-powered civic monitoring.",
-    },
-  ];
+  {
+    title1: "Real-Time",
+    title2: "Community Impact",
+    paragraph:
+      "Analyze live public reports, detect urgent issues faster, and empower citizens through AI-powered civic monitoring.",
+  },
+
+  {
+    title1: "Nigeria Needs",
+    title2: "Your Voice",
+    paragraph:
+      "Every verified report you submit helps communities grow safer, cleaner, and more accountable. Real change starts with citizens who refuse to stay silent.",
+  },
+
+  {
+    title1: "Keep Building",
+    title2: "The Future",
+    paragraph:
+      "Do not give up on Nigeria. Every action, report, and community insight you share is helping create a smarter and stronger nation for the next generation.",
+  },
+];
 
   const [currentHero, setCurrentHero] =
     useState(0);
