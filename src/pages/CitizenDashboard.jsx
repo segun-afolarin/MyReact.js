@@ -12,13 +12,23 @@ import DashboardInsights from "../components/dashboard/DashboardInsights";
 import DashboardActivity from "../components/dashboard/DashboardActivity";
 
 const CitizenDashboard = () => {
+  /* DARK MODE */
   const [darkMode, setDarkMode] =
     useState(false);
 
+  /* DESKTOP SIDEBAR */
   const [sidebarOpen, setSidebarOpen] =
-    useState(true);
+    useState(
+      typeof window !== "undefined"
+        ? window.innerWidth >= 1280
+        : true
+    );
 
-  /* DARK MODE */
+  /* MOBILE SIDEBAR */
+  const [mobileSidebar, setMobileSidebar] =
+    useState(false);
+
+  /* DARK MODE EFFECT */
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add(
@@ -30,6 +40,30 @@ const CitizenDashboard = () => {
       );
     }
   }, [darkMode]);
+
+  /* RESPONSIVE SIDEBAR */
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1280) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+  }, []);
 
   return (
     <div
@@ -59,10 +93,10 @@ const CitizenDashboard = () => {
         <div
           className="
           absolute
-          top-[-200px]
-          left-[-120px]
-          w-[420px]
-          h-[420px]
+          top-[-220px]
+          left-[-140px]
+          w-[460px]
+          h-[460px]
           bg-green-500/10
           blur-3xl
           rounded-full
@@ -73,11 +107,25 @@ const CitizenDashboard = () => {
         <div
           className="
           absolute
-          top-[20%]
-          right-[-140px]
-          w-[360px]
-          h-[360px]
+          top-[15%]
+          right-[-160px]
+          w-[400px]
+          h-[400px]
           bg-emerald-500/10
+          blur-3xl
+          rounded-full
+          "
+        />
+
+        {/* BOTTOM GLOW */}
+        <div
+          className="
+          absolute
+          bottom-[-200px]
+          left-[20%]
+          w-[320px]
+          h-[320px]
+          bg-green-400/10
           blur-3xl
           rounded-full
           "
@@ -101,30 +149,35 @@ const CitizenDashboard = () => {
         setDarkMode={setDarkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
+        mobileSidebar={mobileSidebar}
+        setMobileSidebar={setMobileSidebar}
       />
 
       {/* SIDEBAR */}
       <DashboardSidebar
         sidebarOpen={sidebarOpen}
+        mobileSidebar={mobileSidebar}
+        setMobileSidebar={setMobileSidebar}
         darkMode={darkMode}
       />
 
-      {/* MAIN */}
+      {/* MAIN CONTENT */}
       <main
         className={`
         relative
         z-10
         transition-all
         duration-500
-        pt-28
+        pt-24
+        md:pt-28
         pb-32
         px-4
         sm:px-6
         lg:px-8
         ${
           sidebarOpen
-            ? "lg:ml-[290px]"
-            : "lg:ml-[110px]"
+            ? "xl:ml-[290px]"
+            : "xl:ml-[96px]"
         }
         `}
       >
@@ -136,7 +189,7 @@ const CitizenDashboard = () => {
           space-y-8
           "
         >
-          {/* HERO */}
+          {/* WELCOME */}
           <DashboardWelcome
             darkMode={darkMode}
           />
@@ -210,7 +263,7 @@ const CitizenDashboard = () => {
         </div>
       </main>
 
-      {/* MOBILE NAV */}
+      {/* MOBILE NAVIGATION */}
       <FloatingBottomNav
         darkMode={darkMode}
       />

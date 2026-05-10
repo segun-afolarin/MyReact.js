@@ -6,14 +6,27 @@ import {
   FiSun,
   FiMenu,
   FiSearch,
+  FiX,
 } from "react-icons/fi";
+
+import logo from "/images/logo.png";
 
 const DashboardHeader = ({
   darkMode,
   setDarkMode,
   sidebarOpen,
   setSidebarOpen,
+  mobileSidebar,
+  setMobileSidebar,
 }) => {
+  const handleSidebarToggle = () => {
+    if (window.innerWidth < 1280) {
+      setMobileSidebar(!mobileSidebar);
+    } else {
+      setSidebarOpen(!sidebarOpen);
+    }
+  };
+
   return (
     <motion.header
       initial={{
@@ -33,30 +46,57 @@ const DashboardHeader = ({
       left-0
       right-0
       z-50
-      h-[78px]
+      h-[74px]
+      md:h-[78px]
       border-b
-      backdrop-blur-xl
+      backdrop-blur-2xl
       transition-all
       duration-300
       ${
         darkMode
           ? `
-            bg-[#081018]/95
+            bg-[#081018]/92
             border-white/10
           `
           : `
-            bg-white/95
+            bg-white/90
             border-gray-200
           `
       }
       `}
     >
+      {/* HEADER GLOW */}
+      <div
+        className="
+        absolute
+        inset-0
+        overflow-hidden
+        pointer-events-none
+        "
+      >
+        <div
+          className="
+          absolute
+          left-0
+          top-[-90px]
+          w-[280px]
+          h-[180px]
+          bg-green-500/10
+          blur-3xl
+          rounded-full
+          "
+        />
+      </div>
+
       {/* INNER */}
       <div
         className="
+        relative
+        z-10
         h-full
         px-4
-        md:px-7
+        sm:px-6
+        lg:px-8
         flex
         items-center
         justify-between
@@ -67,21 +107,21 @@ const DashboardHeader = ({
           className="
           flex
           items-center
-          gap-4
+          gap-3
+          md:gap-4
           "
         >
           {/* MENU BUTTON */}
           <motion.button
             whileHover={{
-              scale: 1.04,
+              scale: 1.03,
             }}
             whileTap={{
-              scale: 0.96,
+              scale: 0.95,
             }}
-            onClick={() =>
-              setSidebarOpen(!sidebarOpen)
-            }
+            onClick={handleSidebarToggle}
             className={`
+            relative
             w-11
             h-11
             flex
@@ -91,13 +131,14 @@ const DashboardHeader = ({
             border
             transition-all
             duration-300
+            overflow-hidden
             ${
               darkMode
                 ? `
-                  bg-white/[0.03]
+                  bg-white/[0.04]
                   border-white/10
                   text-white
-                  hover:bg-white/[0.06]
+                  hover:bg-white/[0.08]
                 `
                 : `
                   bg-[#F7F7F7]
@@ -108,48 +149,118 @@ const DashboardHeader = ({
             }
             `}
           >
-            <FiMenu />
+            {/* BUTTON GLOW */}
+            <div
+              className="
+              absolute
+              inset-0
+              bg-gradient-to-br
+              from-green-500/10
+              to-transparent
+              "
+            />
+
+            {mobileSidebar ? (
+              <FiX className="relative z-10" />
+            ) : (
+              <FiMenu className="relative z-10" />
+            )}
           </motion.button>
 
           {/* BRAND */}
           <div
             className="
             flex
-            flex-col
+            items-center
+            gap-3
             "
           >
-            <h1
-              className={`
-              text-[20px]
-              md:text-[22px]
-              font-black
-              tracking-tight
-              leading-none
-              ${
-                darkMode
-                  ? "text-white"
-                  : "text-black"
-              }
-              `}
-            >
-              NationAura
-            </h1>
+          
+            {/* LOGO */}
+<div
+  className="
+  relative
+  hidden
+  sm:flex
+  w-12
+  h-12
+  rounded-full
+  bg-white
+  items-center
+  justify-center
+  overflow-hidden
+  shadow-[0_10px_30px_rgba(0,0,0,0.08)]
+  border
+  border-white/40
+  "
+>
+  {/* SOFT GLOW */}
+  <div
+    className="
+    absolute
+    inset-0
+    rounded-full
+    bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_70%)]
+    "
+  />
 
-            <p
-              className={`
-              text-xs
-              mt-1
-              tracking-wide
-              uppercase
-              ${
-                darkMode
-                  ? "text-gray-400"
-                  : "text-gray-500"
-              }
-              `}
+  <img
+    src={logo}
+    alt="NationAura Logo"
+    className="
+    relative
+    z-10
+    w-[70%]
+    h-[70%]
+    object-contain
+    "
+  />
+</div>
+
+            {/* TEXT */}
+            <div
+              className="
+              flex
+              flex-col
+              "
             >
-              Civic Intelligence Dashboard
-            </p>
+              <h1
+                className={`
+                text-[18px]
+                sm:text-[20px]
+                md:text-[22px]
+                font-black
+                tracking-tight
+                leading-none
+                ${
+                  darkMode
+                    ? "text-white"
+                    : "text-black"
+                }
+                `}
+              >
+                NationAura
+              </h1>
+
+              <p
+                className={`
+                hidden
+                sm:block
+                text-[10px]
+                md:text-xs
+                mt-1
+                tracking-[0.18em]
+                uppercase
+                ${
+                  darkMode
+                    ? "text-gray-400"
+                    : "text-gray-500"
+                }
+                `}
+              >
+                Civic Intelligence Dashboard
+              </p>
+            </div>
           </div>
         </div>
 
@@ -158,7 +269,8 @@ const DashboardHeader = ({
           className="
           flex
           items-center
-          gap-3
+          gap-2
+          sm:gap-3
           md:gap-4
           "
         >
@@ -166,12 +278,12 @@ const DashboardHeader = ({
           <div
             className={`
             hidden
-            lg:flex
+            xl:flex
             items-center
             gap-3
             h-11
             px-4
-            w-[260px]
+            w-[280px]
             border
             transition-all
             duration-300
@@ -180,10 +292,12 @@ const DashboardHeader = ({
                 ? `
                   bg-white/[0.03]
                   border-white/10
+                  focus-within:bg-white/[0.05]
                 `
                 : `
                   bg-[#F7F7F7]
                   border-gray-200
+                  focus-within:bg-white
                 `
             }
             `}
@@ -270,6 +384,7 @@ const DashboardHeader = ({
               w-2
               h-2
               bg-green-500
+              shadow-[0_0_10px_rgba(34,197,94,0.8)]
               "
             />
           </motion.button>
@@ -299,7 +414,7 @@ const DashboardHeader = ({
                 ? `
                   bg-green-600
                   text-white
-                  shadow-[0_10px_30px_rgba(34,197,94,0.25)]
+                  shadow-[0_10px_30px_rgba(34,197,94,0.30)]
                 `
                 : `
                   bg-black
@@ -320,17 +435,19 @@ const DashboardHeader = ({
             whileHover={{
               y: -2,
             }}
-            className={`
+            className="
             flex
             items-center
             gap-3
-            pl-2
+            pl-1
+            sm:pl-2
             cursor-pointer
-            `}
+            "
           >
             {/* AVATAR */}
             <div
               className="
+              relative
               w-11
               h-11
               bg-gradient-to-br
@@ -341,14 +458,25 @@ const DashboardHeader = ({
               justify-center
               text-white
               font-bold
-              shadow-[0_10px_25px_rgba(34,197,94,0.30)]
+              overflow-hidden
+              shadow-[0_10px_30px_rgba(34,197,94,0.30)]
               "
             >
-              DA
+              <div
+                className="
+                absolute
+                inset-0
+                bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.35),transparent_60%)]
+                "
+              />
+
+              <span className="relative z-10">
+                DA
+              </span>
             </div>
 
             {/* USER */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <h3
                 className={`
                 text-sm

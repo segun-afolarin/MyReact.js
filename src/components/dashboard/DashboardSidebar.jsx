@@ -17,8 +17,12 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 
+import logo from "/images/logo.png";
+
 const DashboardSidebar = ({
   sidebarOpen,
+  mobileSidebar,
+  setMobileSidebar,
   darkMode,
 }) => {
   const [active, setActive] =
@@ -57,254 +61,354 @@ const DashboardSidebar = ({
   ];
 
   return (
-    <AnimatePresence>
-      {sidebarOpen && (
-        <motion.aside
-          initial={{
-            x: -80,
-            opacity: 0,
-          }}
-          animate={{
-            x: 0,
-            opacity: 1,
-          }}
-          exit={{
-            x: -80,
-            opacity: 0,
-          }}
-          transition={{
-            duration: 0.4,
-          }}
-          className={`
-          fixed
-          top-[78px]
-          left-0
-          bottom-0
-          z-40
-          w-[290px]
-          border-r
-          flex-col
-          hidden
-          lg:flex
+    <>
+      {/* MOBILE OVERLAY */}
+      <AnimatePresence>
+        {mobileSidebar && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() =>
+              setMobileSidebar(false)
+            }
+            className="
+            fixed
+            inset-0
+            bg-black/50
+            backdrop-blur-sm
+            z-30
+            xl:hidden
+            "
+          />
+        )}
+      </AnimatePresence>
+
+      {/* SIDEBAR */}
+      <motion.aside
+        initial={false}
+        animate={{
+          width: sidebarOpen
+            ? 290
+            : 92,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 260,
+          damping: 24,
+        }}
+        className={`
+        fixed
+        top-[74px]
+        md:top-[78px]
+        left-0
+        bottom-0
+        w-[290px]
+        max-w-[88vw]
+        z-40
+        border-r
+        overflow-hidden
+        shadow-[8px_0_40px_rgba(0,0,0,0.08)]
+        transition-all
+        duration-300
+        ${
+          mobileSidebar
+            ? "translate-x-0"
+            : "-translate-x-full xl:translate-x-0"
+        }
+        ${
+          darkMode
+            ? `
+              bg-[#0B1218]/98
+              border-white/10
+            `
+            : `
+              bg-white/96
+              border-gray-200
+            `
+        }
+        `}
+      >
+        {/* BACKGROUND */}
+        <div
+          className="
+          absolute
+          inset-0
           overflow-hidden
-          transition-all
-          duration-300
-          ${
-            darkMode
-              ? `
-                bg-[#0B1218]
-                border-white/10
-              `
-              : `
-                bg-[#FCFCFC]
-                border-gray-200
-              `
-          }
-          `}
+          pointer-events-none
+          "
         >
-          {/* TOP STRIP */}
+          {/* GLOW */}
           <div
             className="
-            h-1
-            w-full
-            bg-gradient-to-r
-            from-green-500
-            via-emerald-500
-            to-green-600
+            absolute
+            top-[-120px]
+            left-[-80px]
+            w-[260px]
+            h-[260px]
+            bg-green-500/10
+            blur-3xl
+            rounded-full
             "
           />
 
-          {/* CONTENT */}
+          {/* GRID */}
           <div
             className="
-            flex
-            flex-col
-            h-full
+            absolute
+            inset-0
+            opacity-[0.03]
+            bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)]
+            bg-[size:60px_60px]
+            "
+          />
+        </div>
+
+        {/* TOP STRIP */}
+        <div
+          className="
+          h-1
+          w-full
+          bg-gradient-to-r
+          from-green-500
+          via-emerald-500
+          to-green-600
+          "
+        />
+
+        {/* CONTENT */}
+        <div
+          className="
+          relative
+          z-10
+          h-full
+          overflow-y-auto
+          overscroll-contain
+          scrollbar-thin
+          scrollbar-thumb-green-500/20
+          scrollbar-track-transparent
+          flex
+          flex-col
+          "
+        >
+          {/* HEADER */}
+          <div
+            className={`
             px-4
             py-5
-            "
+            border-b
+            ${
+              darkMode
+                ? "border-white/10"
+                : "border-gray-200"
+            }
+            `}
           >
-            {/* USER CARD */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 10,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                delay: 0.1,
-              }}
+            <div
               className={`
-              border
-              p-4
+              flex
+              items-center
               ${
-                darkMode
-                  ? `
-                    bg-white/[0.02]
-                    border-white/10
-                  `
-                  : `
-                    bg-[#F7F7F7]
-                    border-gray-200
-                  `
+                sidebarOpen
+                  ? "gap-4"
+                  : "justify-center items-center"
               }
               `}
             >
+              {/* LOGO */}
               <div
                 className="
+                relative
+                w-14
+                h-14
+                rounded-full
+                bg-white
                 flex
                 items-center
-                gap-4
+                justify-center
+                overflow-hidden
+                border
+                border-white/50
+                shadow-[0_15px_40px_rgba(0,0,0,0.12)]
+                shrink-0
                 "
               >
-                {/* AVATAR */}
-                <div
+                <img
+                  src={logo}
+                  alt="NationAura"
                   className="
-                  w-14
-                  h-14
-                  bg-gradient-to-br
-                  from-green-600
-                  to-emerald-700
-                  flex
-                  items-center
-                  justify-center
-                  text-white
-                  text-lg
-                  font-bold
-                  shadow-[0_10px_25px_rgba(34,197,94,0.25)]
+                  w-[72%]
+                  h-[72%]
+                  object-contain
                   "
-                >
-                  DA
-                </div>
-
-                {/* INFO */}
-                <div>
-                  <h2
-                    className={`
-                    text-[15px]
-                    font-bold
-                    ${
-                      darkMode
-                        ? "text-white"
-                        : "text-black"
-                    }
-                    `}
-                  >
-                    David A
-                  </h2>
-
-                  <p
-                    className={`
-                    text-sm
-                    mt-1
-                    ${
-                      darkMode
-                        ? "text-gray-400"
-                        : "text-gray-500"
-                    }
-                    `}
-                  >
-                    Civic Intelligence User
-                  </p>
-                </div>
+                />
               </div>
-            </motion.div>
+
+              {/* BRAND */}
+              <AnimatePresence mode="wait">
+                {sidebarOpen && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      x: -10,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      x: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      x: -10,
+                    }}
+                  >
+                    <h2
+                      className={`
+                      text-[20px]
+                      font-black
+                      tracking-tight
+                      ${
+                        darkMode
+                          ? "text-white"
+                          : "text-black"
+                      }
+                      `}
+                    >
+                      NationAura
+                    </h2>
+
+                    <p
+                      className={`
+                      text-xs
+                      mt-1
+                      tracking-[0.18em]
+                      uppercase
+                      ${
+                        darkMode
+                          ? "text-gray-400"
+                          : "text-gray-500"
+                      }
+                      `}
+                    >
+                      Civic Dashboard
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* NAVIGATION */}
+          <div
+            className="
+            flex-1
+            px-4
+            py-6
+            "
+          >
+            <AnimatePresence mode="wait">
+              {sidebarOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className={`
+                  px-2
+                  mb-4
+                  text-xs
+                  font-semibold
+                  tracking-[0.22em]
+                  uppercase
+                  ${
+                    darkMode
+                      ? "text-gray-500"
+                      : "text-gray-400"
+                  }
+                  `}
+                >
+                  Navigation
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* MENU */}
             <div
               className="
-              flex-1
-              mt-8
               flex
               flex-col
+              gap-2
               "
             >
-              {/* LABEL */}
-              <div
-                className={`
-                px-2
-                mb-4
-                text-xs
-                font-semibold
-                tracking-[0.2em]
-                uppercase
-                ${
-                  darkMode
-                    ? "text-gray-500"
-                    : "text-gray-400"
-                }
-                `}
-              >
-                Navigation
-              </div>
+              {menuItems.map(
+                (item, index) => {
+                  const isActive =
+                    active === item.title;
 
-              {/* LINKS */}
-              <div
-                className="
-                flex
-                flex-col
-                gap-1
-                "
-              >
-                {menuItems.map(
-                  (item, index) => {
-                    const isActive =
-                      active === item.title;
+                  return (
+                    <motion.button
+                      key={index}
+                      onClick={() => {
+                        setActive(
+                          item.title
+                        );
 
-                    return (
-                      <motion.button
-                        key={index}
-                        onClick={() =>
-                          setActive(
-                            item.title
-                          )
+                        if (
+                          window.innerWidth <
+                          1280
+                        ) {
+                          setMobileSidebar(
+                            false
+                          );
                         }
-                        whileHover={{
-                          x: 4,
-                        }}
-                        whileTap={{
-                          scale: 0.98,
-                        }}
-                        className={`
-                        relative
-                        flex
-                        items-center
-                        justify-between
-                        w-full
-                        px-4
-                        h-[58px]
-                        transition-all
-                        duration-300
-                        overflow-hidden
-                        ${
-                          isActive
-                            ? `
-                              bg-green-600
-                              text-white
-                              shadow-[0_10px_30px_rgba(34,197,94,0.25)]
-                            `
-                            : darkMode
-                            ? `
-                              text-gray-300
-                              hover:bg-white/[0.04]
-                              hover:text-white
-                            `
-                            : `
-                              text-gray-600
-                              hover:bg-[#F3F4F6]
-                              hover:text-black
-                            `
-                        }
-                        `}
-                      >
-                        {/* ACTIVE BAR */}
-                        {isActive && (
+                      }}
+                      whileHover={{
+                        x: sidebarOpen
+                          ? 4
+                          : 0,
+                      }}
+                      whileTap={{
+                        scale: 0.98,
+                      }}
+                      className={`
+                      group
+                      relative
+                      flex
+                      items-center
+                      ${
+                        sidebarOpen
+                          ? "justify-between px-4"
+                          : "justify-center items-center"
+                      }
+                      h-[56px]
+                      sm:h-[58px]
+                      transition-all
+                      duration-300
+                      overflow-hidden
+                      ${
+                        isActive
+                          ? `
+                            bg-green-600
+                            text-white
+                            shadow-[0_12px_30px_rgba(34,197,94,0.30)]
+                          `
+                          : darkMode
+                          ? `
+                            text-gray-300
+                            hover:bg-white/[0.05]
+                            hover:text-white
+                          `
+                          : `
+                            text-gray-600
+                            hover:bg-[#F3F4F6]
+                            hover:text-black
+                          `
+                      }
+                      `}
+                    >
+                      {/* ACTIVE GLOW */}
+                      {isActive && (
+                        <>
                           <motion.div
-                            layoutId="sidebarActive"
-
+                            layoutId="activeSidebar"
                             className="
                             absolute
                             left-0
@@ -314,37 +418,78 @@ const DashboardSidebar = ({
                             bg-white
                             "
                           />
-                        )}
 
-                        {/* LEFT */}
-                        <div
-                          className="
-                          flex
-                          items-center
-                          gap-4
-                          "
-                        >
                           <div
                             className="
-                            text-[20px]
+                            absolute
+                            inset-0
+                            bg-[radial-gradient(circle_at_left,rgba(255,255,255,0.18),transparent_60%)]
                             "
-                          >
-                            {item.icon}
-                          </div>
+                          />
+                        </>
+                      )}
 
-                          <span
-                            className="
-                            text-sm
-                            font-medium
-                            "
-                          >
-                            {item.title}
-                          </span>
-                        </div>
+                      {/* LEFT */}
+                      <div
+                        className={`
+                        relative
+                        z-10
+                        flex
+                        items-center
+                        ${
+                          sidebarOpen
+                            ? "gap-4"
+                            : "justify-center items-center"
+                        }
+                        `}
+                      >
+                        {/* ICON */}
+                        <motion.div
+                          whileHover={{
+                            scale: 1.08,
+                          }}
+                          className="
+                          text-[21px]
+                          shrink-0
+                          "
+                        >
+                          {item.icon}
+                        </motion.div>
 
-                        {/* RIGHT */}
+                        {/* TEXT */}
+                        <AnimatePresence mode="wait">
+                          {sidebarOpen && (
+                            <motion.span
+                              initial={{
+                                opacity: 0,
+                                x: -10,
+                              }}
+                              animate={{
+                                opacity: 1,
+                                x: 0,
+                              }}
+                              exit={{
+                                opacity: 0,
+                                x: -10,
+                              }}
+                              className="
+                              text-sm
+                              font-medium
+                              whitespace-nowrap
+                              "
+                            >
+                              {item.title}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* RIGHT */}
+                      {sidebarOpen && (
                         <FiChevronRight
                           className={`
+                          relative
+                          z-10
                           text-sm
                           transition-all
                           duration-300
@@ -355,115 +500,227 @@ const DashboardSidebar = ({
                           }
                           `}
                         />
-                      </motion.button>
-                    );
-                  }
-                )}
-              </div>
-            </div>
+                      )}
 
-            {/* BOTTOM */}
-            <div
+                      {/* TOOLTIP */}
+                      {!sidebarOpen && (
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            x: -8,
+                          }}
+                          whileHover={{
+                            opacity: 1,
+                            x: 0,
+                          }}
+                          className="
+                          absolute
+                          left-[78px]
+                          px-3
+                          py-2
+                          rounded-xl
+                          text-sm
+                          font-medium
+                          whitespace-nowrap
+                          opacity-0
+                          pointer-events-none
+                          group-hover:opacity-100
+                          transition-all
+                          duration-200
+                          bg-[#111827]
+                          text-white
+                          z-50
+                          shadow-[0_10px_30px_rgba(0,0,0,0.25)]
+                          border
+                          border-white/10
+                          backdrop-blur-xl
+                          "
+                        >
+                          {item.title}
+                        </motion.div>
+                      )}
+                    </motion.button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+
+          {/* BOTTOM */}
+          <div
+            className={`
+            p-4
+            border-t
+            flex
+            flex-col
+            gap-2
+            ${
+              darkMode
+                ? "border-white/10"
+                : "border-gray-200"
+            }
+            `}
+          >
+            {/* SETTINGS */}
+            <button
               className={`
-              pt-5
-              border-t
+              group
+              relative
+              h-[56px]
               flex
-              flex-col
-              gap-2
+              items-center
+              transition-all
+              duration-300
+              ${
+                sidebarOpen
+                  ? "gap-4 px-4"
+                  : "justify-center items-center"
+              }
               ${
                 darkMode
-                  ? "border-white/10"
-                  : "border-gray-200"
+                  ? `
+                    text-gray-300
+                    hover:bg-white/[0.05]
+                    hover:text-white
+                  `
+                  : `
+                    text-gray-600
+                    hover:bg-[#F3F4F6]
+                    hover:text-black
+                  `
               }
               `}
             >
-              {/* SETTINGS */}
-              <motion.button
-                whileHover={{
-                  x: 4,
-                }}
-                whileTap={{
-                  scale: 0.98,
-                }}
-                className={`
-                h-[54px]
-                px-4
-                flex
-                items-center
-                gap-4
-                transition-all
-                duration-300
-                ${
-                  darkMode
-                    ? `
-                      text-gray-300
-                      hover:bg-white/[0.04]
-                      hover:text-white
-                    `
-                    : `
-                      text-gray-600
-                      hover:bg-[#F3F4F6]
-                      hover:text-black
-                    `
-                }
-                `}
-              >
-                <FiSettings
-                  className="
-                  text-[19px]
-                  "
-                />
+              <FiSettings className="text-[20px]" />
 
-                <span
+              <AnimatePresence mode="wait">
+                {sidebarOpen && (
+                  <motion.span
+                    initial={{
+                      opacity: 0,
+                    }}
+                    animate={{
+                      opacity: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                    }}
+                    className="
+                    text-sm
+                    font-medium
+                    "
+                  >
+                    Settings
+                  </motion.span>
+                )}
+              </AnimatePresence>
+
+              {!sidebarOpen && (
+                <div
                   className="
+                  absolute
+                  left-[78px]
+                  px-3
+                  py-2
+                  rounded-xl
                   text-sm
-                  font-medium
+                  whitespace-nowrap
+                  opacity-0
+                  pointer-events-none
+                  group-hover:opacity-100
+                  transition-all
+                  duration-200
+                  bg-[#111827]
+                  text-white
+                  z-50
+                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
                   "
                 >
                   Settings
-                </span>
-              </motion.button>
+                </div>
+              )}
+            </button>
 
-              {/* LOGOUT */}
-              <motion.button
-                whileHover={{
-                  x: 4,
-                }}
-                whileTap={{
-                  scale: 0.98,
-                }}
-                className="
-                h-[54px]
-                px-4
+            {/* LOGOUT */}
+            <button
+              className="
+              group
+              relative
+              h-[56px]
+              flex
+              items-center
+              text-red-500
+              hover:bg-red-500/10
+              transition-all
+              duration-300
+              "
+            >
+              <div
+                className={`
                 flex
                 items-center
-                gap-4
-                text-red-500
-                hover:bg-red-500/10
-                transition-all
-                duration-300
-                "
+                w-full
+                ${
+                  sidebarOpen
+                    ? "gap-4 px-4"
+                    : "justify-center items-center"
+                }
+                `}
               >
-                <FiLogOut
-                  className="
-                  text-[19px]
-                  "
-                />
+                <FiLogOut className="text-[20px]" />
 
-                <span
+                <AnimatePresence mode="wait">
+                  {sidebarOpen && (
+                    <motion.span
+                      initial={{
+                        opacity: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                      }}
+                      className="
+                      text-sm
+                      font-medium
+                      "
+                    >
+                      Logout
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {!sidebarOpen && (
+                <div
                   className="
+                  absolute
+                  left-[78px]
+                  px-3
+                  py-2
+                  rounded-xl
                   text-sm
-                  font-medium
+                  whitespace-nowrap
+                  opacity-0
+                  pointer-events-none
+                  group-hover:opacity-100
+                  transition-all
+                  duration-200
+                  bg-[#111827]
+                  text-white
+                  z-50
+                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
                   "
                 >
                   Logout
-                </span>
-              </motion.button>
-            </div>
+                </div>
+              )}
+            </button>
           </div>
-        </motion.aside>
-      )}
-    </AnimatePresence>
+        </div>
+      </motion.aside>
+    </>
   );
 };
 
