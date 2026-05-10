@@ -28,6 +28,10 @@ const DashboardSidebar = ({
   const [active, setActive] =
     useState("Dashboard");
 
+  const isMobile =
+    typeof window !== "undefined" &&
+    window.innerWidth < 768;
+
   const menuItems = [
     {
       title: "Dashboard",
@@ -66,17 +70,32 @@ const DashboardSidebar = ({
       <AnimatePresence>
         {mobileSidebar && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{
+              opacity: 0,
+              backdropFilter:
+                "blur(0px)",
+            }}
+            animate={{
+              opacity: 1,
+              backdropFilter:
+                "blur(6px)",
+            }}
+            exit={{
+              opacity: 0,
+              backdropFilter:
+                "blur(0px)",
+            }}
+            transition={{
+              duration: 0.35,
+              ease: "easeInOut",
+            }}
             onClick={() =>
               setMobileSidebar(false)
             }
             className="
             fixed
             inset-0
-            bg-black/50
-            backdrop-blur-sm
+            bg-black/40
             z-30
             xl:hidden
             "
@@ -88,14 +107,29 @@ const DashboardSidebar = ({
       <motion.aside
         initial={false}
         animate={{
-          width: sidebarOpen
-            ? 290
-            : 92,
+          width:
+            sidebarOpen || isMobile
+              ? 290
+              : 92,
+
+          x:
+            mobileSidebar ||
+            !isMobile
+              ? 0
+              : -320,
         }}
         transition={{
-          type: "spring",
-          stiffness: 260,
-          damping: 24,
+          width: {
+            type: "spring",
+            stiffness: 180,
+            damping: 22,
+          },
+
+          x: {
+            type: "spring",
+            stiffness: 140,
+            damping: 20,
+          },
         }}
         className={`
         fixed
@@ -109,13 +143,6 @@ const DashboardSidebar = ({
         border-r
         overflow-hidden
         shadow-[8px_0_40px_rgba(0,0,0,0.08)]
-        transition-all
-        duration-300
-        ${
-          mobileSidebar
-            ? "translate-x-0"
-            : "-translate-x-full xl:translate-x-0"
-        }
         ${
           darkMode
             ? `
@@ -209,14 +236,22 @@ const DashboardSidebar = ({
               flex
               items-center
               ${
-                sidebarOpen
+                sidebarOpen || isMobile
                   ? "gap-4"
                   : "justify-center items-center"
               }
               `}
             >
               {/* LOGO */}
-              <div
+              <motion.div
+                whileHover={{
+                  scale: 1.04,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 14,
+                }}
                 className="
                 relative
                 w-14
@@ -242,11 +277,12 @@ const DashboardSidebar = ({
                   object-contain
                   "
                 />
-              </div>
+              </motion.div>
 
               {/* BRAND */}
               <AnimatePresence mode="wait">
-                {sidebarOpen && (
+                {(sidebarOpen ||
+                  isMobile) && (
                   <motion.div
                     initial={{
                       opacity: 0,
@@ -259,6 +295,9 @@ const DashboardSidebar = ({
                     exit={{
                       opacity: 0,
                       x: -10,
+                    }}
+                    transition={{
+                      duration: 0.25,
                     }}
                   >
                     <h2
@@ -306,11 +345,21 @@ const DashboardSidebar = ({
             "
           >
             <AnimatePresence mode="wait">
-              {sidebarOpen && (
+              {(sidebarOpen ||
+                isMobile) && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  initial={{
+                    opacity: 0,
+                  }}
+                  animate={{
+                    opacity: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                   className={`
                   px-2
                   mb-4
@@ -361,12 +410,21 @@ const DashboardSidebar = ({
                         }
                       }}
                       whileHover={{
-                        x: sidebarOpen
-                          ? 4
-                          : 0,
+                        x:
+                          sidebarOpen ||
+                          isMobile
+                            ? 6
+                            : 0,
+
+                        scale: 1.01,
                       }}
                       whileTap={{
-                        scale: 0.98,
+                        scale: 0.97,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 18,
                       }}
                       className={`
                       group
@@ -374,7 +432,8 @@ const DashboardSidebar = ({
                       flex
                       items-center
                       ${
-                        sidebarOpen
+                        sidebarOpen ||
+                        isMobile
                           ? "justify-between px-4"
                           : "justify-center items-center"
                       }
@@ -409,6 +468,11 @@ const DashboardSidebar = ({
                         <>
                           <motion.div
                             layoutId="activeSidebar"
+                            transition={{
+                              type: "spring",
+                              stiffness: 280,
+                              damping: 22,
+                            }}
                             className="
                             absolute
                             left-0
@@ -437,7 +501,8 @@ const DashboardSidebar = ({
                         flex
                         items-center
                         ${
-                          sidebarOpen
+                          sidebarOpen ||
+                          isMobile
                             ? "gap-4"
                             : "justify-center items-center"
                         }
@@ -446,7 +511,13 @@ const DashboardSidebar = ({
                         {/* ICON */}
                         <motion.div
                           whileHover={{
-                            scale: 1.08,
+                            scale: 1.12,
+                            rotate: 2,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 12,
                           }}
                           className="
                           text-[21px]
@@ -458,7 +529,8 @@ const DashboardSidebar = ({
 
                         {/* TEXT */}
                         <AnimatePresence mode="wait">
-                          {sidebarOpen && (
+                          {(sidebarOpen ||
+                            isMobile) && (
                             <motion.span
                               initial={{
                                 opacity: 0,
@@ -471,6 +543,9 @@ const DashboardSidebar = ({
                               exit={{
                                 opacity: 0,
                                 x: -10,
+                              }}
+                              transition={{
+                                duration: 0.22,
                               }}
                               className="
                               text-sm
@@ -485,60 +560,72 @@ const DashboardSidebar = ({
                       </div>
 
                       {/* RIGHT */}
-                      {sidebarOpen && (
-                        <FiChevronRight
-                          className={`
+                      {(sidebarOpen ||
+                        isMobile) && (
+                        <motion.div
+                          animate={{
+                            x: isActive
+                              ? 0
+                              : -4,
+
+                            opacity: isActive
+                              ? 1
+                              : 0,
+                          }}
+                          transition={{
+                            duration: 0.2,
+                          }}
+                          className="
                           relative
                           z-10
-                          text-sm
-                          transition-all
-                          duration-300
-                          ${
-                            isActive
-                              ? "opacity-100"
-                              : "opacity-0 group-hover:opacity-100"
-                          }
-                          `}
-                        />
+                          "
+                        >
+                          <FiChevronRight
+                            className="
+                            text-sm
+                            "
+                          />
+                        </motion.div>
                       )}
 
                       {/* TOOLTIP */}
-                      {!sidebarOpen && (
-                        <motion.div
-                          initial={{
-                            opacity: 0,
-                            x: -8,
-                          }}
-                          whileHover={{
-                            opacity: 1,
-                            x: 0,
-                          }}
-                          className="
-                          absolute
-                          left-[78px]
-                          px-3
-                          py-2
-                          rounded-xl
-                          text-sm
-                          font-medium
-                          whitespace-nowrap
-                          opacity-0
-                          pointer-events-none
-                          group-hover:opacity-100
-                          transition-all
-                          duration-200
-                          bg-[#111827]
-                          text-white
-                          z-50
-                          shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                          border
-                          border-white/10
-                          backdrop-blur-xl
-                          "
-                        >
-                          {item.title}
-                        </motion.div>
-                      )}
+                      {!sidebarOpen &&
+                        !isMobile && (
+                          <motion.div
+                            initial={{
+                              opacity: 0,
+                              x: -8,
+                            }}
+                            whileHover={{
+                              opacity: 1,
+                              x: 0,
+                            }}
+                            transition={{
+                              duration: 0.2,
+                            }}
+                            className="
+                            absolute
+                            left-[78px]
+                            px-3
+                            py-2
+                            text-sm
+                            font-medium
+                            whitespace-nowrap
+                            opacity-0
+                            pointer-events-none
+                            group-hover:opacity-100
+                            bg-[#111827]
+                            text-white
+                            z-50
+                            shadow-[0_10px_30px_rgba(0,0,0,0.25)]
+                            border
+                            border-white/10
+                            backdrop-blur-xl
+                            "
+                          >
+                            {item.title}
+                          </motion.div>
+                        )}
                     </motion.button>
                   );
                 }
@@ -562,7 +649,18 @@ const DashboardSidebar = ({
             `}
           >
             {/* SETTINGS */}
-            <button
+            <motion.button
+              whileHover={{
+                x: 4,
+              }}
+              whileTap={{
+                scale: 0.97,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 18,
+              }}
               className={`
               group
               relative
@@ -572,7 +670,7 @@ const DashboardSidebar = ({
               transition-all
               duration-300
               ${
-                sidebarOpen
+                sidebarOpen || isMobile
                   ? "gap-4 px-4"
                   : "justify-center items-center"
               }
@@ -594,7 +692,8 @@ const DashboardSidebar = ({
               <FiSettings className="text-[20px]" />
 
               <AnimatePresence mode="wait">
-                {sidebarOpen && (
+                {(sidebarOpen ||
+                  isMobile) && (
                   <motion.span
                     initial={{
                       opacity: 0,
@@ -605,6 +704,9 @@ const DashboardSidebar = ({
                     exit={{
                       opacity: 0,
                     }}
+                    transition={{
+                      duration: 0.2,
+                    }}
                     className="
                     text-sm
                     font-medium
@@ -614,35 +716,21 @@ const DashboardSidebar = ({
                   </motion.span>
                 )}
               </AnimatePresence>
-
-              {!sidebarOpen && (
-                <div
-                  className="
-                  absolute
-                  left-[78px]
-                  px-3
-                  py-2
-                  rounded-xl
-                  text-sm
-                  whitespace-nowrap
-                  opacity-0
-                  pointer-events-none
-                  group-hover:opacity-100
-                  transition-all
-                  duration-200
-                  bg-[#111827]
-                  text-white
-                  z-50
-                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                  "
-                >
-                  Settings
-                </div>
-              )}
-            </button>
+            </motion.button>
 
             {/* LOGOUT */}
-            <button
+            <motion.button
+              whileHover={{
+                x: 4,
+              }}
+              whileTap={{
+                scale: 0.97,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 18,
+              }}
               className="
               group
               relative
@@ -661,7 +749,8 @@ const DashboardSidebar = ({
                 items-center
                 w-full
                 ${
-                  sidebarOpen
+                  sidebarOpen ||
+                  isMobile
                     ? "gap-4 px-4"
                     : "justify-center items-center"
                 }
@@ -670,7 +759,8 @@ const DashboardSidebar = ({
                 <FiLogOut className="text-[20px]" />
 
                 <AnimatePresence mode="wait">
-                  {sidebarOpen && (
+                  {(sidebarOpen ||
+                    isMobile) && (
                     <motion.span
                       initial={{
                         opacity: 0,
@@ -680,6 +770,9 @@ const DashboardSidebar = ({
                       }}
                       exit={{
                         opacity: 0,
+                      }}
+                      transition={{
+                        duration: 0.2,
                       }}
                       className="
                       text-sm
@@ -691,32 +784,7 @@ const DashboardSidebar = ({
                   )}
                 </AnimatePresence>
               </div>
-
-              {!sidebarOpen && (
-                <div
-                  className="
-                  absolute
-                  left-[78px]
-                  px-3
-                  py-2
-                  rounded-xl
-                  text-sm
-                  whitespace-nowrap
-                  opacity-0
-                  pointer-events-none
-                  group-hover:opacity-100
-                  transition-all
-                  duration-200
-                  bg-[#111827]
-                  text-white
-                  z-50
-                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                  "
-                >
-                  Logout
-                </div>
-              )}
-            </button>
+            </motion.button>
           </div>
         </div>
       </motion.aside>
