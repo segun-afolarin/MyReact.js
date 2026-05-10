@@ -471,7 +471,7 @@ const DashboardHeader = ({
               />
 
               <span className="relative z-10">
-                DA
+                AF
               </span>
             </div>
 
@@ -489,7 +489,7 @@ const DashboardHeader = ({
                 }
                 `}
               >
-                David A
+                Afolarin
               </h3>
 
               <p

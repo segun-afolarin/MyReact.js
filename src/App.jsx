@@ -14,6 +14,7 @@ import CommunityVoicesPage  from "./pages/CommunityVoicesPage"
 import PolicyPage from "./pages/PolicyPage";
 import CitizenDashboard from "./pages/CitizenDashboard"
 import AboutPage from "./pages/AboutPage";
+import SubmitReport from "./pages/SubmitReport"
 import Mission from "./pages/Mission";
 import Impact from "./pages/Impact";
 import Government from "./pages/government";
@@ -52,6 +53,10 @@ function App() {
           <Route
             path="/about"
             element={<AboutPage />}
+          />
+          <Route
+            path="/SubmitReport"
+            element={<SubmitReport />}
           />
 
           {/* MISSION */}

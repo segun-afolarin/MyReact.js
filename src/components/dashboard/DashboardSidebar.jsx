@@ -17,6 +17,11 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 
+import {
+  Link,
+  useLocation,
+} from "react-router-dom";
+
 import logo from "/images/logo.png";
 
 const DashboardSidebar = ({
@@ -25,8 +30,7 @@ const DashboardSidebar = ({
   setMobileSidebar,
   darkMode,
 }) => {
-  const [active, setActive] =
-    useState("Dashboard");
+  const location = useLocation();
 
   const isMobile =
     typeof window !== "undefined" &&
@@ -35,31 +39,37 @@ const DashboardSidebar = ({
   const menuItems = [
     {
       title: "Dashboard",
+      path: "/CitizenDashboard",
       icon: <FiGrid />,
     },
 
     {
-      title: "My Reports",
+      title: "Submit Report",
+      path: "/SubmitReport",
       icon: <FiFileText />,
     },
 
     {
-      title: "Live Map",
-      icon: <FiMap />,
-    },
-
-    {
-      title: "Community",
+      title: "Reports Center",
+      path: "/reports",
       icon: <FiUsers />,
     },
 
     {
-      title: "Notifications",
+      title: "Infrastructure Map",
+      path: "/map",
+      icon: <FiMap />,
+    },
+
+    {
+      title: "Community Alerts",
+      path: "/alerts",
       icon: <FiBell />,
     },
 
     {
-      title: "AI Assistant",
+      title: "AI Analytics",
+      path: "/analytics",
       icon: <FiMessageCircle />,
     },
   ];
@@ -390,25 +400,12 @@ const DashboardSidebar = ({
               {menuItems.map(
                 (item, index) => {
                   const isActive =
-                    active === item.title;
+                    location.pathname ===
+                    item.path;
 
                   return (
-                    <motion.button
+                    <motion.div
                       key={index}
-                      onClick={() => {
-                        setActive(
-                          item.title
-                        );
-
-                        if (
-                          window.innerWidth <
-                          1280
-                        ) {
-                          setMobileSidebar(
-                            false
-                          );
-                        }
-                      }}
                       whileHover={{
                         x:
                           sidebarOpen ||
@@ -429,14 +426,6 @@ const DashboardSidebar = ({
                       className={`
                       group
                       relative
-                      flex
-                      items-center
-                      ${
-                        sidebarOpen ||
-                        isMobile
-                          ? "justify-between px-4"
-                          : "justify-center items-center"
-                      }
                       h-[56px]
                       sm:h-[58px]
                       transition-all
@@ -463,170 +452,192 @@ const DashboardSidebar = ({
                       }
                       `}
                     >
-                      {/* ACTIVE GLOW */}
-                      {isActive && (
-                        <>
-                          <motion.div
-                            layoutId="activeSidebar"
-                            transition={{
-                              type: "spring",
-                              stiffness: 280,
-                              damping: 22,
-                            }}
-                            className="
-                            absolute
-                            left-0
-                            top-0
-                            bottom-0
-                            w-1.5
-                            bg-white
-                            "
-                          />
-
-                          <div
-                            className="
-                            absolute
-                            inset-0
-                            bg-[radial-gradient(circle_at_left,rgba(255,255,255,0.18),transparent_60%)]
-                            "
-                          />
-                        </>
-                      )}
-
-                      {/* LEFT */}
-                      <div
-                        className={`
-                        relative
-                        z-10
+                      <Link
+                        to={item.path}
+                        onClick={() => {
+                          if (
+                            window.innerWidth <
+                            1280
+                          ) {
+                            setMobileSidebar(
+                              false
+                            );
+                          }
+                        }}
+                        className="
                         flex
                         items-center
-                        ${
-                          sidebarOpen ||
-                          isMobile
-                            ? "gap-4"
-                            : "justify-center items-center"
-                        }
-                        `}
+                        justify-between
+                        w-full
+                        h-full
+                        "
                       >
-                        {/* ICON */}
-                        <motion.div
-                          whileHover={{
-                            scale: 1.12,
-                            rotate: 2,
-                          }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 12,
-                          }}
-                          className="
-                          text-[21px]
-                          shrink-0
-                          "
-                        >
-                          {item.icon}
-                        </motion.div>
-
-                        {/* TEXT */}
-                        <AnimatePresence mode="wait">
-                          {(sidebarOpen ||
-                            isMobile) && (
-                            <motion.span
-                              initial={{
-                                opacity: 0,
-                                x: -10,
-                              }}
-                              animate={{
-                                opacity: 1,
-                                x: 0,
-                              }}
-                              exit={{
-                                opacity: 0,
-                                x: -10,
-                              }}
+                        {/* ACTIVE GLOW */}
+                        {isActive && (
+                          <>
+                            <motion.div
+                              layoutId="activeSidebar"
                               transition={{
-                                duration: 0.22,
+                                type: "spring",
+                                stiffness: 280,
+                                damping: 22,
                               }}
                               className="
-                              text-sm
-                              font-medium
-                              whitespace-nowrap
+                              absolute
+                              left-0
+                              top-0
+                              bottom-0
+                              w-1.5
+                              bg-white
                               "
-                            >
-                              {item.title}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                            />
 
-                      {/* RIGHT */}
-                      {(sidebarOpen ||
-                        isMobile) && (
-                        <motion.div
-                          animate={{
-                            x: isActive
-                              ? 0
-                              : -4,
+                            <div
+                              className="
+                              absolute
+                              inset-0
+                              bg-[radial-gradient(circle_at_left,rgba(255,255,255,0.18),transparent_60%)]
+                              "
+                            />
+                          </>
+                        )}
 
-                            opacity: isActive
-                              ? 1
-                              : 0,
-                          }}
-                          transition={{
-                            duration: 0.2,
-                          }}
-                          className="
+                        {/* LEFT */}
+                        <div
+                          className={`
                           relative
                           z-10
-                          "
+                          flex
+                          items-center
+                          ${
+                            sidebarOpen ||
+                            isMobile
+                              ? "gap-4 px-4"
+                              : "justify-center items-center w-full"
+                          }
+                          `}
                         >
-                          <FiChevronRight
-                            className="
-                            text-sm
-                            "
-                          />
-                        </motion.div>
-                      )}
-
-                      {/* TOOLTIP */}
-                      {!sidebarOpen &&
-                        !isMobile && (
+                          {/* ICON */}
                           <motion.div
-                            initial={{
-                              opacity: 0,
-                              x: -8,
-                            }}
                             whileHover={{
-                              opacity: 1,
-                              x: 0,
+                              scale: 1.12,
+                              rotate: 2,
+                            }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 12,
+                            }}
+                            className="
+                            text-[21px]
+                            shrink-0
+                            "
+                          >
+                            {item.icon}
+                          </motion.div>
+
+                          {/* TEXT */}
+                          <AnimatePresence mode="wait">
+                            {(sidebarOpen ||
+                              isMobile) && (
+                              <motion.span
+                                initial={{
+                                  opacity: 0,
+                                  x: -10,
+                                }}
+                                animate={{
+                                  opacity: 1,
+                                  x: 0,
+                                }}
+                                exit={{
+                                  opacity: 0,
+                                  x: -10,
+                                }}
+                                transition={{
+                                  duration: 0.22,
+                                }}
+                                className="
+                                text-sm
+                                font-medium
+                                whitespace-nowrap
+                                "
+                              >
+                                {item.title}
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* RIGHT */}
+                        {(sidebarOpen ||
+                          isMobile) && (
+                          <motion.div
+                            animate={{
+                              x: isActive
+                                ? 0
+                                : -4,
+
+                              opacity: isActive
+                                ? 1
+                                : 0,
                             }}
                             transition={{
                               duration: 0.2,
                             }}
                             className="
-                            absolute
-                            left-[78px]
-                            px-3
-                            py-2
-                            text-sm
-                            font-medium
-                            whitespace-nowrap
-                            opacity-0
-                            pointer-events-none
-                            group-hover:opacity-100
-                            bg-[#111827]
-                            text-white
-                            z-50
-                            shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                            border
-                            border-white/10
-                            backdrop-blur-xl
+                            relative
+                            z-10
+                            pr-4
                             "
                           >
-                            {item.title}
+                            <FiChevronRight
+                              className="
+                              text-sm
+                              "
+                            />
                           </motion.div>
                         )}
-                    </motion.button>
+
+                        {/* TOOLTIP */}
+                        {!sidebarOpen &&
+                          !isMobile && (
+                            <motion.div
+                              initial={{
+                                opacity: 0,
+                                x: -8,
+                              }}
+                              whileHover={{
+                                opacity: 1,
+                                x: 0,
+                              }}
+                              transition={{
+                                duration: 0.2,
+                              }}
+                              className="
+                              absolute
+                              left-[78px]
+                              px-3
+                              py-2
+                              text-sm
+                              font-medium
+                              whitespace-nowrap
+                              opacity-0
+                              pointer-events-none
+                              group-hover:opacity-100
+                              bg-[#111827]
+                              text-white
+                              z-50
+                              shadow-[0_10px_30px_rgba(0,0,0,0.25)]
+                              border
+                              border-white/10
+                              backdrop-blur-xl
+                              "
+                            >
+                              {item.title}
+                            </motion.div>
+                          )}
+                      </Link>
+                    </motion.div>
                   );
                 }
               )}

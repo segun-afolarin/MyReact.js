@@ -32,7 +32,7 @@ const DashboardWelcome = ({
  const heroContent = [
   {
     title1: "Welcome Back",
-    title2: "David A",
+    title2: "Afolarin",
     paragraph:
       "Your civic intelligence network is actively monitoring reports, infrastructure updates, and emergency alerts across Nigerian communities.",
   },
