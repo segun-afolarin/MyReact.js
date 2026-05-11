@@ -1,80 +1,109 @@
 import { motion } from "framer-motion";
 
+import { useState } from "react";
+
+import { Link } from "react-router-dom";
+
 import {
   FiClock,
   FiMapPin,
   FiCheckCircle,
-  FiAlertCircle,
+  FiAlertTriangle,
   FiArrowUpRight,
-  FiTrendingUp,
   FiActivity,
+  FiCamera,
+  FiShield,
+  FiPlus,
+  FiNavigation,
+  FiUsers,
 } from "react-icons/fi";
 
-const activities = [
+const nearbyReports = [
   {
-    title: "Road Damage Report Submitted",
-    location: "Wuse 2, Abuja",
-    status: "Pending Review",
-    icon: <FiAlertCircle />,
-    color: "from-orange-500 to-amber-500",
+    title: "Collapsed Drainage Blocking Road",
+    location: "Rayfield, Jos",
+    status: "Needs Community Validation",
+    image:
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
+    type: "Flood Risk",
+    confirmations: 0,
+    time: "4 mins ago",
+    severity: "High Risk",
+    icon: <FiAlertTriangle />,
+    color: "from-orange-500 to-red-600",
     badge:
-      "bg-orange-500/15 text-orange-400 border-orange-500/20",
-    time: "2 mins ago",
+      "bg-orange-500/15 text-orange-300 border-orange-500/20",
   },
 
   {
-    title: "Flooding Issue Verified",
-    location: "Lekki Phase 1, Lagos",
-    status: "Verified",
+    title: "Major Road Crack Near Junction",
+    location: "Terminus, Jos",
+    status: "Needs Community Validation",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
+    type: "Road Damage",
+    confirmations: 0,
+    time: "12 mins ago",
+    severity: "Moderate Risk",
     icon: <FiCheckCircle />,
     color: "from-green-500 to-emerald-600",
     badge:
-      "bg-green-500/15 text-green-400 border-green-500/20",
-    time: "12 mins ago",
+      "bg-green-500/15 text-green-300 border-green-500/20",
   },
 
   {
-    title: "Streetlight Repair In Progress",
-    location: "Port Harcourt",
-    status: "In Progress",
-    icon: <FiClock />,
+    title: "Streetlight Failure Across Block",
+    location: "Angwan Rogo, Jos",
+    status: "Awaiting Validation",
+    image:
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
+    type: "Power Issue",
+    confirmations: 0,
+    time: "25 mins ago",
+    severity: "Low Risk",
+    icon: <FiActivity />,
     color: "from-blue-500 to-cyan-600",
     badge:
-      "bg-blue-500/15 text-blue-400 border-blue-500/20",
-    time: "25 mins ago",
-  },
-
-  {
-    title: "Electricity Complaint Resolved",
-    location: "Ibadan",
-    status: "Resolved",
-    icon: <FiCheckCircle />,
-    color: "from-emerald-500 to-green-700",
-    badge:
-      "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    time: "1 hour ago",
+      "bg-blue-500/15 text-blue-300 border-blue-500/20",
   },
 ];
 
 const DashboardActivity = ({ darkMode }) => {
+  const [reports, setReports] =
+    useState(nearbyReports);
+
+  const [confirmedReports, setConfirmedReports] =
+    useState([]);
+
+  const handleConfirm = (index) => {
+    if (confirmedReports.includes(index)) return;
+
+    const updatedReports = [...reports];
+
+    updatedReports[index].confirmations += 1;
+
+    setReports(updatedReports);
+
+    setConfirmedReports([
+      ...confirmedReports,
+      index,
+    ]);
+  };
+
   return (
     <motion.section
       initial={{
         opacity: 0,
         y: 20,
       }}
-
       whileInView={{
         opacity: 1,
         y: 0,
       }}
-
       viewport={{ once: true }}
-
       transition={{
         duration: 0.5,
       }}
-
       className={`
       relative
       overflow-hidden
@@ -84,55 +113,53 @@ const DashboardActivity = ({ darkMode }) => {
       ${
         darkMode
           ? `
-            bg-[#0B1620]/95
+            bg-[#07110D]
             border-white/10
           `
           : `
-            bg-white/90
+            bg-white
             border-gray-200
           `
       }
       `}
     >
-      {/* BACKGROUND GLOW */}
-      <div
-        className="
-        absolute
-        -top-24
-        -right-24
-        w-72
-        h-72
-        rounded-full
-        bg-green-500/10
-        blur-3xl
-        "
-      />
-
-      {/* GRID */}
+      {/* BACKGROUND */}
       <div
         className="
         absolute
         inset-0
         opacity-[0.03]
         bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)]
-        bg-[size:35px_35px]
+        bg-[size:40px_40px]
         "
       />
 
-      {/* CONTENT */}
-      <div className="relative z-10">
+      <div
+        className="
+        absolute
+        -top-24
+        right-[-120px]
+        w-[420px]
+        h-[420px]
+        bg-green-500/10
+        blur-[120px]
+        rounded-full
+        "
+      />
 
+      <div className="relative z-10">
         {/* HEADER */}
         <div
           className={`
           flex
           flex-col
-          sm:flex-row
-          sm:items-center
-          sm:justify-between
-          gap-5
+          xl:flex-row
+          xl:items-center
+          xl:justify-between
+          gap-8
           p-5
-          md:p-6
+          sm:p-7
+          lg:p-9
           border-b
           ${
             darkMode
@@ -142,20 +169,18 @@ const DashboardActivity = ({ darkMode }) => {
           `}
         >
           {/* LEFT */}
-          <div>
-
+          <div className="max-w-3xl">
             <div
               className={`
               inline-flex
               items-center
-              gap-2
-              px-3
-              py-2
-              mb-4
+              gap-3
+              px-4
+              py-3
               border
               text-[11px]
-              font-semibold
-              tracking-[0.2em]
+              font-black
+              tracking-[0.22em]
               uppercase
               ${
                 darkMode
@@ -172,17 +197,44 @@ const DashboardActivity = ({ darkMode }) => {
               }
               `}
             >
-              <div className="w-2 h-2 bg-green-500 animate-pulse" />
+              <div className="relative flex h-2 w-2">
+                <span
+                  className="
+                  animate-ping
+                  absolute
+                  inline-flex
+                  h-full
+                  w-full
+                  rounded-full
+                  bg-green-400
+                  opacity-75
+                  "
+                />
 
-              Real-Time Feed
+                <span
+                  className="
+                  relative
+                  inline-flex
+                  rounded-full
+                  h-2
+                  w-2
+                  bg-green-500
+                  "
+                />
+              </div>
+
+              Nearby Community Reports
             </div>
 
             <h2
               className={`
-              text-2xl
-              md:text-3xl
+              mt-6
+              text-[2rem]
+              sm:text-[2.8rem]
+              lg:text-[4rem]
+              leading-[0.95]
+              tracking-[-0.08em]
               font-black
-              tracking-tight
               ${
                 darkMode
                   ? "text-white"
@@ -190,13 +242,20 @@ const DashboardActivity = ({ darkMode }) => {
               }
               `}
             >
-              Civic Activity
+              Help Verify
+              <span className="text-green-500">
+                {" "}
+                Real Issues
+              </span>{" "}
+              Around You.
             </h2>
 
             <p
               className={`
-              mt-2
+              mt-5
+              max-w-2xl
               text-sm
+              sm:text-base
               leading-relaxed
               ${
                 darkMode
@@ -205,305 +264,199 @@ const DashboardActivity = ({ darkMode }) => {
               }
               `}
             >
-              Live infrastructure events,
-              verifications, and response updates.
+              Citizens near you are reporting road
+              damage, flooding, broken infrastructure,
+              and emergency risks. NationAura waits
+              for at least{" "}
+              <span className="text-green-500 font-bold">
+                5 citizen confirmations
+              </span>{" "}
+              before escalating verified reports to
+              the appropriate government agency for
+              action.
             </p>
           </div>
 
-          {/* RIGHT */}
+          {/* ACTIONS */}
           <div
             className="
             flex
-            items-center
-            gap-3
+            flex-col
+            sm:flex-row
+            gap-4
+            w-full
+            xl:w-auto
             "
           >
-            {/* LIVE */}
-            <div
-              className={`
-              hidden
-              md:flex
-              items-center
-              gap-2
-              px-4
-              h-12
-              border
-              ${
-                darkMode
-                  ? `
-                    bg-white/[0.03]
-                    border-white/10
-                    text-gray-300
-                  `
-                  : `
-                    bg-[#F8FAF9]
-                    border-gray-200
-                    text-gray-700
-                  `
-              }
-              `}
-            >
-              <FiTrendingUp className="text-green-500" />
-
-              <span className="text-sm font-medium">
-                +38% Activity
-              </span>
-            </div>
-
-            {/* BUTTON */}
-            <motion.button
-              whileHover={{
-                y: -2,
-              }}
-
-              whileTap={{
-                scale: 0.97,
-              }}
-
-              className="
-              h-12
-              px-5
-              bg-gradient-to-r
-              from-green-600
-              to-emerald-700
-              text-white
-              font-semibold
-              shadow-[0_12px_30px_rgba(34,197,94,0.3)]
-              "
-            >
-              <span
+            {/* REPORT BUTTON */}
+            <Link to="/report">
+              <motion.button
+                whileHover={{
+                  y: -3,
+                }}
+                whileTap={{
+                  scale: 0.98,
+                }}
                 className="
-                flex
-                items-center
-                gap-2
+                h-14
+                px-6
+                bg-gradient-to-r
+                from-green-500
+                to-emerald-600
+                text-white
+                font-bold
+                shadow-[0_20px_60px_rgba(34,197,94,0.35)]
                 "
               >
-                View All
-
-                <FiArrowUpRight />
-              </span>
-            </motion.button>
-          </div>
-        </div>
-
-        {/* ACTIVITY LIST */}
-        <div className="p-5 md:p-6 space-y-4">
-
-          {activities.map((activity, index) => (
-            <motion.div
-              key={index}
-
-              initial={{
-                opacity: 0,
-                x: 20,
-              }}
-
-              whileInView={{
-                opacity: 1,
-                x: 0,
-              }}
-
-              transition={{
-                duration: 0.4,
-                delay: index * 0.08,
-              }}
-
-              viewport={{ once: true }}
-
-              whileHover={{
-                y: -3,
-              }}
-
-              className={`
-              group
-              relative
-              overflow-hidden
-              border
-              transition-all
-              duration-500
-              ${
-                darkMode
-                  ? `
-                    bg-white/[0.03]
-                    border-white/10
-                    hover:bg-white/[0.05]
-                    hover:border-green-500/20
-                  `
-                  : `
-                    bg-[#F8FAF9]
-                    border-gray-200
-                    hover:bg-white
-                    hover:border-green-300
-                  `
-              }
-              `}
-            >
-              {/* LEFT ACCENT */}
-              <div
-                className={`
-                absolute
-                left-0
-                top-0
-                bottom-0
-                w-[4px]
-                bg-gradient-to-b
-                ${activity.color}
-                `}
-              />
-
-              {/* HOVER GLOW */}
-              <div
-                className={`
-                absolute
-                -right-16
-                -top-16
-                w-40
-                h-40
-                rounded-full
-                opacity-0
-                blur-3xl
-                transition-all
-                duration-500
-                group-hover:opacity-20
-                bg-gradient-to-br
-                ${activity.color}
-                `}
-              />
-
-              {/* CONTENT */}
-              <div
-                className="
-                relative
-                p-4
-                md:p-5
-                flex
-                flex-col
-                sm:flex-row
-                sm:items-start
-                gap-4
-                "
-              >
-                {/* ICON */}
-                <motion.div
-                  whileHover={{
-                    rotate: 6,
-                    scale: 1.05,
-                  }}
-
-                  className={`
-                  relative
-                  w-14
-                  h-14
-                  flex-shrink-0
-                  bg-gradient-to-br
-                  ${activity.color}
-                  text-white
+                <span
+                  className="
                   flex
                   items-center
                   justify-center
-                  text-xl
-                  shadow-[0_10px_30px_rgba(0,0,0,0.2)]
-                  `}
+                  gap-3
+                  whitespace-nowrap
+                  "
                 >
-                  {/* PULSE */}
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.4, 0, 0.4],
-                    }}
+                  <FiPlus className="text-lg" />
 
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                    }}
+                  Report Your Own Issue
+                </span>
+              </motion.button>
+            </Link>
 
+            {/* VIEW BUTTON */}
+            <Link to="/report-center">
+              <motion.button
+                whileHover={{
+                  y: -3,
+                }}
+                whileTap={{
+                  scale: 0.98,
+                }}
+                className={`
+                h-14
+                px-6
+                border
+                font-semibold
+                ${
+                  darkMode
+                    ? `
+                      bg-white/[0.03]
+                      border-white/10
+                      text-white
+                    `
+                    : `
+                      bg-[#F8FAF9]
+                      border-gray-200
+                      text-black
+                    `
+                }
+                `}
+              >
+                <span
+                  className="
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  whitespace-nowrap
+                  "
+                >
+                  <FiNavigation />
+
+                  View All Reports Near You
+                </span>
+              </motion.button>
+            </Link>
+          </div>
+        </div>
+
+        {/* REPORT GRID */}
+        <div
+          className="
+          p-5
+          sm:p-7
+          lg:p-9
+          grid
+          grid-cols-1
+          lg:grid-cols-2
+          xl:grid-cols-3
+          gap-6
+          "
+        >
+          {reports.map((report, index) => {
+            const confirmed =
+              confirmedReports.includes(index);
+
+            return (
+              <motion.div
+                key={index}
+                initial={{
+                  opacity: 0,
+                  y: 30,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{ once: true }}
+                transition={{
+                  delay: index * 0.08,
+                }}
+                whileHover={{
+                  y: -8,
+                }}
+                className={`
+                group
+                relative
+                overflow-hidden
+                border
+                transition-all
+                duration-500
+                ${
+                  darkMode
+                    ? `
+                      bg-[#0C1712]
+                      border-white/10
+                      hover:border-green-500/20
+                    `
+                    : `
+                      bg-white
+                      border-gray-200
+                      hover:border-green-300
+                    `
+                }
+                `}
+              >
+                {/* IMAGE */}
+                <div className="relative h-[240px] overflow-hidden">
+                  <img
+                    src={report.image}
+                    alt={report.title}
                     className="
-                    absolute
-                    inset-0
-                    border
-                    border-white/40
+                    w-full
+                    h-full
+                    object-cover
+                    transition-transform
+                    duration-700
+                    group-hover:scale-110
                     "
                   />
 
-                  {activity.icon}
-                </motion.div>
-
-                {/* BODY */}
-                <div className="flex-1 min-w-0">
-
-                  {/* TOP */}
+                  {/* OVERLAY */}
                   <div
                     className="
-                    flex
-                    flex-col
-                    lg:flex-row
-                    lg:items-start
-                    lg:justify-between
-                    gap-4
+                    absolute
+                    inset-0
+                    bg-gradient-to-t
+                    from-black/80
+                    via-black/20
+                    to-transparent
                     "
-                  >
-                    {/* TEXT */}
-                    <div className="min-w-0">
+                  />
 
-                      <h3
-                        className={`
-                        text-lg
-                        md:text-xl
-                        font-bold
-                        leading-tight
-                        ${
-                          darkMode
-                            ? "text-white"
-                            : "text-black"
-                        }
-                        `}
-                      >
-                        {activity.title}
-                      </h3>
-
-                      <div
-                        className={`
-                        mt-3
-                        flex
-                        flex-wrap
-                        items-center
-                        gap-x-5
-                        gap-y-2
-                        text-sm
-                        ${
-                          darkMode
-                            ? "text-gray-400"
-                            : "text-gray-500"
-                        }
-                        `}
-                      >
-                        <div
-                          className="
-                          flex
-                          items-center
-                          gap-2
-                          "
-                        >
-                          <FiMapPin />
-
-                          {activity.location}
-                        </div>
-
-                        <div
-                          className="
-                          flex
-                          items-center
-                          gap-2
-                          "
-                        >
-                          <FiClock />
-
-                          {activity.time}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* STATUS */}
+                  {/* TOP BADGE */}
+                  <div className="absolute top-4 left-4">
                     <div
                       className={`
                       inline-flex
@@ -513,78 +466,286 @@ const DashboardActivity = ({ darkMode }) => {
                       py-2
                       border
                       text-xs
-                      font-semibold
-                      tracking-wide
-                      whitespace-nowrap
-                      self-start
-                      ${activity.badge}
+                      font-bold
+                      backdrop-blur-xl
+                      ${report.badge}
                       `}
                     >
                       <div className="w-2 h-2 rounded-full bg-current" />
 
-                      {activity.status}
+                      {report.severity}
+                    </div>
+                  </div>
+
+                  {/* TYPE */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.15em] text-white/70">
+                          {report.type}
+                        </p>
+
+                        <h3 className="mt-2 text-2xl font-black leading-tight text-white">
+                          {report.title}
+                        </h3>
+                      </div>
+
+                      <div
+                        className={`
+                        w-14
+                        h-14
+                        flex-shrink-0
+                        bg-gradient-to-br
+                        ${report.color}
+                        text-white
+                        flex
+                        items-center
+                        justify-center
+                        text-2xl
+                        shadow-[0_15px_40px_rgba(0,0,0,0.3)]
+                        `}
+                      >
+                        {report.icon}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CONTENT */}
+                <div className="p-5 sm:p-6">
+                  {/* META */}
+                  <div
+                    className={`
+                    flex
+                    flex-wrap
+                    items-center
+                    gap-x-5
+                    gap-y-3
+                    text-sm
+                    ${
+                      darkMode
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    }
+                    `}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FiMapPin />
+
+                      {report.location}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <FiClock />
+
+                      {report.time}
+                    </div>
+                  </div>
+
+                  {/* STATUS */}
+                  <div
+                    className={`
+                    mt-5
+                    p-4
+                    border
+                    ${
+                      darkMode
+                        ? `
+                          bg-white/[0.03]
+                          border-white/10
+                        `
+                        : `
+                          bg-[#F8FAF9]
+                          border-gray-200
+                        `
+                    }
+                    `}
+                  >
+                    <div className="flex items-start gap-3">
+                      <FiShield className="text-green-500 text-lg mt-1" />
+
+                      <div>
+                        <p
+                          className={`
+                          text-sm
+                          font-semibold
+                          ${
+                            darkMode
+                              ? "text-white"
+                              : "text-black"
+                          }
+                          `}
+                        >
+                          {report.status}
+                        </p>
+
+                        <p
+                          className={`
+                          mt-1
+                          text-sm
+                          leading-relaxed
+                          ${
+                            darkMode
+                              ? "text-gray-500"
+                              : "text-gray-500"
+                          }
+                          `}
+                        >
+                          Reports require at least 5
+                          community confirmations before
+                          being forwarded to government
+                          authorities.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
                   {/* FOOTER */}
                   <div
                     className="
-                    mt-5
+                    mt-6
                     flex
                     items-center
                     justify-between
                     gap-4
                     "
                   >
-                    {/* AI */}
+                    {/* CONFIRMATIONS */}
                     <div
                       className={`
                       flex
                       items-center
-                      gap-2
-                      text-sm
+                      gap-3
                       ${
                         darkMode
-                          ? "text-gray-500"
-                          : "text-gray-400"
+                          ? "text-gray-300"
+                          : "text-gray-700"
                       }
                       `}
                     >
-                      <FiActivity className="text-green-500" />
+                      <div
+                        className="
+                        w-11
+                        h-11
+                        bg-green-500/10
+                        text-green-500
+                        flex
+                        items-center
+                        justify-center
+                        "
+                      >
+                        <FiUsers />
+                      </div>
 
-                      AI Monitoring Active
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Community Confirmations
+                        </p>
+
+                        <h4 className="text-lg font-black">
+                          {report.confirmations}/5
+                        </h4>
+
+                        <p className="text-[11px] text-green-500 font-semibold mt-1">
+                          {5 - report.confirmations} more
+                          needed
+                        </p>
+                      </div>
                     </div>
 
-                    {/* BUTTON */}
+                    {/* ACTION */}
                     <motion.button
-                      whileHover={{
-                        x: 3,
+                      whileHover={
+                        confirmed
+                          ? {}
+                          : {
+                              x: 3,
+                            }
+                      }
+                      whileTap={{
+                        scale: 0.98,
                       }}
-
+                      onClick={() =>
+                        handleConfirm(index)
+                      }
+                      disabled={confirmed}
                       className={`
-                      flex
-                      items-center
-                      gap-2
+                      h-12
+                      px-5
                       text-sm
-                      font-semibold
+                      font-bold
                       transition-all
                       duration-300
                       ${
-                        darkMode
-                          ? "text-green-400 hover:text-green-300"
-                          : "text-green-700 hover:text-green-800"
+                        confirmed
+                          ? `
+                            bg-emerald-600
+                            text-white
+                            cursor-default
+                          `
+                          : `
+                            bg-green-500
+                            text-white
+                            shadow-[0_12px_30px_rgba(34,197,94,0.35)]
+                          `
                       }
                       `}
                     >
-                      View Details
+                      <span
+                        className="
+                        flex
+                        items-center
+                        gap-2
+                        "
+                      >
+                        {confirmed
+                          ? "Confirmed"
+                          : "Confirm"}
 
-                      <FiArrowUpRight />
+                        <FiArrowUpRight />
+                      </span>
                     </motion.button>
                   </div>
+
+                  {/* BOTTOM AI BAR */}
+                  <div
+                    className={`
+                    mt-5
+                    pt-5
+                    border-t
+                    flex
+                    items-center
+                    justify-between
+                    text-sm
+                    ${
+                      darkMode
+                        ? `
+                          border-white/10
+                          text-gray-500
+                        `
+                        : `
+                          border-gray-200
+                          text-gray-500
+                        `
+                    }
+                    `}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FiCamera className="text-green-500" />
+
+                      AI image analysis active
+                    </div>
+
+                    <div className="flex items-center gap-2 text-green-500 font-semibold">
+                      Live
+
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </motion.section>

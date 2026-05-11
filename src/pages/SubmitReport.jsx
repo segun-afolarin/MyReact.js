@@ -7,7 +7,6 @@ import FloatingBottomNav from "../components/dashboard/FloatingBottomNav";
 import DashboardPageHeader from "../components/dashboard/DashboardPageHeader";
 import QuickReportActions from "../components/dashboard/QuickReportActions";
 import UserReportsQueue from "../components/dashboard/UserReportsQueue";
-import ReportsMap from "../components/dashboard/ReportsMap";
 import NearbyIssues from "../components/dashboard/NearbyIssues";
 import RecentReports from "../components/dashboard/RecentReports";
 
@@ -294,17 +293,6 @@ const SubmitReport = () => {
               items-start
               "
             >
-              {/* MAP */}
-              <div
-                className="
-                min-w-0
-                h-full
-                "
-              >
-                <ReportsMap
-                  darkMode={darkMode}
-                />
-              </div>
 
               {/* ISSUES */}
               <div

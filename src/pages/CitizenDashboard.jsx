@@ -6,8 +6,6 @@ import FloatingBottomNav from "../components/dashboard/FloatingBottomNav";
 
 import DashboardWelcome from "../components/dashboard/DashboardWelcome";
 import DashboardStats from "../components/dashboard/DashboardStats";
-import DashboardMap from "../components/dashboard/DashboardMap";
-import DashboardReports from "../components/dashboard/DashboardReports";
 import DashboardInsights from "../components/dashboard/DashboardInsights";
 import DashboardActivity from "../components/dashboard/DashboardActivity";
 
@@ -209,12 +207,6 @@ const CitizenDashboard = () => {
             items-start
             "
           >
-            {/* MAP */}
-            <div className="min-w-0">
-              <DashboardMap
-                darkMode={darkMode}
-              />
-            </div>
 
             {/* INSIGHTS */}
             <div
@@ -241,12 +233,6 @@ const CitizenDashboard = () => {
             items-start
             "
           >
-            {/* REPORTS */}
-            <div className="min-w-0">
-              <DashboardReports
-                darkMode={darkMode}
-              />
-            </div>
 
             {/* ACTIVITY */}
             <div

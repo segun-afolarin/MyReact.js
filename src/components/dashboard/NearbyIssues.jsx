@@ -1,4 +1,9 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+
+import {
+  motion,
+  AnimatePresence,
+} from "framer-motion";
 
 import {
   FiMapPin,
@@ -56,6 +61,23 @@ const nearbyIssues = [
 const NearbyIssues = ({
   darkMode,
 }) => {
+  const [detecting, setDetecting] =
+    useState(false);
+
+  const [showIssues, setShowIssues] =
+    useState(false);
+
+  const handleDetectLocation = () => {
+    if (showIssues) return;
+
+    setDetecting(true);
+
+    setTimeout(() => {
+      setDetecting(false);
+      setShowIssues(true);
+    }, 1800);
+  };
+
   return (
     <section
       className={`
@@ -403,8 +425,32 @@ const NearbyIssues = ({
                 justify-center
                 text-green-500
                 text-2xl
+                overflow-hidden
                 "
               >
+                {detecting && (
+                  <motion.div
+                    initial={{
+                      scale: 0,
+                      opacity: 0.8,
+                    }}
+                    animate={{
+                      scale: 2.4,
+                      opacity: 0,
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1.5,
+                    }}
+                    className="
+                    absolute
+                    inset-0
+                    border
+                    border-green-500/30
+                    "
+                  />
+                )}
+
                 <motion.div
                   animate={{
                     scale: [1, 1.5, 1],
@@ -432,6 +478,8 @@ const NearbyIssues = ({
               whileTap={{
                 scale: 0.98,
               }}
+              onClick={handleDetectLocation}
+              disabled={detecting}
               className="
               mt-5
               w-full
@@ -448,290 +496,333 @@ const NearbyIssues = ({
               hover:bg-green-400
               transition-all
               duration-300
+              disabled:opacity-80
               "
             >
-              <FiNavigation />
+              <motion.div
+                animate={
+                  detecting
+                    ? {
+                        rotate: 360,
+                      }
+                    : {}
+                }
+                transition={{
+                  repeat: Infinity,
+                  duration: 1,
+                  ease: "linear",
+                }}
+              >
+                <FiNavigation />
+              </motion.div>
 
-              Detect My Location
+              {detecting
+                ? "Detecting Location..."
+                : showIssues
+                ? "Location Detected"
+                : "Detect My Location"}
             </motion.button>
           </motion.div>
         </div>
 
         {/* ISSUES */}
-        <div className="space-y-4">
-          {nearbyIssues.map(
-            (issue, index) => (
-              <motion.div
-                key={index}
-                initial={{
-                  opacity: 0,
-                  y: 25,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  delay: index * 0.08,
-                }}
-                whileHover={{
-                  y: -4,
-                }}
-                className={`
-                group
-                relative
-                overflow-hidden
-                border
-                p-5
-                sm:p-6
-                transition-all
-                duration-300
-                ${
-                  darkMode
-                    ? `
-                      bg-[#0A141D]
-                      border-white/10
-                    `
-                    : `
-                      bg-white
-                      border-gray-200
-                    `
-                }
-                `}
-              >
-                {/* TOP LINE */}
-                <motion.div
-                  initial={{
-                    width: 0,
-                  }}
-                  whileInView={{
-                    width: "100%",
-                  }}
-                  transition={{
-                    duration: 1,
-                    delay:
-                      0.3 +
-                      index * 0.1,
-                  }}
-                  className="
-                  absolute
-                  top-0
-                  left-0
-                  h-[2px]
-                  bg-gradient-to-r
-                  from-green-500
-                  to-transparent
-                  "
-                />
-
-                <div
-                  className="
-                  flex
-                  flex-col
-                  xl:flex-row
-                  xl:items-start
-                  xl:justify-between
-                  gap-6
-                  "
-                >
-                  {/* LEFT */}
-                  <div className="flex-1">
-                    {/* TAGS */}
-                    <div
-                      className="
-                      flex
-                      flex-wrap
-                      items-center
-                      gap-3
-                      mb-5
-                      "
-                    >
-                      <div
-                        className="
-                        flex
-                        items-center
-                        gap-2
-                        px-3
-                        py-2
-                        bg-green-500/10
-                        border
-                        border-green-500/20
-                        text-green-500
-                        text-[10px]
-                        font-black
-                        uppercase
-                        tracking-[0.18em]
-                        "
-                      >
-                        <FiAlertTriangle />
-
-                        {issue.category}
-                      </div>
-
-                      <div
-                        className="
-                        flex
-                        items-center
-                        gap-2
-                        px-3
-                        py-2
-                        border
-                        border-white/10
-                        text-[10px]
-                        font-black
-                        uppercase
-                        tracking-[0.18em]
-                        text-white
-                        "
-                      >
-                        <FiShield />
-
-                        {issue.severity}
-                      </div>
-                    </div>
-
-                    {/* TITLE */}
-                    <h3
-                      className={`
-                      text-xl
-                      sm:text-2xl
-                      font-black
-                      leading-tight
-                      tracking-[-0.04em]
-                      ${
-                        darkMode
-                          ? "text-white"
-                          : "text-black"
-                      }
-                      `}
-                    >
-                      {issue.title}
-                    </h3>
-
-                    {/* META */}
-                    <div
-                      className="
-                      flex
-                      flex-wrap
-                      items-center
-                      gap-4
-                      mt-5
-                      "
-                    >
-                      <div
-                        className={`
-                        flex
-                        items-center
-                        gap-2
-                        text-sm
-                        ${
-                          darkMode
-                            ? "text-gray-400"
-                            : "text-gray-600"
-                        }
-                        `}
-                      >
-                        <FiMapPin />
-
-                        {issue.location}
-                      </div>
-
-                      <div
-                        className={`
-                        flex
-                        items-center
-                        gap-2
-                        text-sm
-                        ${
-                          darkMode
-                            ? "text-gray-400"
-                            : "text-gray-600"
-                        }
-                        `}
-                      >
-                        <FiClock />
-
-                        {issue.time}
-                      </div>
-
-                      <div
-                        className="
-                        flex
-                        items-center
-                        gap-2
-                        text-sm
-                        text-green-500
-                        font-semibold
-                        "
-                      >
-                        <FiRadio />
-
-                        {issue.confirmations}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* RIGHT */}
-                  <div
-                    className="
-                    flex
-                    flex-col
-                    items-start
-                    xl:items-end
-                    gap-4
-                    "
+        <AnimatePresence>
+          {showIssues && (
+            <motion.div
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              className="space-y-4"
+            >
+              {nearbyIssues.map(
+                (issue, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{
+                      opacity: 0,
+                      y: 35,
+                      scale: 0.96,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    transition={{
+                      duration: 0.6,
+                      delay:
+                        index * 0.12,
+                      ease: "easeOut",
+                    }}
+                    whileHover={{
+                      y: -4,
+                    }}
+                    className={`
+                    group
+                    relative
+                    overflow-hidden
+                    border
+                    p-5
+                    sm:p-6
+                    transition-all
+                    duration-300
+                    ${
+                      darkMode
+                        ? `
+                          bg-[#0A141D]
+                          border-white/10
+                        `
+                        : `
+                          bg-white
+                          border-gray-200
+                        `
+                    }
+                    `}
                   >
-                    <div
-                      className="
-                      px-4
-                      py-3
-                      bg-green-500/10
-                      border
-                      border-green-500/20
-                      text-green-500
-                      text-xs
-                      font-black
-                      uppercase
-                      tracking-[0.15em]
-                      "
-                    >
-                      {issue.distance}
-                    </div>
-
-                    <motion.button
-                      whileHover={{
-                        x: 4,
+                    {/* TOP LINE */}
+                    <motion.div
+                      initial={{
+                        width: 0,
+                      }}
+                      animate={{
+                        width: "100%",
+                      }}
+                      transition={{
+                        duration: 1,
+                        delay:
+                          0.3 +
+                          index * 0.1,
                       }}
                       className="
-                      h-12
-                      px-5
-                      bg-green-500
-                      text-white
-                      text-sm
-                      font-black
-                      uppercase
-                      tracking-[0.14em]
+                      absolute
+                      top-0
+                      left-0
+                      h-[2px]
+                      bg-gradient-to-r
+                      from-green-500
+                      to-transparent
+                      "
+                    />
+
+                    <div
+                      className="
                       flex
-                      items-center
-                      gap-3
-                      hover:bg-green-400
-                      transition-all
-                      duration-300
+                      flex-col
+                      xl:flex-row
+                      xl:items-start
+                      xl:justify-between
+                      gap-6
                       "
                     >
-                      View Details
+                      {/* LEFT */}
+                      <div className="flex-1">
+                        {/* TAGS */}
+                        <div
+                          className="
+                          flex
+                          flex-wrap
+                          items-center
+                          gap-3
+                          mb-5
+                          "
+                        >
+                          <div
+                            className="
+                            flex
+                            items-center
+                            gap-2
+                            px-3
+                            py-2
+                            bg-green-500/10
+                            border
+                            border-green-500/20
+                            text-green-500
+                            text-[10px]
+                            font-black
+                            uppercase
+                            tracking-[0.18em]
+                            "
+                          >
+                            <FiAlertTriangle />
 
-                      <FiArrowUpRight />
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            )
+                            {issue.category}
+                          </div>
+
+                          <div
+                            className="
+                            flex
+                            items-center
+                            gap-2
+                            px-3
+                            py-2
+                            border
+                            border-white/10
+                            text-[10px]
+                            font-black
+                            uppercase
+                            tracking-[0.18em]
+                            text-white
+                            "
+                          >
+                            <FiShield />
+
+                            {issue.severity}
+                          </div>
+                        </div>
+
+                        {/* TITLE */}
+                        <h3
+                          className={`
+                          text-xl
+                          sm:text-2xl
+                          font-black
+                          leading-tight
+                          tracking-[-0.04em]
+                          break-words
+                          ${
+                            darkMode
+                              ? "text-white"
+                              : "text-black"
+                          }
+                          `}
+                        >
+                          {issue.title}
+                        </h3>
+
+                        {/* META */}
+                        <div
+                          className="
+                          flex
+                          flex-wrap
+                          items-center
+                          gap-4
+                          mt-5
+                          "
+                        >
+                          <div
+                            className={`
+                            flex
+                            items-center
+                            gap-2
+                            text-sm
+                            ${
+                              darkMode
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            }
+                            `}
+                          >
+                            <FiMapPin />
+
+                            {issue.location}
+                          </div>
+
+                          <div
+                            className={`
+                            flex
+                            items-center
+                            gap-2
+                            text-sm
+                            ${
+                              darkMode
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            }
+                            `}
+                          >
+                            <FiClock />
+
+                            {issue.time}
+                          </div>
+
+                          <div
+                            className="
+                            flex
+                            items-center
+                            gap-2
+                            text-sm
+                            text-green-500
+                            font-semibold
+                            "
+                          >
+                            <FiRadio />
+
+                            {issue.confirmations}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RIGHT */}
+                      <div
+                        className="
+                        flex
+                        flex-col
+                        items-start
+                        xl:items-end
+                        gap-4
+                        w-full
+                        xl:w-auto
+                        "
+                      >
+                        <div
+                          className="
+                          px-4
+                          py-3
+                          bg-green-500/10
+                          border
+                          border-green-500/20
+                          text-green-500
+                          text-xs
+                          font-black
+                          uppercase
+                          tracking-[0.15em]
+                          "
+                        >
+                          {issue.distance}
+                        </div>
+
+                        <motion.button
+                          whileHover={{
+                            x: 4,
+                          }}
+                          className="
+                          h-12
+                          w-full
+                          sm:w-auto
+                          px-5
+                          bg-green-500
+                          text-white
+                          text-sm
+                          font-black
+                          uppercase
+                          tracking-[0.14em]
+                          flex
+                          items-center
+                          justify-center
+                          gap-3
+                          hover:bg-green-400
+                          transition-all
+                          duration-300
+                          "
+                        >
+                          View Details
+
+                          <FiArrowUpRight />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              )}
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </section>
   );
