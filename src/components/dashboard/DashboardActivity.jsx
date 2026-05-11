@@ -68,6 +68,34 @@ const nearbyReports = [
   },
 ];
 
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 40,
+    scale: 0.96,
+  },
+
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+
+    transition: {
+      duration: 0.7,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
 const DashboardActivity = ({ darkMode }) => {
   const [reports, setReports] =
     useState(nearbyReports);
@@ -98,9 +126,12 @@ const DashboardActivity = ({ darkMode }) => {
       whileInView={{
         opacity: 1,
       }}
-      viewport={{ once: true }}
+      viewport={{
+        once: true,
+        amount: 0.1,
+      }}
       transition={{
-        duration: 0.7,
+        duration: 0.8,
       }}
       className={`
       relative
@@ -132,7 +163,16 @@ const DashboardActivity = ({ darkMode }) => {
         "
       />
 
-      <div
+      <motion.div
+        animate={{
+          scale: [1, 1.08, 1],
+          opacity: [0.08, 0.14, 0.08],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
         className="
         absolute
         -top-24
@@ -156,9 +196,12 @@ const DashboardActivity = ({ darkMode }) => {
             opacity: 1,
             y: 0,
           }}
-          viewport={{ once: true }}
+          viewport={{
+            once: true,
+          }}
           transition={{
             duration: 0.8,
+            ease: [0.22, 1, 0.36, 1],
           }}
           className={`
           flex
@@ -183,13 +226,17 @@ const DashboardActivity = ({ darkMode }) => {
             <motion.div
               initial={{
                 opacity: 0,
-                scale: 0.8,
+                y: 18,
               }}
               whileInView={{
                 opacity: 1,
-                scale: 1,
+                y: 0,
+              }}
+              viewport={{
+                once: true,
               }}
               transition={{
+                delay: 0.1,
                 duration: 0.6,
               }}
               className={`
@@ -250,15 +297,19 @@ const DashboardActivity = ({ darkMode }) => {
             <motion.h2
               initial={{
                 opacity: 0,
-                y: 50,
+                y: 30,
               }}
               whileInView={{
                 opacity: 1,
                 y: 0,
               }}
+              viewport={{
+                once: true,
+              }}
               transition={{
-                delay: 0.1,
+                delay: 0.15,
                 duration: 0.8,
+                ease: [0.22, 1, 0.36, 1],
               }}
               className={`
               mt-6
@@ -286,14 +337,17 @@ const DashboardActivity = ({ darkMode }) => {
             <motion.p
               initial={{
                 opacity: 0,
-                y: 30,
+                y: 20,
               }}
               whileInView={{
                 opacity: 1,
                 y: 0,
               }}
+              viewport={{
+                once: true,
+              }}
               transition={{
-                delay: 0.2,
+                delay: 0.22,
                 duration: 0.7,
               }}
               className={`
@@ -326,11 +380,14 @@ const DashboardActivity = ({ darkMode }) => {
           <motion.div
             initial={{
               opacity: 0,
-              x: 40,
+              x: 30,
             }}
             whileInView={{
               opacity: 1,
               x: 0,
+            }}
+            viewport={{
+              once: true,
             }}
             transition={{
               delay: 0.25,
@@ -345,15 +402,19 @@ const DashboardActivity = ({ darkMode }) => {
             xl:w-auto
             "
           >
-            {/* REPORT BUTTON */}
             <Link to="/report">
               <motion.button
                 whileHover={{
-                  y: -5,
-                  scale: 1.02,
+                  y: -3,
+                  scale: 1.015,
                 }}
                 whileTap={{
-                  scale: 0.96,
+                  scale: 0.98,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 18,
                 }}
                 className="
                 h-14
@@ -382,15 +443,19 @@ const DashboardActivity = ({ darkMode }) => {
               </motion.button>
             </Link>
 
-            {/* VIEW BUTTON */}
             <Link to="/report-center">
               <motion.button
                 whileHover={{
-                  y: -5,
-                  scale: 1.02,
+                  y: -3,
+                  scale: 1.015,
                 }}
                 whileTap={{
-                  scale: 0.96,
+                  scale: 0.98,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 18,
                 }}
                 className={`
                 h-14
@@ -431,7 +496,14 @@ const DashboardActivity = ({ darkMode }) => {
         </motion.div>
 
         {/* REPORT GRID */}
-        <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{
+            once: true,
+            amount: 0.15,
+          }}
           className="
           p-5
           sm:p-7
@@ -450,32 +522,12 @@ const DashboardActivity = ({ darkMode }) => {
             return (
               <motion.div
                 key={index}
-                initial={{
-                  opacity: 0,
-                  y: -160,
-                  rotate: -6,
-                  scale: 0.9,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                  rotate: 0,
-                  scale: 1,
-                }}
-                viewport={{
-                  once: false,
-                  amount: 0.25,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 80,
-                  damping: 14,
-                  mass: 1,
-                  delay: index * 0.12,
-                }}
+                variants={cardVariants}
                 whileHover={{
-                  y: -10,
-                  scale: 1.015,
+                  y: -8,
+                  transition: {
+                    duration: 0.25,
+                  },
                 }}
                 className={`
                 group
@@ -484,6 +536,7 @@ const DashboardActivity = ({ darkMode }) => {
                 border
                 transition-all
                 duration-500
+                will-change-transform
                 ${
                   darkMode
                     ? `
@@ -504,11 +557,15 @@ const DashboardActivity = ({ darkMode }) => {
                   <motion.img
                     src={report.image}
                     alt={report.title}
+                    initial={{
+                      scale: 1.05,
+                    }}
                     whileHover={{
-                      scale: 1.12,
+                      scale: 1.1,
                     }}
                     transition={{
-                      duration: 0.8,
+                      duration: 0.7,
+                      ease: "easeOut",
                     }}
                     className="
                     w-full
@@ -533,14 +590,17 @@ const DashboardActivity = ({ darkMode }) => {
                   <motion.div
                     initial={{
                       opacity: 0,
-                      y: -20,
+                      y: -10,
                     }}
                     whileInView={{
                       opacity: 1,
                       y: 0,
                     }}
+                    viewport={{
+                      once: true,
+                    }}
                     transition={{
-                      delay: 0.2,
+                      delay: 0.2 + index * 0.1,
                     }}
                     className="absolute top-4 left-4"
                   >
@@ -566,26 +626,36 @@ const DashboardActivity = ({ darkMode }) => {
 
                   {/* TYPE */}
                   <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-end justify-between gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-[0.15em] text-white/70">
                           {report.type}
                         </p>
 
-                        <motion.h3
-                          whileHover={{
-                            x: 4,
-                          }}
-                          className="mt-2 text-2xl font-black leading-tight text-white"
+                        <h3
+                          className="
+                          mt-2
+                          text-2xl
+                          font-black
+                          leading-tight
+                          text-white
+                          transition-transform
+                          duration-300
+                          group-hover:translate-x-1
+                          "
                         >
                           {report.title}
-                        </motion.h3>
+                        </h3>
                       </div>
 
                       <motion.div
                         whileHover={{
-                          rotate: 8,
-                          scale: 1.1,
+                          rotate: 6,
+                          scale: 1.08,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
                         }}
                         className={`
                         w-14
@@ -641,7 +711,10 @@ const DashboardActivity = ({ darkMode }) => {
                   {/* STATUS */}
                   <motion.div
                     whileHover={{
-                      scale: 1.02,
+                      y: -2,
+                    }}
+                    transition={{
+                      duration: 0.25,
                     }}
                     className={`
                     mt-5
@@ -714,7 +787,7 @@ const DashboardActivity = ({ darkMode }) => {
                     {/* CONFIRMATIONS */}
                     <motion.div
                       whileHover={{
-                        scale: 1.03,
+                        scale: 1.02,
                       }}
                       className={`
                       flex
@@ -749,10 +822,16 @@ const DashboardActivity = ({ darkMode }) => {
                         <motion.h4
                           key={report.confirmations}
                           initial={{
-                            scale: 1.3,
+                            scale: 1.2,
+                            opacity: 0.6,
                           }}
                           animate={{
                             scale: 1,
+                            opacity: 1,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 250,
                           }}
                           className="text-lg font-black"
                         >
@@ -772,12 +851,15 @@ const DashboardActivity = ({ darkMode }) => {
                         confirmed
                           ? {}
                           : {
-                              x: 4,
                               scale: 1.03,
                             }
                       }
                       whileTap={{
-                        scale: 0.95,
+                        scale: 0.96,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
                       }}
                       onClick={() =>
                         handleConfirm(index)
@@ -816,17 +898,19 @@ const DashboardActivity = ({ darkMode }) => {
                           ? "Confirmed"
                           : "Confirm"}
 
-                        <motion.div
-                          animate={{
-                            x: [0, 4, 0],
-                          }}
-                          transition={{
-                            duration: 1.2,
-                            repeat: Infinity,
-                          }}
-                        >
-                          <FiArrowUpRight />
-                        </motion.div>
+                        {!confirmed && (
+                          <motion.div
+                            animate={{
+                              x: [0, 3, 0],
+                            }}
+                            transition={{
+                              duration: 1.4,
+                              repeat: Infinity,
+                            }}
+                          >
+                            <FiArrowUpRight />
+                          </motion.div>
+                        )}
                       </span>
                     </motion.button>
                   </div>
@@ -870,7 +954,7 @@ const DashboardActivity = ({ darkMode }) => {
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </motion.section>
   );
