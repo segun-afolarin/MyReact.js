@@ -37,7 +37,7 @@ const DashboardInsights = ({
   darkMode,
 }) => {
   return (
-    <section className="relative mt-14 overflow-hidden">
+    <section className="relative mt-10 sm:mt-14 overflow-hidden">
       {/* HUGE BACKGROUND */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* GRID */}
@@ -79,10 +79,13 @@ const DashboardInsights = ({
           absolute
           -top-40
           left-[-10%]
-          w-[500px]
-          h-[500px]
+          w-[320px]
+          h-[320px]
+          sm:w-[500px]
+          sm:h-[500px]
           bg-green-500/20
-          blur-[130px]
+          blur-[100px]
+          sm:blur-[130px]
           "
         />
 
@@ -100,10 +103,13 @@ const DashboardInsights = ({
           absolute
           bottom-[-200px]
           right-[-10%]
-          w-[550px]
-          h-[550px]
+          w-[320px]
+          h-[320px]
+          sm:w-[550px]
+          sm:h-[550px]
           bg-emerald-400/20
-          blur-[150px]
+          blur-[100px]
+          sm:blur-[150px]
           "
         />
       </div>
@@ -113,7 +119,7 @@ const DashboardInsights = ({
         className={`
           relative
           border
-          shadow-[0_40px_120px_rgba(0,0,0,0.08)]
+          shadow-[0_30px_90px_rgba(0,0,0,0.08)]
           overflow-hidden
           ${
             darkMode
@@ -144,7 +150,7 @@ const DashboardInsights = ({
         />
 
         {/* INNER CONTAINER */}
-        <div className="relative p-6 sm:p-8 lg:p-12">
+        <div className="relative p-4 sm:p-6 lg:p-12">
           {/* HEADER */}
           <div
             className="
@@ -153,7 +159,8 @@ const DashboardInsights = ({
             xl:flex-row
             xl:items-end
             xl:justify-between
-            gap-10
+            gap-8
+            lg:gap-10
             "
           >
             {/* LEFT */}
@@ -168,13 +175,19 @@ const DashboardInsights = ({
                   opacity: 1,
                   y: 0,
                 }}
+                transition={{
+                  duration: 0.6,
+                }}
                 viewport={{ once: true }}
                 className={`
                   inline-flex
                   items-center
-                  gap-3
-                  px-5
-                  py-3
+                  gap-2
+                  sm:gap-3
+                  px-4
+                  sm:px-5
+                  py-2.5
+                  sm:py-3
                   border
                   shadow-sm
                   ${
@@ -216,10 +229,11 @@ const DashboardInsights = ({
 
                 <p
                   className="
-                  text-[10px]
+                  text-[9px]
                   sm:text-[11px]
                   uppercase
-                  tracking-[0.35em]
+                  tracking-[0.22em]
+                  sm:tracking-[0.35em]
                   font-black
                   text-green-500
                   "
@@ -229,28 +243,31 @@ const DashboardInsights = ({
               </motion.div>
 
               <motion.h2
-  initial={{
-    opacity: 0,
-    y: 20,
-  }}
-  whileInView={{
-    opacity: 1,
-    y: 0,
-  }}
-  transition={{
-    delay: 0.08,
-  }}
-  viewport={{ once: true }}
-  className="
-    mt-8
-    text-[2.1rem]
-    sm:text-[3rem]
-    lg:text-[4.3rem]
-    leading-[0.9]
-    tracking-[-0.09em]
-    font-black
-  "
->
+                initial={{
+                  opacity: 0,
+                  y: 20,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: 0.08,
+                  duration: 0.7,
+                }}
+                viewport={{ once: true }}
+                className="
+                  mt-6
+                  sm:mt-8
+                  text-[2rem]
+                  sm:text-[3rem]
+                  lg:text-[4.3rem]
+                  leading-[0.92]
+                  tracking-[-0.07em]
+                  sm:tracking-[-0.09em]
+                  font-black
+                "
+              >
                 <span
                   className={
                     darkMode
@@ -310,12 +327,14 @@ const DashboardInsights = ({
                 }}
                 transition={{
                   delay: 0.12,
+                  duration: 0.7,
                 }}
                 viewport={{ once: true }}
                 className={`
-                  mt-7
+                  mt-5
+                  sm:mt-7
                   max-w-2xl
-                  text-sm
+                  text-[14px]
                   sm:text-base
                   lg:text-lg
                   leading-relaxed
@@ -345,12 +364,20 @@ const DashboardInsights = ({
                 opacity: 1,
                 scale: 1,
               }}
+              transition={{
+                duration: 0.6,
+              }}
               viewport={{ once: true }}
+              whileHover={{
+                y: -4,
+              }}
               className={`
                 relative
                 overflow-hidden
                 border
-                min-w-[300px]
+                w-full
+                xl:max-w-[370px]
+                xl:min-w-[340px]
                 shadow-[0_30px_80px_rgba(0,0,0,0.08)]
                 ${
                   darkMode
@@ -377,8 +404,8 @@ const DashboardInsights = ({
                 "
               />
 
-              <div className="relative p-6">
-                <div className="flex items-center gap-5">
+              <div className="relative p-4 sm:p-6">
+                <div className="flex items-center gap-4 sm:gap-5">
                   <motion.div
                     animate={{
                       rotate: [0, 10, -10, 0],
@@ -388,26 +415,31 @@ const DashboardInsights = ({
                       repeat: Infinity,
                     }}
                     className="
-                    w-16
-                    h-16
+                    w-14
+                    h-14
+                    sm:w-16
+                    sm:h-16
                     bg-green-500
                     flex
                     items-center
                     justify-center
                     text-white
-                    text-3xl
+                    text-2xl
+                    sm:text-3xl
                     shadow-[0_20px_60px_rgba(34,197,94,0.35)]
                     "
                   >
                     <FiCpu />
                   </motion.div>
 
-                  <div>
+                  <div className="min-w-0">
                     <p
                       className={`
-                        text-[10px]
+                        text-[9px]
+                        sm:text-[10px]
                         uppercase
-                        tracking-[0.22em]
+                        tracking-[0.18em]
+                        sm:tracking-[0.22em]
                         font-black
                         ${
                           darkMode
@@ -422,9 +454,11 @@ const DashboardInsights = ({
                     <h4
                       className={`
                         mt-2
-                        text-2xl
+                        text-xl
+                        sm:text-2xl
                         font-black
-                        tracking-[-0.06em]
+                        tracking-[-0.05em]
+                        leading-tight
                         ${
                           darkMode
                             ? "text-white"
@@ -438,7 +472,7 @@ const DashboardInsights = ({
                 </div>
 
                 {/* MINI STATS */}
-                <div className="mt-8 grid grid-cols-2 gap-4">
+                <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4">
                   {[
                     {
                       label: "Active Scans",
@@ -449,11 +483,15 @@ const DashboardInsights = ({
                       value: "97%",
                     },
                   ].map((item, index) => (
-                    <div
+                    <motion.div
                       key={index}
+                      whileHover={{
+                        y: -3,
+                      }}
                       className={`
                         border
-                        p-4
+                        p-3
+                        sm:p-4
                         ${
                           darkMode
                             ? `
@@ -469,9 +507,11 @@ const DashboardInsights = ({
                     >
                       <p
                         className={`
-                          text-[10px]
+                          text-[9px]
+                          sm:text-[10px]
                           uppercase
-                          tracking-[0.15em]
+                          tracking-[0.12em]
+                          sm:tracking-[0.15em]
                           ${
                             darkMode
                               ? "text-gray-500"
@@ -485,7 +525,8 @@ const DashboardInsights = ({
                       <h3
                         className={`
                           mt-2
-                          text-3xl
+                          text-2xl
+                          sm:text-3xl
                           font-black
                           tracking-[-0.08em]
                           ${
@@ -497,7 +538,7 @@ const DashboardInsights = ({
                       >
                         {item.value}
                       </h3>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -507,11 +548,13 @@ const DashboardInsights = ({
           {/* GRID */}
           <div
             className="
-            mt-12
+            mt-10
+            sm:mt-12
             grid
             grid-cols-1
             xl:grid-cols-[1.15fr_0.85fr]
-            gap-7
+            gap-5
+            sm:gap-7
             "
           >
             {/* LEFT PANEL */}
@@ -524,9 +567,12 @@ const DashboardInsights = ({
                 opacity: 1,
                 y: 0,
               }}
+              transition={{
+                duration: 0.7,
+              }}
               viewport={{ once: true }}
               whileHover={{
-                y: -8,
+                y: -6,
               }}
               className={`
                 relative
@@ -566,38 +612,47 @@ const DashboardInsights = ({
                 absolute
                 -top-20
                 -right-20
-                w-80
-                h-80
+                w-60
+                h-60
+                sm:w-80
+                sm:h-80
                 bg-green-500/10
-                blur-[120px]
+                blur-[100px]
+                sm:blur-[120px]
                 "
               />
 
-              <div className="relative p-7 sm:p-9">
+              <div className="relative p-5 sm:p-7 lg:p-9">
                 {/* TOP */}
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-5">
+                  <div className="flex items-center gap-3 sm:gap-5 min-w-0">
                     <div
                       className="
-                      w-16
-                      h-16
+                      w-14
+                      h-14
+                      sm:w-16
+                      sm:h-16
                       bg-green-500
                       flex
                       items-center
                       justify-center
                       text-white
-                      text-3xl
+                      text-2xl
+                      sm:text-3xl
                       shadow-[0_20px_60px_rgba(34,197,94,0.35)]
+                      flex-shrink-0
                       "
                     >
                       <FiShield />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <p
                         className="
-                        text-[10px]
-                        tracking-[0.28em]
+                        text-[9px]
+                        sm:text-[10px]
+                        tracking-[0.18em]
+                        sm:tracking-[0.28em]
                         font-black
                         text-green-500
                         "
@@ -608,8 +663,9 @@ const DashboardInsights = ({
                       <h3
                         className={`
                           mt-2
-                          text-3xl
+                          text-[1.8rem]
                           sm:text-4xl
+                          leading-tight
                           font-black
                           tracking-[-0.08em]
                           ${
@@ -626,7 +682,8 @@ const DashboardInsights = ({
 
                   <div
                     className="
-                    flex
+                    hidden
+                    sm:flex
                     items-center
                     gap-2
                     bg-green-500
@@ -646,7 +703,7 @@ const DashboardInsights = ({
                 </div>
 
                 {/* BIG NUMBER */}
-                <div className="mt-12">
+                <div className="mt-10 sm:mt-12">
                   <motion.h1
                     animate={{
                       y: [0, -4, 0],
@@ -656,7 +713,7 @@ const DashboardInsights = ({
                       repeat: Infinity,
                     }}
                     className={`
-                    text-[38px]
+                    text-[52px]
                     sm:text-[54px]
                     lg:text-[72px]
                     leading-[0.92]
@@ -672,34 +729,42 @@ const DashboardInsights = ({
                     97%
                   </motion.h1>
 
-                  <div
+                  <motion.div
+                    whileHover={{
+                      scale: 1.02,
+                    }}
                     className="
-                    mt-6
+                    mt-5
                     inline-flex
                     items-center
                     gap-2
                     bg-green-500
-                    px-6
-                    py-4
+                    px-5
+                    sm:px-6
+                    py-3
+                    sm:py-4
                     text-white
-                    text-[10px]
+                    text-[9px]
+                    sm:text-[10px]
                     uppercase
-                    tracking-[0.18em]
+                    tracking-[0.15em]
+                    sm:tracking-[0.18em]
                     font-black
                     shadow-[0_20px_60px_rgba(34,197,94,0.35)]
                     "
                   >
                     <FiTrendingUp />
                     AI DETECTION ACCURACY
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* TEXT */}
                 <p
                   className={`
-                    mt-8
+                    mt-7
+                    sm:mt-8
                     max-w-2xl
-                    text-sm
+                    text-[14px]
                     sm:text-base
                     leading-relaxed
                     ${
@@ -717,16 +782,21 @@ const DashboardInsights = ({
                 </p>
 
                 {/* ALERTS */}
-                <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                   {liveAlerts.map((item, index) => (
                     <motion.div
                       key={index}
                       whileHover={{
                         y: -6,
                       }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 120,
+                      }}
                       className={`
                         border
-                        p-5
+                        p-4
+                        sm:p-5
                         shadow-sm
                         transition-all
                         duration-300
@@ -745,14 +815,17 @@ const DashboardInsights = ({
                     >
                       <div
                         className="
-                        w-14
-                        h-14
+                        w-12
+                        h-12
+                        sm:w-14
+                        sm:h-14
                         bg-green-500
                         flex
                         items-center
                         justify-center
                         text-white
-                        text-2xl
+                        text-xl
+                        sm:text-2xl
                         shadow-[0_15px_40px_rgba(34,197,94,0.3)]
                         "
                       >
@@ -761,8 +834,10 @@ const DashboardInsights = ({
 
                       <h4
                         className={`
-                          mt-6
-                          text-3xl
+                          mt-5
+                          sm:mt-6
+                          text-2xl
+                          sm:text-3xl
                           font-black
                           tracking-[-0.08em]
                           ${
@@ -805,9 +880,12 @@ const DashboardInsights = ({
                 opacity: 1,
                 y: 0,
               }}
+              transition={{
+                duration: 0.7,
+              }}
               viewport={{ once: true }}
               whileHover={{
-                y: -8,
+                y: -6,
               }}
               className={`
                 relative
@@ -839,19 +917,20 @@ const DashboardInsights = ({
                 "
               />
 
-              <div className="relative p-7 sm:p-9">
+              <div className="relative p-5 sm:p-7 lg:p-9">
                 {/* HEADER */}
                 <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-black text-green-500">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.25em] font-black text-green-500">
                       LIVE ANALYTICS
                     </p>
 
                     <h3
                       className={`
                         mt-2
-                        text-3xl
+                        text-[1.8rem]
                         sm:text-4xl
+                        leading-tight
                         font-black
                         tracking-[-0.08em]
                         ${
@@ -867,15 +946,19 @@ const DashboardInsights = ({
 
                   <div
                     className="
-                    w-16
-                    h-16
+                    w-14
+                    h-14
+                    sm:w-16
+                    sm:h-16
                     bg-green-500
                     flex
                     items-center
                     justify-center
                     text-white
-                    text-3xl
+                    text-2xl
+                    sm:text-3xl
                     shadow-[0_20px_60px_rgba(34,197,94,0.35)]
+                    flex-shrink-0
                     "
                   >
                     <FiActivity />
@@ -883,7 +966,7 @@ const DashboardInsights = ({
                 </div>
 
                 {/* FEED */}
-                <div className="mt-10 space-y-5">
+                <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
                   {[
                     "AI classified 18 urgent infrastructure failures.",
                     "Flood escalation detected across connected districts.",
@@ -902,6 +985,7 @@ const DashboardInsights = ({
                       }}
                       transition={{
                         delay: index * 0.08,
+                        duration: 0.5,
                       }}
                       whileHover={{
                         x: 4,
@@ -909,7 +993,8 @@ const DashboardInsights = ({
                       className={`
                         group
                         border
-                        p-5
+                        p-4
+                        sm:p-5
                         transition-all
                         duration-300
                         ${
@@ -926,7 +1011,7 @@ const DashboardInsights = ({
                       `}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <motion.div
                             animate={{
                               scale: [1, 1.2, 1],
@@ -940,6 +1025,7 @@ const DashboardInsights = ({
                             w-3
                             h-3
                             bg-green-500
+                            flex-shrink-0
                             "
                           />
 
@@ -947,6 +1033,7 @@ const DashboardInsights = ({
                             <p
                               className={`
                                 text-sm
+                                sm:text-[15px]
                                 leading-relaxed
                                 font-medium
                                 ${
@@ -978,11 +1065,13 @@ const DashboardInsights = ({
 
                         <FiArrowUpRight
                           className={`
-                            text-xl
+                            text-lg
+                            sm:text-xl
                             transition-all
                             duration-300
                             group-hover:translate-x-1
                             group-hover:-translate-y-1
+                            flex-shrink-0
                             ${
                               darkMode
                                 ? "text-gray-500"
@@ -1000,25 +1089,31 @@ const DashboardInsights = ({
                   whileHover={{
                     scale: 1.02,
                   }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 140,
+                  }}
                   className="
-                  mt-8
+                  mt-7
+                  sm:mt-8
                   bg-green-500
-                  p-7
+                  p-5
+                  sm:p-7
                   shadow-[0_25px_70px_rgba(34,197,94,0.35)]
                   "
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.15em] text-white/70">
+                      <p className="text-[10px] sm:text-xs uppercase tracking-[0.15em] text-white/70">
                         Civic Performance
                       </p>
 
-                      <h4 className="mt-3 text-6xl font-black tracking-[-0.1em] text-white">
+                      <h4 className="mt-3 text-[3rem] sm:text-6xl leading-none font-black tracking-[-0.1em] text-white">
                         94%
                       </h4>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm font-black uppercase text-white">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase text-white">
                       <FiZap />
                       +12.4%
                     </div>
