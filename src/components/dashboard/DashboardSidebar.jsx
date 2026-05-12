@@ -54,7 +54,7 @@ const DashboardSidebar = ({
       icon: <FiFileText />,
     },
     {
-      title: "Reports Center",
+      title: "My Reports",
       path: "/reports",
       icon: <FiUsers />,
     },

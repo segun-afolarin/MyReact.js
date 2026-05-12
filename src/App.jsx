@@ -21,7 +21,8 @@ import Impact from "./pages/Impact";
 import Government from "./pages/government";
 import HelpCenter from "./pages/help-center";
 import FAQPage from "./pages/FAQ";
-import Documentation from "./pages/Documentation"
+import MyReportsDashboard from "./pages/MyReportsDashboard";
+import Documentation from "./pages/Documentation";
 import ContactPage from "./pages/Contact";
 import Signup from "./pages/Signup"
 import NotFound from "./pages/NotFound";
@@ -53,6 +54,11 @@ function App() {
             path="/government"
             element={<Government />}
           />
+            <Route
+            path="/reports"
+            element={<MyReportsDashboard />}
+          />
+
 
           {/* ABOUT */}
           <Route

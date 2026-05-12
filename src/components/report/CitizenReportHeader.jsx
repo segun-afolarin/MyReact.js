@@ -259,13 +259,14 @@ const CitizenReportHeader = ({
                   {/* TITLE */}
                   <motion.h1
                     className={`
-                    text-[2.1rem]
-                    sm:text-[3rem]
-                    lg:text-[4.3rem]
+                  text-[38px]
+                    sm:text-[54px]
+                    lg:text-[72px]
                     leading-[0.92]
                     tracking-[-0.06em]
                     font-black
-                    uppercase
+                    break-words
+                  
                     ${
                       darkMode
                         ? "text-white"

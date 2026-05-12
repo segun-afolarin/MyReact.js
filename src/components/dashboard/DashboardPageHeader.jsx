@@ -321,11 +321,10 @@ const DashboardPageHeader = ({
                       delay: 0.4,
                     }}
                     className={`
-                    mt-6
+                   mt-6
                     max-w-2xl
                     text-sm
                     sm:text-base
-                    lg:text-lg
                     leading-relaxed
                     ${
                       darkMode
