@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { motion } from "framer-motion";
 
@@ -11,10 +11,13 @@ import {
   FiCrosshair,
   FiImage,
   FiMapPin,
-  FiRadio,
   FiUploadCloud,
   FiX,
-  FiZap,
+  FiMic,
+  FiMicOff,
+  FiClock,
+  FiShield,
+  FiNavigation,
 } from "react-icons/fi";
 
 const ReportFormPanel = ({
@@ -49,6 +52,12 @@ const ReportFormPanel = ({
   const [files, setFiles] =
     useState([]);
 
+  const [isRecording, setIsRecording] =
+    useState(false);
+
+  const [speechSupported, setSpeechSupported] =
+    useState(false);
+
   const [completedFields, setCompletedFields] =
     useState({
       category: !!preSelectedCategory,
@@ -57,6 +66,15 @@ const ReportFormPanel = ({
       address: false,
       images: false,
     });
+
+  useEffect(() => {
+    if (
+      "webkitSpeechRecognition" in window ||
+      "SpeechRecognition" in window
+    ) {
+      setSpeechSupported(true);
+    }
+  }, []);
 
   const categories = [
     {
@@ -95,6 +113,51 @@ const ReportFormPanel = ({
         "from-pink-500 to-rose-500",
     },
   ];
+
+  const handleVoiceRecording = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) return;
+
+    const recognition =
+      new SpeechRecognition();
+
+    recognition.continuous = false;
+
+    recognition.lang = "en-US";
+
+    recognition.interimResults = false;
+
+    setIsRecording(true);
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const transcript =
+        event.results[0][0].transcript;
+
+      setDescription((prev) =>
+        prev
+          ? `${prev} ${transcript}`
+          : transcript
+      );
+
+      setCompletedFields((prev) => ({
+        ...prev,
+        description: true,
+      }));
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onerror = () => {
+      setIsRecording(false);
+    };
+  };
 
   const handleLocationDetection =
     () => {
@@ -245,6 +308,7 @@ const ReportFormPanel = ({
       relative
       overflow-hidden
       border
+      shadow-[0_20px_60px_rgba(34,197,94,0.08)]
       ${
         darkMode
           ? `
@@ -289,7 +353,7 @@ const ReportFormPanel = ({
         absolute
         top-0
         left-0
-        h-[2px]
+        h-[3px]
         w-full
         bg-gradient-to-r
         from-green-500
@@ -307,6 +371,212 @@ const ReportFormPanel = ({
         lg:p-8
         "
       >
+        {/* TOP INFO CARDS */}
+        <div
+          className="
+          grid
+          grid-cols-1
+          sm:grid-cols-3
+          gap-4
+          mb-8
+          "
+        >
+          <div
+            className={`
+            border
+            p-4
+            ${
+              darkMode
+                ? `
+                  border-white/10
+                  bg-white/[0.03]
+                `
+                : `
+                  border-gray-200
+                  bg-gray-50
+                `
+            }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                w-11
+                h-11
+                bg-green-100
+                text-green-600
+                flex
+                items-center
+                justify-center
+                text-lg
+                "
+              >
+                <FiShield />
+              </div>
+
+              <div>
+                <h4
+                  className={`
+                  text-sm
+                  font-black
+                  ${
+                    darkMode
+                      ? "text-white"
+                      : "text-black"
+                  }
+                  `}
+                >
+                  Trusted Reports
+                </h4>
+
+                <p
+                  className={`
+                  text-xs
+                  mt-1
+                  ${
+                    darkMode
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                  }
+                  `}
+                >
+                  Verified by community
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`
+            border
+            p-4
+            ${
+              darkMode
+                ? `
+                  border-white/10
+                  bg-white/[0.03]
+                `
+                : `
+                  border-gray-200
+                  bg-gray-50
+                `
+            }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                w-11
+                h-11
+                bg-green-100
+                text-green-600
+                flex
+                items-center
+                justify-center
+                text-lg
+                "
+              >
+                <FiClock />
+              </div>
+
+              <div>
+                <h4
+                  className={`
+                  text-sm
+                  font-black
+                  ${
+                    darkMode
+                      ? "text-white"
+                      : "text-black"
+                  }
+                  `}
+                >
+                  Faster Response
+                </h4>
+
+                <p
+                  className={`
+                  text-xs
+                  mt-1
+                  ${
+                    darkMode
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                  }
+                  `}
+                >
+                  Real-time emergency flow
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`
+            border
+            p-4
+            ${
+              darkMode
+                ? `
+                  border-white/10
+                  bg-white/[0.03]
+                `
+                : `
+                  border-gray-200
+                  bg-gray-50
+                `
+            }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                w-11
+                h-11
+                bg-green-100
+                text-green-600
+                flex
+                items-center
+                justify-center
+                text-lg
+                "
+              >
+                <FiNavigation />
+              </div>
+
+              <div>
+                <h4
+                  className={`
+                  text-sm
+                  font-black
+                  ${
+                    darkMode
+                      ? "text-white"
+                      : "text-black"
+                  }
+                  `}
+                >
+                  GPS Tracking
+                </h4>
+
+                <p
+                  className={`
+                  text-xs
+                  mt-1
+                  ${
+                    darkMode
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                  }
+                  `}
+                >
+                  Accurate location system
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CATEGORY */}
         <div className="mt-2">
           <div
@@ -424,6 +694,7 @@ const ReportFormPanel = ({
                         ? `
                           border-green-500
                           bg-green-500/10
+                          shadow-[0_10px_30px_rgba(34,197,94,0.15)]
                         `
                         : darkMode
                         ? `
@@ -597,9 +868,53 @@ const ReportFormPanel = ({
                 Detailed Description
               </label>
 
-              {renderCheck(
-                completedFields.description
-              )}
+              <div className="flex items-center gap-3">
+                {speechSupported && (
+                  <motion.button
+                    whileTap={{
+                      scale: 0.95,
+                    }}
+                    whileHover={{
+                      scale: 1.04,
+                    }}
+                    type="button"
+                    onClick={
+                      handleVoiceRecording
+                    }
+                    className={`
+                    w-11
+                    h-11
+                    flex
+                    items-center
+                    justify-center
+                    transition-all
+                    duration-300
+                    ${
+                      isRecording
+                        ? `
+                          bg-red-500
+                          text-white
+                          animate-pulse
+                        `
+                        : `
+                          bg-green-500
+                          text-white
+                        `
+                    }
+                    `}
+                  >
+                    {isRecording ? (
+                      <FiMicOff />
+                    ) : (
+                      <FiMic />
+                    )}
+                  </motion.button>
+                )}
+
+                {renderCheck(
+                  completedFields.description
+                )}
+              </div>
             </div>
 
             <textarea
@@ -644,6 +959,27 @@ const ReportFormPanel = ({
               }
               `}
             />
+
+            {speechSupported && (
+              <p
+                className={`
+                mt-3
+                text-xs
+                flex
+                items-center
+                gap-2
+                ${
+                  darkMode
+                    ? "text-gray-500"
+                    : "text-gray-500"
+                }
+                `}
+              >
+                <FiMic className="text-green-500" />
+                Tap microphone to speak
+                instead of typing
+              </p>
+            )}
           </div>
 
           {/* ADDRESS */}
@@ -791,11 +1127,15 @@ const ReportFormPanel = ({
               "
             >
               <h3
-                className="
+                className={`
                 text-lg
                 font-black
-                text-white
-                "
+                ${
+                  darkMode
+                    ? "text-white"
+                    : "text-black"
+                }
+                `}
               >
                 Location Connected
               </h3>
@@ -807,7 +1147,7 @@ const ReportFormPanel = ({
                 flex-wrap
                 gap-5
                 text-sm
-                text-green-300
+                text-green-500
                 "
               >
                 <span>
@@ -909,7 +1249,7 @@ const ReportFormPanel = ({
                 flex
                 items-center
                 justify-center
-                text-green-400
+                text-green-500
                 text-4xl
                 "
               >
@@ -1110,6 +1450,7 @@ const ReportFormPanel = ({
             gap-4
             transition-all
             duration-300
+            shadow-[0_20px_50px_rgba(34,197,94,0.25)]
             "
           >
             <span className="relative z-10">

@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   FiClock,
   FiMapPin,
-  FiArrowUpRight,
   FiCheckCircle,
   FiUsers,
   FiTrendingUp,
@@ -16,8 +15,9 @@ const reports = [
     title: "Collapsed Road Section",
     location: "Sabon Gari, Kano",
     status: "Awaiting Community Verification",
-    confirmations: 18,
-    progress: 72,
+    confirmations: 3,
+    required: 5,
+    progress: 60,
     date: "Submitted 2 hours ago",
     image:
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
@@ -36,8 +36,9 @@ const reports = [
     title: "Blocked Drainage System",
     location: "Nassarawa, Kano",
     status: "Community Review Active",
-    confirmations: 31,
-    progress: 88,
+    confirmations: 4,
+    required: 5,
+    progress: 80,
     date: "Submitted Yesterday",
     image:
       "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?q=80&w=1200&auto=format&fit=crop",
@@ -48,6 +49,90 @@ const reports = [
       "Drain Blockage",
       "Voice Note Attached",
       "Emergency Flag Enabled",
+    ],
+  },
+
+  {
+    id: "NR-3901",
+    title: "Broken Street Lights",
+    location: "Jos, Plateau",
+    status: "Verification In Progress",
+    confirmations: 2,
+    required: 5,
+    progress: 40,
+    date: "30 minutes ago",
+    image:
+      "https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop",
+    description:
+      "Multiple street lights no longer functioning causing security concerns at night.",
+    fields: [
+      "Public Safety",
+      "Night Visibility",
+      "Community Alert",
+      "Photo Evidence Uploaded",
+    ],
+  },
+
+  {
+    id: "NR-5510",
+    title: "Overflowing Waste Dump",
+    location: "Kaduna Central",
+    status: "Nearby Citizens Reviewing",
+    confirmations: 1,
+    required: 5,
+    progress: 20,
+    date: "1 hour ago",
+    image:
+      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1200&auto=format&fit=crop",
+    description:
+      "Waste disposal area overflowing into nearby roads and drainage systems.",
+    fields: [
+      "Environmental Hazard",
+      "Waste Overflow",
+      "Health Risk",
+      "Urgent Cleanup Needed",
+    ],
+  },
+
+  {
+    id: "NR-6612",
+    title: "Bridge Surface Damage",
+    location: "Maiduguri",
+    status: "Awaiting More Confirmations",
+    confirmations: 5,
+    required: 5,
+    progress: 100,
+    date: "Today",
+    image:
+      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?q=80&w=1200&auto=format&fit=crop",
+    description:
+      "Deep cracks forming across bridge surface used daily by commercial vehicles.",
+    fields: [
+      "Bridge Damage",
+      "Structural Concern",
+      "Heavy Traffic Zone",
+      "AI Risk Analysis Complete",
+    ],
+  },
+
+  {
+    id: "NR-7102",
+    title: "Flooded School Entrance",
+    location: "Ibadan",
+    status: "Community Validation Active",
+    confirmations: 3,
+    required: 5,
+    progress: 60,
+    date: "3 hours ago",
+    image:
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop",
+    description:
+      "School entrance flooded after rainfall making access difficult for students.",
+    fields: [
+      "Flood Risk",
+      "School Access Blocked",
+      "Citizen Reported",
+      "Photo Evidence Uploaded",
     ],
   },
 ];
@@ -85,7 +170,7 @@ const UserReportsQueue = ({ darkMode }) => {
             }
             `}
           >
-            Your Civic Submissions
+            Community Verification Feed
           </motion.p>
 
           <motion.h2
@@ -106,9 +191,9 @@ const UserReportsQueue = ({ darkMode }) => {
             }
             `}
           >
-            Reports Waiting
+            Reports Around You
             <span className="block text-green-500 mt-1">
-              For Community Confirmation
+              Awaiting Citizen Confirmation
             </span>
           </motion.h2>
 
@@ -130,10 +215,11 @@ const UserReportsQueue = ({ darkMode }) => {
             }
             `}
           >
-            Your reports are currently
-            being validated by nearby
-            citizens before escalation
-            to government agencies.
+            Reports submitted by citizens
+            near your area require at least
+            5 community confirmations
+            before they are forwarded to
+            government agencies for action.
           </motion.p>
         </div>
 
@@ -174,7 +260,7 @@ const UserReportsQueue = ({ darkMode }) => {
                 }
                 `}
               >
-                Verification Queue
+                Nearby Verification Queue
               </p>
 
               <h3
@@ -189,8 +275,12 @@ const UserReportsQueue = ({ darkMode }) => {
                 }
                 `}
               >
-                49
+                126
               </h3>
+
+              <p className="mt-2 text-green-500 text-sm font-semibold">
+                Reports waiting for citizens
+              </p>
             </div>
 
             <div
@@ -439,7 +529,8 @@ const UserReportsQueue = ({ darkMode }) => {
                     </h4>
 
                     <p className="mt-2 text-green-500 text-sm font-semibold">
-                      Citizens Confirmed
+                      / {report.required} Needed
+                      Before Escalation
                     </p>
                   </div>
                 </div>
@@ -515,12 +606,14 @@ const UserReportsQueue = ({ darkMode }) => {
                     </div>
 
                     <span className="text-green-500 font-bold text-sm">
-                      {report.progress}%
+                      {report.confirmations}/
+                      {report.required}
                     </span>
                   </div>
 
                   <div
                     className={`
+                    relative
                     h-3
                     overflow-hidden
                     ${
@@ -536,9 +629,39 @@ const UserReportsQueue = ({ darkMode }) => {
                         width: `${report.progress}%`,
                       }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1 }}
-                      className="h-full bg-green-500"
-                    />
+                      transition={{
+                        duration: 1.2,
+                      }}
+                      className="
+                      h-full
+                      bg-green-500
+                      relative
+                      overflow-hidden
+                      "
+                    >
+                      <motion.div
+                        animate={{
+                          x: [
+                            "-100%",
+                            "250%",
+                          ],
+                        }}
+                        transition={{
+                          duration: 1.8,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="
+                        absolute
+                        top-0
+                        left-0
+                        w-20
+                        h-full
+                        bg-white/30
+                        skew-x-12
+                        "
+                      />
+                    </motion.div>
                   </div>
                 </div>
 
@@ -593,9 +716,9 @@ const UserReportsQueue = ({ darkMode }) => {
                     sm:w-auto
                     "
                   >
-                    Track Response
+                    Confirm Report
 
-                    <FiArrowUpRight />
+                    <FiCheckCircle />
                   </motion.button>
                 </div>
               </div>

@@ -9,7 +9,6 @@ import ReportHero from "../components/reports/ReportHero";
 import ImpactOverviewCards from "../components/reports/ImpactOverviewCards";
 import ResolutionTimeline from "../components/reports/ResolutionTimeline";
 import ReportCardsGrid from "../components/reports/ReportCardsGrid";
-import AIInsightsPanel from "../components/reports/AIInsightsPanel";
 import CommunityVerificationFeed from "../components/reports/CommunityVerificationFeed";
 
 const MyReportsDashboard = () => {
@@ -200,15 +199,16 @@ const MyReportsDashboard = () => {
             darkMode={darkMode}
           />
 
+           {/* REPORTS GRID */}
+          <ReportCardsGrid
+            darkMode={darkMode}
+          />
           {/* TIMELINE */}
           <ResolutionTimeline
             darkMode={darkMode}
           />
 
-          {/* REPORTS GRID */}
-          <ReportCardsGrid
-            darkMode={darkMode}
-          />
+         
 
           {/* AI + GOVERNMENT */}
           <section
@@ -220,17 +220,6 @@ const MyReportsDashboard = () => {
             items-start
             "
           >
-            {/* AI INSIGHTS */}
-            <div
-              className="
-              min-w-0
-              self-start
-              "
-            >
-              <AIInsightsPanel
-                darkMode={darkMode}
-              />
-            </div>
           </section>
 
           {/* COMMUNITY FEED */}

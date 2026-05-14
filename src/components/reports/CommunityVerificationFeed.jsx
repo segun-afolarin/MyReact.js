@@ -12,7 +12,6 @@ import {
   FiActivity,
   FiArrowUpRight,
   FiZap,
-  FiStar,
 } from "react-icons/fi";
 
 const activities = [
@@ -95,9 +94,7 @@ const metrics = [
   },
 ];
 
-const CommunityVerificationFeed = ({
-  darkMode,
-}) => {
+const CommunityVerificationFeed = () => {
   return (
     <section className="relative">
       {/* HEADER */}
@@ -122,22 +119,25 @@ const CommunityVerificationFeed = ({
             px-4
             py-2
             border
-            border-green-200
-            bg-green-50
+            border-green-100
+            bg-white
             text-green-700
             mb-5
+            shadow-sm
             "
           >
             <FiUsers />
 
             <span
               className="
-              text-sm
-              font-bold
-              tracking-wide
+              text-xs
+              sm:text-sm
+              font-black
+              tracking-[0.18em]
+              uppercase
               "
             >
-              COMMUNITY VERIFICATION NETWORK
+              Community Verification Feed
             </span>
           </div>
 
@@ -147,25 +147,17 @@ const CommunityVerificationFeed = ({
             sm:text-5xl
             lg:text-6xl
             font-black
-            leading-tight
-            tracking-tight
-            text-green-950
+            leading-[0.95]
+            tracking-[-0.05em]
+            text-[#0B1117]
             "
           >
-            Citizens Are{" "}
-            <span
-              className="
-              text-transparent
-              bg-clip-text
-              bg-gradient-to-r
-              from-green-400
-              via-green-500
-              to-green-600
-              "
-            >
-              Fixing Nigeria
-            </span>{" "}
-            Together
+            Real Citizens.
+            <br />
+
+            <span className="text-green-600">
+              Real Impact.
+            </span>
           </h2>
 
           <p
@@ -174,73 +166,56 @@ const CommunityVerificationFeed = ({
             text-base
             sm:text-lg
             leading-relaxed
-            text-green-900/70
+            text-black/60
             max-w-3xl
             "
           >
-            Real Nigerians verifying
-            infrastructure problems,
-            uploading evidence, and helping
-            government agencies respond
-            faster through trusted
-            community intelligence.
+            Nigerians are actively
+            confirming infrastructure
+            issues, uploading evidence,
+            and helping urgent reports
+            reach authorities faster.
           </p>
         </div>
 
-        {/* LIVE STATUS */}
+        {/* LIVE CARD */}
         <motion.div
-          initial={{
-            opacity: 0,
-            x: 30,
+          whileHover={{
+            y: -4,
           }}
-          whileInView={{
-            opacity: 1,
-            x: 0,
-          }}
-          transition={{
-            duration: 0.6,
-          }}
-          viewport={{ once: true }}
           className="
           relative
           overflow-hidden
           border
-          border-green-200
+          border-green-100
           bg-white
-          px-6
-          py-5
-          shadow-[0_20px_60px_rgba(34,197,94,0.15)]
+          p-6
+          min-w-[280px]
+          shadow-[0_20px_60px_rgba(34,197,94,0.08)]
           "
         >
-          {/* GLOW */}
+          {/* TOP LINE */}
           <div
             className="
             absolute
-            inset-0
-            bg-gradient-to-br
-            from-green-100
-            to-green-50
+            top-0
+            left-0
+            w-full
+            h-[3px]
+            bg-gradient-to-r
+            from-green-400
+            via-green-500
+            to-transparent
             "
           />
 
-          <div
-            className="
-            relative
-            z-10
-            flex
-            items-center
-            gap-4
-            "
-          >
-            {/* ICON */}
+          <div className="flex items-center gap-4">
             <div
               className="
               relative
               w-16
               h-16
-              bg-gradient-to-br
-              from-green-400
-              to-green-600
+              bg-green-500
               text-white
               flex
               items-center
@@ -252,33 +227,29 @@ const CommunityVerificationFeed = ({
                 className="
                 absolute
                 inset-0
-                bg-green-300/40
+                bg-green-400
                 animate-ping
+                opacity-20
                 "
               />
 
               <FiActivity className="relative z-10" />
             </div>
 
-            {/* TEXT */}
             <div>
               <h3
                 className="
                 text-3xl
                 font-black
-                text-green-700
+                text-[#0B1117]
                 "
               >
                 LIVE
               </h3>
 
-              <p
-                className="
-                text-sm
-                text-green-900/60
-                "
-              >
-                Citizens Verifying Issues
+              <p className="text-sm text-black/60">
+                Community reports updating
+                in real-time
               </p>
             </div>
           </div>
@@ -312,7 +283,7 @@ const CommunityVerificationFeed = ({
             }}
             viewport={{ once: true }}
             whileHover={{
-              y: -6,
+              y: -5,
             }}
             className="
             relative
@@ -321,9 +292,10 @@ const CommunityVerificationFeed = ({
             border-green-100
             bg-white
             p-5
-            shadow-[0_20px_60px_rgba(34,197,94,0.10)]
             transition-all
             duration-500
+            shadow-[0_15px_50px_rgba(34,197,94,0.08)]
+            hover:shadow-[0_25px_70px_rgba(34,197,94,0.14)]
             "
           >
             <div
@@ -331,9 +303,9 @@ const CommunityVerificationFeed = ({
               absolute
               top-0
               right-0
-              w-32
-              h-32
-              bg-green-100
+              w-[120px]
+              h-[120px]
+              bg-green-100/60
               blur-3xl
               "
             />
@@ -343,9 +315,7 @@ const CommunityVerificationFeed = ({
                 className="
                 w-14
                 h-14
-                bg-gradient-to-br
-                from-green-400
-                to-green-600
+                bg-green-500
                 text-white
                 flex
                 items-center
@@ -361,7 +331,7 @@ const CommunityVerificationFeed = ({
                 className="
                 text-4xl
                 font-black
-                text-green-700
+                text-[#0B1117]
                 "
               >
                 {item.value}
@@ -371,7 +341,7 @@ const CommunityVerificationFeed = ({
                 className="
                 mt-2
                 text-sm
-                text-green-900/60
+                text-black/60
                 "
               >
                 {item.title}
@@ -400,7 +370,7 @@ const CommunityVerificationFeed = ({
             }}
             viewport={{ once: true }}
             whileHover={{
-              y: -6,
+              y: -4,
             }}
             className="
             group
@@ -409,20 +379,21 @@ const CommunityVerificationFeed = ({
             border
             border-green-100
             bg-white
-            shadow-[0_25px_80px_rgba(34,197,94,0.12)]
             transition-all
             duration-500
+            hover:shadow-[0_25px_80px_rgba(34,197,94,0.12)]
             "
           >
-            {/* BACKGROUND */}
+            {/* BG */}
             <div
               className="
               absolute
-              inset-0
-              bg-gradient-to-br
-              from-green-50
-              via-white
-              to-green-50
+              top-0
+              right-0
+              w-[180px]
+              h-[180px]
+              bg-green-100/50
+              blur-3xl
               "
             />
 
@@ -433,7 +404,7 @@ const CommunityVerificationFeed = ({
               left-0
               top-0
               bottom-0
-              w-[5px]
+              w-[4px]
               bg-gradient-to-b
               from-green-300
               via-green-500
@@ -468,44 +439,20 @@ const CommunityVerificationFeed = ({
                   flex-1
                   "
                 >
-                  {/* USER IMAGE */}
-                  <motion.div
-                    whileHover={{
-                      scale: 1.05,
-                    }}
+                  {/* IMAGE */}
+                  <img
+                    src={item.image}
+                    alt={item.user}
                     className="
-                    relative
+                    w-[82px]
+                    h-[82px]
+                    object-cover
+                    rounded-2xl
+                    border-4
+                    border-white
+                    shadow-lg
                     "
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.user}
-                      className="
-                      w-[95px]
-                      h-[95px]
-                      object-cover
-                      rounded-[28px]
-                      border-4
-                      border-white
-                      shadow-[0_20px_60px_rgba(34,197,94,0.25)]
-                      "
-                    />
-
-                    <div
-                      className="
-                      absolute
-                      bottom-1
-                      right-1
-                      w-5
-                      h-5
-                      bg-green-400
-                      border-4
-                      border-white
-                      animate-pulse
-                      rounded-full
-                      "
-                    />
-                  </motion.div>
+                  />
 
                   {/* TEXT */}
                   <div className="flex-1">
@@ -521,9 +468,9 @@ const CommunityVerificationFeed = ({
                       <h3
                         className="
                         text-2xl
-                        sm:text-3xl
+                        sm:text-[28px]
                         font-black
-                        text-green-950
+                        text-[#0B1117]
                         "
                       >
                         {item.user}
@@ -534,22 +481,22 @@ const CommunityVerificationFeed = ({
                         flex
                         items-center
                         gap-2
-                        px-4
+                        px-3
                         py-2
-                        bg-green-100
-                        text-green-700
+                        bg-green-50
                         border
-                        border-green-200
+                        border-green-100
+                        text-green-700
                         "
                       >
                         <FiCheckCircle />
 
                         <span
                           className="
-                          text-xs
+                          text-[11px]
                           font-black
                           uppercase
-                          tracking-wide
+                          tracking-[0.15em]
                           "
                         >
                           {item.status}
@@ -571,7 +518,7 @@ const CommunityVerificationFeed = ({
                       <span
                         className="
                         text-sm
-                        text-green-900/60
+                        text-black/55
                         "
                       >
                         {item.location}
@@ -585,10 +532,10 @@ const CommunityVerificationFeed = ({
                       text-base
                       sm:text-lg
                       leading-relaxed
-                      text-green-900/75
+                      text-black/70
                       "
                     >
-                      <span className="font-black">
+                      <span className="font-black text-black">
                         {item.user}
                       </span>{" "}
                       {item.action}
@@ -601,7 +548,7 @@ const CommunityVerificationFeed = ({
                       flex
                       flex-wrap
                       items-center
-                      gap-4
+                      gap-3
                       "
                     >
                       <div
@@ -611,18 +558,18 @@ const CommunityVerificationFeed = ({
                         gap-2
                         px-4
                         py-3
-                        bg-green-50
                         border
                         border-green-100
-                        text-green-700
+                        bg-[#F8FFF9]
                         "
                       >
-                        <FiCamera />
+                        <FiCamera className="text-green-600" />
 
                         <span
                           className="
                           text-sm
                           font-semibold
+                          text-black/70
                           "
                         >
                           {item.evidence}
@@ -636,10 +583,8 @@ const CommunityVerificationFeed = ({
                         gap-2
                         px-4
                         py-3
-                        bg-green-100
-                        border
-                        border-green-200
-                        text-green-700
+                        bg-green-500
+                        text-white
                         "
                       >
                         <FiShield />
@@ -647,10 +592,10 @@ const CommunityVerificationFeed = ({
                         <span
                           className="
                           text-sm
-                          font-bold
+                          font-black
                           "
                         >
-                          Trust Score {item.trust}
+                          Trust {item.trust}
                         </span>
                       </div>
                     </div>
@@ -660,18 +605,18 @@ const CommunityVerificationFeed = ({
                 {/* RIGHT */}
                 <div
                   className="
-                  xl:min-w-[260px]
+                  xl:min-w-[250px]
                   flex
                   flex-col
                   gap-4
                   "
                 >
-                  {/* VERIFIED BOX */}
+                  {/* VERIFIED */}
                   <div
                     className="
                     border
                     border-green-100
-                    bg-green-50
+                    bg-[#F8FFF9]
                     p-5
                     "
                   >
@@ -680,9 +625,7 @@ const CommunityVerificationFeed = ({
                         className="
                         w-14
                         h-14
-                        bg-gradient-to-br
-                        from-green-400
-                        to-green-600
+                        bg-green-500
                         text-white
                         flex
                         items-center
@@ -696,9 +639,9 @@ const CommunityVerificationFeed = ({
                       <div>
                         <h4
                           className="
-                          text-2xl
+                          text-xl
                           font-black
-                          text-green-700
+                          text-[#0B1117]
                           "
                         >
                           VERIFIED
@@ -708,23 +651,23 @@ const CommunityVerificationFeed = ({
                           className="
                           text-xs
                           uppercase
-                          tracking-wide
-                          text-green-900/50
+                          tracking-[0.15em]
+                          text-black/45
                           "
                         >
-                          Community Confirmation
+                          Trusted Community
+                          Report
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* TIME */}
+                  {/* FOOTER */}
                   <div
                     className="
                     flex
                     items-center
                     justify-between
-                    gap-4
                     "
                   >
                     <div className="flex items-center gap-2">
@@ -733,33 +676,33 @@ const CommunityVerificationFeed = ({
                       <span
                         className="
                         text-sm
-                        text-green-900/60
+                        text-black/55
                         "
                       >
                         {item.time}
                       </span>
                     </div>
 
-                    {/* BUTTON */}
                     <motion.button
                       whileHover={{
-                        scale: 1.05,
+                        scale: 1.04,
                       }}
                       whileTap={{
-                        scale: 0.95,
+                        scale: 0.96,
                       }}
                       className="
                       group/btn
                       w-14
                       h-14
-                      bg-gradient-to-br
-                      from-green-400
-                      to-green-600
+                      bg-green-500
                       text-white
                       flex
                       items-center
                       justify-center
-                      shadow-[0_20px_50px_rgba(34,197,94,0.30)]
+                      shadow-lg
+                      transition-all
+                      duration-300
+                      hover:bg-green-600
                       "
                     >
                       <FiArrowUpRight
@@ -776,36 +719,11 @@ const CommunityVerificationFeed = ({
                 </div>
               </div>
             </div>
-
-            {/* HOVER LINE */}
-            <motion.div
-              initial={{
-                scaleX: 0,
-              }}
-              whileHover={{
-                scaleX: 1,
-              }}
-              transition={{
-                duration: 0.4,
-              }}
-              className="
-              absolute
-              bottom-0
-              left-0
-              h-[4px]
-              w-full
-              origin-left
-              bg-gradient-to-r
-              from-green-300
-              via-green-500
-              to-green-600
-              "
-            />
           </motion.div>
         ))}
       </div>
 
-      {/* BOTTOM CTA */}
+      {/* CTA */}
       <motion.div
         initial={{
           opacity: 0,
@@ -828,43 +746,42 @@ const CommunityVerificationFeed = ({
         bg-white
         p-6
         sm:p-8
-        shadow-[0_25px_80px_rgba(34,197,94,0.12)]
+        shadow-[0_20px_60px_rgba(34,197,94,0.08)]
         "
       >
-        {/* BG */}
+        {/* TOP LINE */}
         <div
           className="
           absolute
-          inset-0
+          top-0
+          left-0
+          h-[3px]
+          w-full
           bg-gradient-to-r
-          from-green-50
-          via-white
-          to-green-50
+          from-green-400
+          via-green-500
+          to-transparent
           "
         />
 
         <div
           className="
-          relative
-          z-10
           flex
           flex-col
           xl:flex-row
           xl:items-center
           xl:justify-between
-          gap-6
+          gap-8
           "
         >
           {/* LEFT */}
-          <div>
-            <div className="flex items-center gap-4 mb-4">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-4 mb-5">
               <div
                 className="
                 w-16
                 h-16
-                bg-gradient-to-br
-                from-green-400
-                to-green-600
+                bg-green-500
                 text-white
                 flex
                 items-center
@@ -880,42 +797,36 @@ const CommunityVerificationFeed = ({
                   className="
                   text-3xl
                   font-black
-                  text-green-950
+                  text-[#0B1117]
                   "
                 >
-                  Civic Trust Ecosystem
+                  Stronger Together
                 </h3>
 
-                <p
-                  className="
-                  mt-1
-                  text-sm
-                  text-green-900/60
-                  "
-                >
-                  Citizens building Nigeria
-                  together
+                <p className="text-sm text-black/55">
+                  Citizens building
+                  accountability
                 </p>
               </div>
             </div>
 
             <p
               className="
-              max-w-3xl
               text-base
               leading-relaxed
-              text-green-900/70
+              text-black/65
               "
             >
-              Every verification, evidence
-              upload, and citizen response
-              strengthens NationAura’s
-              trusted civic intelligence
-              system across Nigeria.
+              Every citizen confirmation,
+              evidence upload, and report
+              verification helps communities
+              push for faster action and
+              better infrastructure across
+              Nigeria.
             </p>
           </div>
 
-          {/* SCORE */}
+          {/* TRUST */}
           <div
             className="
             flex
@@ -925,41 +836,19 @@ const CommunityVerificationFeed = ({
           >
             <div
               className="
-              relative
               w-24
               h-24
-              bg-gradient-to-br
-              from-green-400
-              to-green-600
+              bg-green-500
               text-white
               flex
               items-center
               justify-center
               text-4xl
               font-black
-              shadow-[0_25px_70px_rgba(34,197,94,0.30)]
+              shadow-lg
               "
             >
               95
-
-              <div
-                className="
-                absolute
-                -top-2
-                -right-2
-                w-9
-                h-9
-                bg-green-200
-                text-green-700
-                text-sm
-                font-black
-                flex
-                items-center
-                justify-center
-                "
-              >
-                <FiStar />
-              </div>
             </div>
 
             <div>
@@ -967,7 +856,7 @@ const CommunityVerificationFeed = ({
                 className="
                 text-5xl
                 font-black
-                text-green-700
+                text-[#0B1117]
                 "
               >
                 TRUST
@@ -976,10 +865,11 @@ const CommunityVerificationFeed = ({
               <p
                 className="
                 text-sm
-                text-green-900/60
+                text-black/55
                 "
               >
-                National Community Score
+                National community
+                confidence
               </p>
             </div>
           </div>

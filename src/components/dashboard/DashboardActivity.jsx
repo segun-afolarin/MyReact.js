@@ -21,7 +21,7 @@ import {
 const nearbyReports = [
   {
     title: "Collapsed Drainage Blocking Road",
-    location: "Rayfield, Jos",
+    location: "Rayfield, Kwara",
     status: "Needs Community Validation",
     image:
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
@@ -37,7 +37,7 @@ const nearbyReports = [
 
   {
     title: "Major Road Crack Near Junction",
-    location: "Terminus, Jos",
+    location: "Terminus, Kwara",
     status: "Needs Community Validation",
     image:
       "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
@@ -53,7 +53,7 @@ const nearbyReports = [
 
   {
     title: "Streetlight Failure Across Block",
-    location: "Angwan Rogo, Jos",
+    location: "Ifelodun, Kwara",
     status: "Awaiting Validation",
     image:
       "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",

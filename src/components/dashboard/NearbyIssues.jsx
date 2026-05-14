@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   motion,
@@ -10,51 +10,65 @@ import {
   FiAlertTriangle,
   FiClock,
   FiNavigation,
-  FiArrowUpRight,
+  FiCheckCircle,
   FiRadio,
   FiShield,
   FiActivity,
+  FiLoader,
+  FiUsers,
 } from "react-icons/fi";
 
-const nearbyIssues = [
+const initialIssues = [
   {
+    id: 1,
     title: "Collapsed Road Section",
     category: "Road Damage",
     location: "Rayfield Junction",
     distance: "0.8 KM",
     time: "14 mins ago",
     severity: "Critical",
-    confirmations: "42 Citizens Nearby",
+    confirmations: 42,
+    image:
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1400&auto=format&fit=crop",
   },
 
   {
+    id: 2,
     title: "Blocked Drainage System",
     category: "Drainage",
     location: "Bukuru Market Road",
     distance: "1.4 KM",
     time: "29 mins ago",
     severity: "Medium",
-    confirmations: "18 Citizens Nearby",
+    confirmations: 18,
+    image:
+      "https://images.unsplash.com/photo-1517022812141-23620dba5c23?q=80&w=1400&auto=format&fit=crop",
   },
 
   {
+    id: 3,
     title: "Street Light Failure",
     category: "Electricity",
     location: "Old Airport Road",
     distance: "2.1 KM",
     time: "1 hour ago",
     severity: "Low",
-    confirmations: "9 Citizens Nearby",
+    confirmations: 9,
+    image:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop",
   },
 
   {
+    id: 4,
     title: "Flood Risk Zone",
     category: "Flood Alert",
     location: "Terminus Junction",
     distance: "2.7 KM",
     time: "2 hours ago",
     severity: "High",
-    confirmations: "31 Citizens Nearby",
+    confirmations: 31,
+    image:
+      "https://images.unsplash.com/photo-1527489377706-5bf97e608852?q=80&w=1400&auto=format&fit=crop",
   },
 ];
 
@@ -62,20 +76,50 @@ const NearbyIssues = ({
   darkMode,
 }) => {
   const [detecting, setDetecting] =
-    useState(false);
+    useState(true);
 
-  const [showIssues, setShowIssues] =
-    useState(false);
+  const [issues, setIssues] =
+    useState([]);
 
-  const handleDetectLocation = () => {
-    if (showIssues) return;
+  const [confirmedIds, setConfirmedIds] =
+    useState([]);
 
-    setDetecting(true);
-
-    setTimeout(() => {
+  /* AUTO LOAD */
+  useEffect(() => {
+    const timer = setTimeout(() => {
       setDetecting(false);
-      setShowIssues(true);
-    }, 1800);
+
+      setIssues(initialIssues);
+    }, 2200);
+
+    return () =>
+      clearTimeout(timer);
+  }, []);
+
+  /* CONFIRM ISSUE */
+  const handleConfirm = (id) => {
+    if (
+      confirmedIds.includes(id)
+    )
+      return;
+
+    setConfirmedIds((prev) => [
+      ...prev,
+      id,
+    ]);
+
+    setIssues((prev) =>
+      prev.map((issue) =>
+        issue.id === id
+          ? {
+              ...issue,
+              confirmations:
+                issue.confirmations +
+                1,
+            }
+          : issue
+      )
+    );
   };
 
   return (
@@ -83,7 +127,9 @@ const NearbyIssues = ({
       className={`
       relative
       overflow-hidden
+      rounded-[2rem]
       border
+
       ${
         darkMode
           ? `
@@ -123,20 +169,20 @@ const NearbyIssues = ({
           absolute
           top-[-120px]
           right-[-100px]
-          w-[300px]
-          h-[300px]
-          bg-green-500/10
-          blur-[120px]
+          w-[400px]
+          h-[400px]
+          bg-green-500/20
+          blur-[140px]
           "
         />
 
-        {/* LINE */}
+        {/* TOP LINE */}
         <div
           className="
           absolute
           top-0
           left-0
-          h-[2px]
+          h-[3px]
           w-full
           bg-gradient-to-r
           from-green-500
@@ -151,9 +197,9 @@ const NearbyIssues = ({
         className="
         relative
         z-10
-        p-4
-        sm:p-6
-        lg:p-8
+        p-5
+        sm:p-8
+        lg:p-10
         "
       >
         {/* HEADER */}
@@ -164,17 +210,17 @@ const NearbyIssues = ({
           xl:flex-row
           xl:items-end
           xl:justify-between
-          gap-6
-          mb-8
+          gap-8
+          mb-10
           "
         >
           {/* LEFT */}
-          <div className="max-w-2xl">
+          <div className="max-w-3xl">
             {/* BADGE */}
             <motion.div
               initial={{
                 opacity: 0,
-                y: 10,
+                y: 15,
               }}
               whileInView={{
                 opacity: 1,
@@ -187,10 +233,12 @@ const NearbyIssues = ({
               inline-flex
               items-center
               gap-3
+              px-5
+              py-3
+              rounded-full
               border
-              px-4
-              py-2
-              mb-5
+              mb-6
+
               ${
                 darkMode
                   ? `
@@ -206,44 +254,35 @@ const NearbyIssues = ({
               }
               `}
             >
-              <div
+              <motion.div
+                animate={{
+                  scale: [
+                    1,
+                    1.4,
+                    1,
+                  ],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2,
+                }}
                 className="
-                relative
-                flex
+                w-2.5
+                h-2.5
+                rounded-full
+                bg-green-500
                 "
-              >
-                <span
-                  className="
-                  absolute
-                  inline-flex
-                  h-full
-                  w-full
-                  animate-ping
-                  bg-green-400
-                  opacity-75
-                  "
-                />
-
-                <span
-                  className="
-                  relative
-                  inline-flex
-                  w-2.5
-                  h-2.5
-                  bg-green-500
-                  "
-                />
-              </div>
+              />
 
               <span
                 className="
-                text-[10px]
+                text-[11px]
                 font-black
                 uppercase
                 tracking-[0.22em]
                 "
               >
-                Real-Time Nearby Activity
+                Live Citizen Monitoring
               </span>
             </motion.div>
 
@@ -261,13 +300,13 @@ const NearbyIssues = ({
                 once: true,
               }}
               className={`
-              text-[1.9rem]
-              sm:text-[2.8rem]
-              lg:text-[3.7rem]
-              leading-[0.95]
+              text-[2.2rem]
+              sm:text-[3.5rem]
+              lg:text-[5rem]
+              leading-[0.9]
               tracking-[-0.06em]
               font-black
-              uppercase
+
               ${
                 darkMode
                   ? "text-white"
@@ -275,14 +314,14 @@ const NearbyIssues = ({
               }
               `}
             >
-              Issues Around
+              Nearby Issues
               <span
                 className="
                 block
                 text-green-500
                 "
               >
-                Your Location
+                Detected Live
               </span>
             </motion.h2>
 
@@ -296,18 +335,19 @@ const NearbyIssues = ({
                 opacity: 1,
                 y: 0,
               }}
-              viewport={{
-                once: true,
-              }}
               transition={{
                 delay: 0.1,
               }}
+              viewport={{
+                once: true,
+              }}
               className={`
-              mt-5
-              text-sm
-              sm:text-base
+              mt-6
+              text-base
+              sm:text-lg
               leading-relaxed
-              max-w-xl
+              max-w-2xl
+
               ${
                 darkMode
                   ? "text-gray-400"
@@ -315,15 +355,17 @@ const NearbyIssues = ({
               }
               `}
             >
-              NationAura tracks nearby
-              citizen reports in real time,
-              helping communities identify
-              urgent infrastructure risks
-              before they escalate.
+              NationAura automatically
+              detects nearby citizen
+              reports around your current
+              location so communities can
+              quickly confirm real
+              problems before they become
+              dangerous.
             </motion.p>
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* LOCATION STATUS */}
           <motion.div
             initial={{
               opacity: 0,
@@ -337,10 +379,14 @@ const NearbyIssues = ({
               once: true,
             }}
             className={`
+            relative
+            overflow-hidden
+            rounded-[1.8rem]
             border
-            p-5
+            p-6
             min-w-full
-            sm:min-w-[320px]
+            sm:min-w-[350px]
+
             ${
               darkMode
                 ? `
@@ -356,18 +402,33 @@ const NearbyIssues = ({
           >
             <div
               className="
+              absolute
+              top-0
+              right-0
+              w-32
+              h-32
+              bg-green-500/10
+              blur-[80px]
+              "
+            />
+
+            <div
+              className="
+              relative
+              z-10
               flex
               items-center
               justify-between
-              gap-4
+              gap-5
               "
             >
               <div>
                 <p
                   className={`
-                  text-[10px]
+                  text-[11px]
                   uppercase
-                  tracking-[0.22em]
+                  tracking-[0.2em]
+
                   ${
                     darkMode
                       ? "text-gray-500"
@@ -375,14 +436,16 @@ const NearbyIssues = ({
                   }
                   `}
                 >
-                  AI Detection Radius
+                  Civic Detection
                 </p>
 
                 <h3
                   className={`
-                  mt-2
-                  text-3xl
+                  mt-3
+                  text-2xl
+                  sm:text-3xl
                   font-black
+
                   ${
                     darkMode
                       ? "text-white"
@@ -390,24 +453,32 @@ const NearbyIssues = ({
                   }
                   `}
                 >
-                  4.8 KM
+                  {detecting
+                    ? "Scanning..."
+                    : "Location Detected"}
                 </h3>
 
                 <p
                   className="
-                  mt-2
-                  text-green-500
+                  mt-3
                   text-sm
+                  text-green-500
                   font-semibold
                   "
                 >
-                  Active civic monitoring
+                  {detecting
+                    ? "Finding nearby reports"
+                    : "Live nearby issue tracking enabled"}
                 </p>
               </div>
 
               <motion.div
                 animate={{
-                  scale: [1, 1.1, 1],
+                  scale: [
+                    1,
+                    1.08,
+                    1,
+                  ],
                 }}
                 transition={{
                   repeat: Infinity,
@@ -415,8 +486,9 @@ const NearbyIssues = ({
                 }}
                 className="
                 relative
-                w-16
-                h-16
+                w-20
+                h-20
+                rounded-2xl
                 bg-green-500/10
                 border
                 border-green-500/20
@@ -424,37 +496,39 @@ const NearbyIssues = ({
                 items-center
                 justify-center
                 text-green-500
-                text-2xl
+                text-3xl
                 overflow-hidden
                 "
               >
-                {detecting && (
+                {detecting ? (
                   <motion.div
-                    initial={{
-                      scale: 0,
-                      opacity: 0.8,
-                    }}
                     animate={{
-                      scale: 2.4,
-                      opacity: 0,
+                      rotate: 360,
                     }}
                     transition={{
                       repeat: Infinity,
-                      duration: 1.5,
+                      duration: 1,
+                      ease: "linear",
                     }}
-                    className="
-                    absolute
-                    inset-0
-                    border
-                    border-green-500/30
-                    "
-                  />
+                  >
+                    <FiLoader />
+                  </motion.div>
+                ) : (
+                  <FiNavigation />
                 )}
 
                 <motion.div
                   animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.5, 0, 0.5],
+                    scale: [
+                      1,
+                      1.8,
+                      1,
+                    ],
+                    opacity: [
+                      0.3,
+                      0,
+                      0.3,
+                    ],
                   }}
                   transition={{
                     repeat: Infinity,
@@ -463,71 +537,18 @@ const NearbyIssues = ({
                   className="
                   absolute
                   inset-0
+                  rounded-2xl
                   bg-green-500/10
                   "
                 />
-
-                <FiActivity className="relative z-10" />
               </motion.div>
             </div>
-
-            <motion.button
-              whileHover={{
-                scale: 1.02,
-              }}
-              whileTap={{
-                scale: 0.98,
-              }}
-              onClick={handleDetectLocation}
-              disabled={detecting}
-              className="
-              mt-5
-              w-full
-              h-14
-              bg-green-500
-              text-white
-              font-black
-              uppercase
-              tracking-[0.15em]
-              flex
-              items-center
-              justify-center
-              gap-3
-              hover:bg-green-400
-              transition-all
-              duration-300
-              disabled:opacity-80
-              "
-            >
-              <motion.div
-                animate={
-                  detecting
-                    ? {
-                        rotate: 360,
-                      }
-                    : {}
-                }
-                transition={{
-                  repeat: Infinity,
-                  duration: 1,
-                  ease: "linear",
-                }}
-              >
-                <FiNavigation />
-              </motion.div>
-
-              {detecting
-                ? "Detecting Location..."
-                : showIssues
-                ? "Location Detected"
-                : "Detect My Location"}
-            </motion.button>
           </motion.div>
         </div>
 
-        {/* ISSUES */}
+        {/* LOADING */}
         <AnimatePresence>
-          {showIssues && (
+          {detecting && (
             <motion.div
               initial={{
                 opacity: 0,
@@ -538,287 +559,585 @@ const NearbyIssues = ({
               exit={{
                 opacity: 0,
               }}
-              className="space-y-4"
+              className="
+              flex
+              flex-col
+              items-center
+              justify-center
+              py-20
+              "
             >
-              {nearbyIssues.map(
-                (issue, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{
-                      opacity: 0,
-                      y: 35,
-                      scale: 0.96,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                    }}
-                    transition={{
-                      duration: 0.6,
-                      delay:
-                        index * 0.12,
-                      ease: "easeOut",
-                    }}
-                    whileHover={{
-                      y: -4,
-                    }}
-                    className={`
-                    group
-                    relative
-                    overflow-hidden
-                    border
-                    p-5
-                    sm:p-6
-                    transition-all
-                    duration-300
-                    ${
-                      darkMode
-                        ? `
-                          bg-[#0A141D]
-                          border-white/10
-                        `
-                        : `
-                          bg-white
-                          border-gray-200
-                        `
-                    }
-                    `}
-                  >
-                    {/* TOP LINE */}
+              <motion.div
+                animate={{
+                  rotate: 360,
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 1,
+                  ease: "linear",
+                }}
+                className="
+                w-20
+                h-20
+                rounded-full
+                border-[5px]
+                border-green-200
+                border-t-green-500
+                "
+              />
+
+              <h3
+                className={`
+                mt-8
+                text-2xl
+                font-black
+
+                ${
+                  darkMode
+                    ? "text-white"
+                    : "text-black"
+                }
+                `}
+              >
+                Detecting Nearby Issues
+              </h3>
+
+              <p
+                className={`
+                mt-3
+                text-center
+                max-w-md
+
+                ${
+                  darkMode
+                    ? "text-gray-400"
+                    : "text-gray-500"
+                }
+                `}
+              >
+                NationAura AI is scanning
+                real-time citizen reports
+                around your area...
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ISSUES */}
+        <AnimatePresence>
+          {!detecting && (
+            <motion.div
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              className="
+              grid
+              grid-cols-1
+              xl:grid-cols-2
+              gap-6
+              "
+            >
+              {issues.map(
+                (
+                  issue,
+                  index
+                ) => {
+                  const confirmed =
+                    confirmedIds.includes(
+                      issue.id
+                    );
+
+                  return (
                     <motion.div
+                      key={issue.id}
                       initial={{
-                        width: 0,
+                        opacity: 0,
+                        y: 40,
                       }}
                       animate={{
-                        width: "100%",
+                        opacity: 1,
+                        y: 0,
                       }}
                       transition={{
-                        duration: 1,
+                        duration: 0.6,
                         delay:
-                          0.3 +
-                          index * 0.1,
+                          index * 0.12,
                       }}
-                      className="
-                      absolute
-                      top-0
-                      left-0
-                      h-[2px]
-                      bg-gradient-to-r
-                      from-green-500
-                      to-transparent
-                      "
-                    />
+                      whileHover={{
+                        y: -8,
+                      }}
+                      className={`
+                      group
+                      relative
+                      overflow-hidden
+                      rounded-[2rem]
+                      border
 
-                    <div
-                      className="
-                      flex
-                      flex-col
-                      xl:flex-row
-                      xl:items-start
-                      xl:justify-between
-                      gap-6
-                      "
+                      ${
+                        darkMode
+                          ? `
+                            bg-[#0A141D]
+                            border-white/10
+                          `
+                          : `
+                            bg-white
+                            border-gray-200
+                          `
+                      }
+                      `}
                     >
-                      {/* LEFT */}
-                      <div className="flex-1">
-                        {/* TAGS */}
+                      {/* IMAGE */}
+                      <div
+                        className="
+                        relative
+                        h-[260px]
+                        overflow-hidden
+                        "
+                      >
+                        <motion.img
+                          whileHover={{
+                            scale: 1.08,
+                          }}
+                          transition={{
+                            duration: 1,
+                          }}
+                          src={
+                            issue.image
+                          }
+                          alt={
+                            issue.title
+                          }
+                          className="
+                          w-full
+                          h-full
+                          object-cover
+                          "
+                        />
+
+                        <div
+                          className="
+                          absolute
+                          inset-0
+                          bg-gradient-to-t
+                          from-black/90
+                          via-black/20
+                          to-transparent
+                          "
+                        />
+
+                        {/* TOP BADGES */}
+                        <div
+                          className="
+                          absolute
+                          top-4
+                          left-4
+                          right-4
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                          "
+                        >
+                          <div
+                            className="
+                            px-4
+                            py-2
+                            rounded-full
+                            bg-green-500
+                            text-white
+                            text-[10px]
+                            font-black
+                            uppercase
+                            tracking-[0.16em]
+                            "
+                          >
+                            {
+                              issue.category
+                            }
+                          </div>
+
+                          <div
+                            className="
+                            px-4
+                            py-2
+                            rounded-full
+                            bg-white/90
+                            text-black
+                            text-[10px]
+                            font-black
+                            uppercase
+                            tracking-[0.16em]
+                            "
+                          >
+                            {
+                              issue.severity
+                            }
+                          </div>
+                        </div>
+
+                        {/* BOTTOM CONTENT */}
+                        <div
+                          className="
+                          absolute
+                          bottom-0
+                          left-0
+                          right-0
+                          p-6
+                          "
+                        >
+                          <h3
+                            className="
+                            text-2xl
+                            sm:text-3xl
+                            font-black
+                            text-white
+                            leading-tight
+                            "
+                          >
+                            {
+                              issue.title
+                            }
+                          </h3>
+
+                          <div
+                            className="
+                            flex
+                            flex-wrap
+                            items-center
+                            gap-4
+                            mt-4
+                            text-white/80
+                            text-sm
+                            "
+                          >
+                            <div className="flex items-center gap-2">
+                              <FiMapPin />
+
+                              {
+                                issue.location
+                              }
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <FiClock />
+
+                              {
+                                issue.time
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* BODY */}
+                      <div className="p-6">
+                        {/* LIVE STATUS */}
                         <div
                           className="
                           flex
                           flex-wrap
                           items-center
-                          gap-3
-                          mb-5
+                          justify-between
+                          gap-4
                           "
                         >
                           <div
                             className="
                             flex
                             items-center
-                            gap-2
-                            px-3
-                            py-2
+                            gap-3
+                            "
+                          >
+                            <div
+                              className="
+                              w-12
+                              h-12
+                              rounded-xl
+                              bg-green-500/10
+                              border
+                              border-green-500/20
+                              text-green-500
+                              flex
+                              items-center
+                              justify-center
+                              "
+                            >
+                              <FiRadio />
+                            </div>
+
+                            <div>
+                              <p
+                                className={`
+                                text-xs
+                                uppercase
+                                tracking-[0.15em]
+
+                                ${
+                                  darkMode
+                                    ? "text-gray-500"
+                                    : "text-gray-400"
+                                }
+                                `}
+                              >
+                                Confirmed By
+                              </p>
+
+                              <h4
+                                className={`
+                                mt-1
+                                font-black
+
+                                ${
+                                  darkMode
+                                    ? "text-white"
+                                    : "text-black"
+                                }
+                                `}
+                              >
+                                {
+                                  issue.confirmations
+                                }{" "}
+                                Citizens
+                              </h4>
+                            </div>
+                          </div>
+
+                          <div
+                            className="
+                            px-4
+                            py-3
+                            rounded-2xl
                             bg-green-500/10
                             border
                             border-green-500/20
                             text-green-500
-                            text-[10px]
+                            text-sm
                             font-black
-                            uppercase
-                            tracking-[0.18em]
                             "
                           >
-                            <FiAlertTriangle />
-
-                            {issue.category}
-                          </div>
-
-                          <div
-                            className="
-                            flex
-                            items-center
-                            gap-2
-                            px-3
-                            py-2
-                            border
-                            border-white/10
-                            text-[10px]
-                            font-black
-                            uppercase
-                            tracking-[0.18em]
-                            text-white
-                            "
-                          >
-                            <FiShield />
-
-                            {issue.severity}
+                            {
+                              issue.distance
+                            }
                           </div>
                         </div>
 
-                        {/* TITLE */}
-                        <h3
+                        {/* INFO */}
+                        <div
                           className={`
-                          text-xl
-                          sm:text-2xl
-                          font-black
-                          leading-tight
-                          tracking-[-0.04em]
-                          break-words
+                          mt-6
+                          p-5
+                          rounded-2xl
+                          border
+
                           ${
                             darkMode
-                              ? "text-white"
-                              : "text-black"
+                              ? `
+                                bg-white/[0.03]
+                                border-white/10
+                              `
+                              : `
+                                bg-[#FAFAFA]
+                                border-gray-200
+                              `
                           }
                           `}
                         >
-                          {issue.title}
-                        </h3>
+                          <div className="flex items-start gap-4">
+                            <div
+                              className="
+                              w-12
+                              h-12
+                              rounded-xl
+                              bg-green-500
+                              text-white
+                              flex
+                              items-center
+                              justify-center
+                              shrink-0
+                              "
+                            >
+                              <FiShield />
+                            </div>
 
-                        {/* META */}
+                            <div>
+                              <h4
+                                className={`
+                                font-black
+                                text-lg
+
+                                ${
+                                  darkMode
+                                    ? "text-white"
+                                    : "text-black"
+                                }
+                                `}
+                              >
+                                Help Confirm
+                                This Issue
+                              </h4>
+
+                              <p
+                                className={`
+                                mt-2
+                                text-sm
+                                leading-relaxed
+
+                                ${
+                                  darkMode
+                                    ? "text-gray-400"
+                                    : "text-gray-600"
+                                }
+                                `}
+                              >
+                                Citizens near this
+                                area can confirm
+                                whether this issue
+                                is still active to
+                                improve AI
+                                accuracy and speed
+                                up government
+                                response.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* BUTTONS */}
                         <div
                           className="
+                          mt-6
                           flex
-                          flex-wrap
-                          items-center
+                          flex-col
+                          sm:flex-row
                           gap-4
-                          mt-5
                           "
                         >
-                          <div
+                          {/* CONFIRM */}
+                          <motion.button
+                            whileHover={{
+                              scale: 1.02,
+                            }}
+                            whileTap={{
+                              scale: 0.97,
+                            }}
+                            onClick={() =>
+                              handleConfirm(
+                                issue.id
+                              )
+                            }
+                            disabled={
+                              confirmed
+                            }
                             className={`
+                            flex-1
+                            h-14
+                            rounded-2xl
+                            font-black
+                            uppercase
+                            tracking-[0.14em]
                             flex
                             items-center
-                            gap-2
-                            text-sm
+                            justify-center
+                            gap-3
+                            transition-all
+                            duration-300
+
                             ${
-                              darkMode
-                                ? "text-gray-400"
-                                : "text-gray-600"
+                              confirmed
+                                ? `
+                                  bg-green-500
+                                  text-white
+                                `
+                                : `
+                                  bg-gradient-to-r
+                                  from-green-400
+                                  to-green-500
+                                  text-white
+                                  hover:shadow-[0_20px_50px_rgba(34,197,94,0.35)]
+                                `
                             }
                             `}
                           >
-                            <FiMapPin />
+                            {confirmed ? (
+                              <>
+                                <FiCheckCircle />
 
-                            {issue.location}
-                          </div>
+                                Confirmed
+                              </>
+                            ) : (
+                              <>
+                                <FiUsers />
 
-                          <div
+                                Confirm Issue
+                              </>
+                            )}
+                          </motion.button>
+
+                          {/* CONFIRM MORE */}
+                          <motion.button
+                            whileHover={{
+                              y: -2,
+                            }}
+                            whileTap={{
+                              scale: 0.98,
+                            }}
                             className={`
+                            h-14
+                            px-6
+                            rounded-2xl
+                            border
+                            font-black
+                            uppercase
+                            tracking-[0.14em]
                             flex
                             items-center
-                            gap-2
-                            text-sm
+                            justify-center
+                            gap-3
+
                             ${
                               darkMode
-                                ? "text-gray-400"
-                                : "text-gray-600"
+                                ? `
+                                  border-white/10
+                                  bg-white/[0.03]
+                                  text-white
+                                `
+                                : `
+                                  border-gray-200
+                                  bg-[#FAFAFA]
+                                  text-black
+                                `
                             }
                             `}
                           >
-                            <FiClock />
+                            <FiActivity />
 
-                            {issue.time}
-                          </div>
-
-                          <div
-                            className="
-                            flex
-                            items-center
-                            gap-2
-                            text-sm
-                            text-green-500
-                            font-semibold
-                            "
-                          >
-                            <FiRadio />
-
-                            {issue.confirmations}
-                          </div>
+                            Confirm More
+                          </motion.button>
                         </div>
                       </div>
 
-                      {/* RIGHT */}
+                      {/* SIDE GLOW */}
                       <div
                         className="
-                        flex
-                        flex-col
-                        items-start
-                        xl:items-end
-                        gap-4
-                        w-full
-                        xl:w-auto
+                        absolute
+                        -right-10
+                        top-10
+                        w-40
+                        h-40
+                        bg-green-500/10
+                        blur-[100px]
+                        opacity-0
+                        group-hover:opacity-100
+                        transition-all
+                        duration-700
                         "
-                      >
-                        <div
-                          className="
-                          px-4
-                          py-3
-                          bg-green-500/10
-                          border
-                          border-green-500/20
-                          text-green-500
-                          text-xs
-                          font-black
-                          uppercase
-                          tracking-[0.15em]
-                          "
-                        >
-                          {issue.distance}
-                        </div>
-
-                        <motion.button
-                          whileHover={{
-                            x: 4,
-                          }}
-                          className="
-                          h-12
-                          w-full
-                          sm:w-auto
-                          px-5
-                          bg-green-500
-                          text-white
-                          text-sm
-                          font-black
-                          uppercase
-                          tracking-[0.14em]
-                          flex
-                          items-center
-                          justify-center
-                          gap-3
-                          hover:bg-green-400
-                          transition-all
-                          duration-300
-                          "
-                        >
-                          View Details
-
-                          <FiArrowUpRight />
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )
+                      />
+                    </motion.div>
+                  );
+                }
               )}
             </motion.div>
           )}

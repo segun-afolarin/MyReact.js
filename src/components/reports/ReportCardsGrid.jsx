@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   motion,
@@ -19,129 +19,76 @@ import {
   FiX,
   FiSave,
   FiFileText,
-  FiImage,
+  FiSearch,
   FiArrowUpRight,
+  FiImage,
 } from "react-icons/fi";
 
 const initialReports = [
   {
     id: 1,
-
     title:
       "Collapsed Drainage Blocking Main Road",
-
     description:
-      "Heavy drainage collapse is causing traffic congestion and dangerous flooding during rainfall.",
-
-    location:
-      "Wuse 2, Abuja",
-
-    date:
-      "Submitted • 2 May 2026",
-
-    status:
-      "Recently Submitted",
-
-    progress: 8,
-
+      "Heavy drainage collapse is causing flooding and severe traffic congestion during rainfall.",
+    location: "Wuse 2, Abuja",
+    date: "2 May 2026",
+    status: "Recently Submitted",
+    progress: 12,
     ai: "96%",
-
-    severity:
-      "High Priority",
-
+    severity: "High Priority",
     editable: true,
-
     image:
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
   },
 
   {
     id: 2,
-
     title:
       "Broken Streetlights Across Junction",
-
     description:
-      "Multiple streetlights are damaged causing dangerous night visibility for drivers.",
-
-    location:
-      "Jabi, Abuja",
-
-    date:
-      "Submitted • 7 May 2026",
-
-    status:
-      "Under Review",
-
-    progress: 18,
-
+      "Damaged streetlights are creating dangerous night visibility for drivers and pedestrians.",
+    location: "Jabi, Abuja",
+    date: "7 May 2026",
+    status: "Under Review",
+    progress: 32,
     ai: "88%",
-
-    severity:
-      "Medium Priority",
-
+    severity: "Medium Priority",
     editable: true,
-
     image:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
   },
- {
-  id: 3,
 
-  title:
-    "Bridge Cracks Endangering Daily Commuters",
+  {
+    id: 3,
+    title:
+      "Bridge Cracks Endangering Commuters",
+    description:
+      "Residents reported visible structural cracks on a busy pedestrian bridge.",
+    location: "Garki, Abuja",
+    date: "10 May 2026",
+    status: "AI Priority Escalated",
+    progress: 68,
+    ai: "97%",
+    severity: "Critical Infrastructure",
+    editable: false,
+    image:
+      "https://images.unsplash.com/photo-1517089596392-fb9a9033e05b?q=80&w=1200&auto=format&fit=crop",
+  },
 
-  description:
-    "Residents reported visible structural cracks and weakened concrete on a busy pedestrian bridge causing serious public safety concerns.",
-
-  location:
-    "Garki, Abuja",
-
-  date:
-    "Submitted • 10 May 2026",
-
-  status:
-    "AI Priority Escalated",
-
-  progress: 54,
-
-  ai: "97%",
-
-  severity:
-    "Critical Infrastructure",
-
-  editable: false,
-
-  image:
-    "https://images.unsplash.com/photo-1517089596392-fb9a9033e05b?q=80&w=1200&auto=format&fit=crop",
-},
   {
     id: 4,
-
     title:
       "Dangerous Road Crack Near Market",
-
     description:
-      "Large road crack expanding daily near busy market area causing transportation risk and traffic disruption.",
-
-    location:
-      "Garki, Abuja",
-
-    date:
-      "Submitted • 10 May 2026",
-
-    status:
-      "AI Investigating",
-
+      "Large road crack expanding near a busy market causing transportation risk.",
+    location: "Garki, Abuja",
+    date: "10 May 2026",
+    status: "AI Investigating",
     progress: 46,
-
     ai: "94%",
-
-    severity:
-      "Urgent Attention",
-
+    severity: "Urgent Attention",
     editable: true,
-
     image:
       "https://images.unsplash.com/photo-1517022812141-23620dba5c23?q=80&w=1200&auto=format&fit=crop",
   },
@@ -152,6 +99,9 @@ const ReportCardsGrid = ({
 }) => {
   const [reports, setReports] =
     useState(initialReports);
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
   const [showDeleteModal, setShowDeleteModal] =
     useState(false);
@@ -169,7 +119,31 @@ const ReportCardsGrid = ({
       description: "",
     });
 
-  /* DELETE */
+  const filteredReports =
+    useMemo(() => {
+      return reports.filter(
+        (report) => {
+          const search =
+            searchTerm.toLowerCase();
+
+          return (
+            report.title
+              .toLowerCase()
+              .includes(search) ||
+            report.location
+              .toLowerCase()
+              .includes(search) ||
+            report.description
+              .toLowerCase()
+              .includes(search) ||
+            report.status
+              .toLowerCase()
+              .includes(search)
+          );
+        }
+      );
+    }, [reports, searchTerm]);
+
   const handleDeleteClick = (
     report
   ) => {
@@ -190,7 +164,6 @@ const ReportCardsGrid = ({
     setShowDeleteModal(false);
   };
 
-  /* EDIT */
   const handleEdit = (
     report
   ) => {
@@ -198,10 +171,7 @@ const ReportCardsGrid = ({
 
     setFormData({
       title: report.title,
-
-      location:
-        report.location,
-
+      location: report.location,
       description:
         report.description,
     });
@@ -216,13 +186,10 @@ const ReportCardsGrid = ({
         selectedReport.id
           ? {
               ...item,
-
               title:
                 formData.title,
-
               location:
                 formData.location,
-
               description:
                 formData.description,
             }
@@ -234,803 +201,778 @@ const ReportCardsGrid = ({
   };
 
   return (
-    <section className="relative overflow-hidden">
-      {/* BACKGROUND */}
-      <div
-        className="
-        absolute
-        inset-0
-        pointer-events-none
-        "
-      >
-        <div
-          className="
-          absolute
-          top-0
-          left-1/2
-          -translate-x-1/2
-          w-[700px]
-          h-[700px]
-          bg-green-200/40
-          blur-[160px]
-          "
-        />
-
-        <div
-          className="
-          absolute
-          bottom-0
-          right-0
-          w-[400px]
-          h-[400px]
-          bg-green-100/60
-          blur-[140px]
-          "
-        />
-      </div>
-
+    <section className="mt-10">
       {/* HEADER */}
       <div
         className="
-        relative
-        z-10
         flex
         flex-col
-        2xl:flex-row
-        2xl:items-end
-        2xl:justify-between
-        gap-8
-        mb-12
+        lg:flex-row
+        lg:items-end
+        lg:justify-between
+        gap-6
+        mb-8
         "
       >
-        {/* LEFT */}
-        <div className="max-w-4xl">
-          <div
-            className="
-            inline-flex
-            items-center
-            gap-3
-            px-5
-            py-3
-            bg-white
-            border
-            border-green-100
-            mb-6
-            shadow-sm
-            "
+        <div className="max-w-2xl">
+          <motion.p
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{ once: true }}
+            className={`
+            text-[10px]
+            uppercase
+            tracking-[0.3em]
+            font-bold
+            mb-4
+            ${
+              darkMode
+                ? "text-green-400"
+                : "text-green-700"
+            }
+            `}
           >
-            <FiActivity className="text-green-500" />
+            My Civic Reports
+          </motion.p>
 
-            <span
-              className="
-              text-xs
-              sm:text-sm
-              font-black
-              uppercase
-              tracking-[0.25em]
-              text-green-700
-              "
-            >
-              AI Civic Monitoring
-            </span>
-          </div>
-
-          <h2
-            className="
-            text-4xl
-            sm:text-5xl
-            lg:text-6xl
-            xl:text-7xl
+          <motion.h2
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{ once: true }}
+            className={`
+            text-3xl
+            sm:text-4xl
+            lg:text-5xl
             font-black
-            leading-[0.95]
-            tracking-tight
-            text-black
-            "
+            tracking-[-0.05em]
+            leading-[1]
+            ${
+              darkMode
+                ? "text-white"
+                : "text-black"
+            }
+            `}
           >
-            Reports Building{" "}
-
-            <span
-              className="
-              text-transparent
-              bg-clip-text
-              bg-gradient-to-r
-              from-green-400
-              via-green-500
-              to-green-300
-              "
-            >
-              Smarter Cities
+            Manage Your
+            <span className="block text-green-500 mt-1">
+              Submitted Reports
             </span>
-          </h2>
+          </motion.h2>
 
-          <p
-            className="
-            mt-6
-            text-base
-            sm:text-lg
-            lg:text-xl
+          <motion.p
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{ once: true }}
+            transition={{
+              delay: 0.1,
+            }}
+            className={`
+            mt-5
+            text-sm
+            sm:text-base
             leading-relaxed
-            text-black/60
-            max-w-3xl
-            "
+            max-w-xl
+            ${
+              darkMode
+                ? "text-gray-400"
+                : "text-gray-600"
+            }
+            `}
           >
-            Every citizen report strengthens
-            transparency, helps communities
-            get faster attention, and gives
-            governments real-time insight
-            into infrastructure problems
-            across Nigeria.
-          </p>
+            Track your submitted
+            reports, edit details,
+            monitor AI verification,
+            and follow government
+            response progress.
+          </motion.p>
         </div>
 
-        {/* RIGHT CARD */}
+        {/* SEARCH */}
         <motion.div
           initial={{
             opacity: 0,
-            x: 30,
+            x: 20,
           }}
           whileInView={{
             opacity: 1,
             x: 0,
           }}
-          transition={{
-            duration: 0.7,
-          }}
           viewport={{ once: true }}
-          className="
+          className={`
           relative
-          overflow-hidden
-          bg-white
           border
-          border-green-100
-          p-6
-          sm:p-8
-          shadow-[0_20px_60px_rgba(34,197,94,0.12)]
-          min-w-full
-          sm:min-w-[420px]
-          "
+          overflow-hidden
+          w-full
+          lg:w-[380px]
+          ${
+            darkMode
+              ? `
+                bg-[#09131B]
+                border-white/10
+              `
+              : `
+                bg-white
+                border-gray-200
+              `
+          }
+          `}
         >
           <div
             className="
             absolute
-            top-0
-            right-0
-            w-40
-            h-40
-            bg-green-200/50
-            blur-[100px]
+            inset-y-0
+            left-0
+            w-32
+            bg-green-500/10
+            blur-3xl
             "
           />
 
           <div
             className="
             relative
-            z-10
             flex
             items-center
-            gap-5
             "
           >
             <div
               className="
-              w-16
-              h-16
-              sm:w-20
-              sm:h-20
-              bg-gradient-to-br
-              from-green-400
-              to-green-500
-              text-white
-              flex
-              items-center
-              justify-center
-              text-3xl
-              shadow-xl
-              shadow-green-300/40
+              pl-5
+              text-green-500
+              text-lg
               "
             >
-              <FiTrendingUp />
+              <FiSearch />
             </div>
 
-            <div>
-              <h3
-                className="
-                text-5xl
-                sm:text-6xl
-                font-black
-                text-green-500
-                leading-none
-                "
-              >
-                78%
-              </h3>
-
-              <p
-                className="
-                mt-2
-                text-sm
-                sm:text-base
-                text-black/60
-                "
-              >
-                Government Response Rate
-              </p>
-            </div>
+            <input
+              type="text"
+              placeholder="Search your reports..."
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm(
+                  e.target.value
+                )
+              }
+              className={`
+              w-full
+              bg-transparent
+              px-4
+              py-5
+              text-sm
+              outline-none
+              ${
+                darkMode
+                  ? `
+                    text-white
+                    placeholder:text-gray-500
+                  `
+                  : `
+                    text-black
+                    placeholder:text-gray-400
+                  `
+              }
+              `}
+            />
           </div>
         </motion.div>
       </div>
 
-      {/* GRID */}
-      <div
-        className="
-        relative
-        z-10
-        grid
-        grid-cols-1
-        md:grid-cols-2
-        2xl:grid-cols-3
-        gap-6
-        xl:gap-8
-        "
-      >
-        {reports.map(
-          (
-            report,
-            index
-          ) => (
-            <motion.div
-              key={report.id}
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                duration: 0.6,
-                delay:
-                  index * 0.08,
-              }}
-              viewport={{
-                once: true,
-              }}
-              whileHover={{
-                y: -10,
-              }}
-              className="
-              group
-              relative
-              overflow-hidden
-              bg-white
-              border
-              border-green-100
-              shadow-[0_20px_60px_rgba(34,197,94,0.08)]
-              transition-all
-              duration-500
-              "
-            >
-              {/* GLOW */}
-              <div
-                className="
-                absolute
-                inset-0
-                opacity-0
-                group-hover:opacity-100
+      {/* REPORT LIST */}
+      <div className="space-y-5">
+        <AnimatePresence>
+          {filteredReports.map(
+            (report, index) => (
+              <motion.div
+                key={report.id}
+                layout
+                initial={{
+                  opacity: 0,
+                  y: 30,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.95,
+                }}
+                viewport={{ once: true }}
+                transition={{
+                  delay:
+                    index * 0.08,
+                }}
+                whileHover={{
+                  y: -4,
+                }}
+                className={`
+                group
+                border
+                overflow-hidden
                 transition-all
-                duration-700
-                bg-gradient-to-br
-                from-green-50
-                via-white
-                to-green-100
-                "
-              />
-
-              {/* IMAGE */}
-              <div className="relative h-[260px] sm:h-[320px] overflow-hidden">
-                <motion.img
-                  whileHover={{
-                    scale: 1.08,
-                  }}
-                  transition={{
-                    duration: 1,
-                  }}
-                  src={
-                    report.image
-                  }
-                  alt={
-                    report.title
-                  }
-                  className="
-                  w-full
-                  h-full
-                  object-cover
-                  "
-                />
-
-                {/* OVERLAY */}
+                duration-300
+                ${
+                  darkMode
+                    ? `
+                      bg-[#09131B]
+                      border-white/10
+                    `
+                    : `
+                      bg-white
+                      border-gray-200
+                    `
+                }
+                `}
+              >
                 <div
                   className="
-                  absolute
-                  inset-0
-                  bg-gradient-to-t
-                  from-black/90
-                  via-black/30
-                  to-transparent
-                  "
-                />
-
-                {/* AI */}
-                <div
-                  className="
-                  absolute
-                  top-4
-                  left-4
+                  grid
+                  grid-cols-1
+                  xl:grid-cols-[340px_1fr]
                   "
                 >
-                  <div
-                    className="
-                    flex
-                    items-center
-                    gap-2
-                    px-4
-                    py-2
-                    bg-white
-                    border
-                    border-green-100
-                    shadow-lg
-                    "
-                  >
-                    <div
+                  {/* IMAGE */}
+                  <div className="relative h-[260px] xl:h-full overflow-hidden">
+                    <img
+                      src={
+                        report.image
+                      }
+                      alt={
+                        report.title
+                      }
                       className="
-                      w-2
-                      h-2
-                      bg-green-400
-                      animate-pulse
+                      w-full
+                      h-full
+                      object-cover
+                      transition-transform
+                      duration-700
+                      group-hover:scale-105
                       "
                     />
 
-                    <FiCpu className="text-green-500" />
-
-                    <span
-                      className="
-                      text-sm
-                      font-black
-                      text-black
-                      "
-                    >
-                      AI{" "}
-                      {
-                        report.ai
-                      }
-                    </span>
-                  </div>
-                </div>
-
-                {/* STATUS */}
-                <div
-                  className="
-                  absolute
-                  top-4
-                  right-4
-                  "
-                >
-                  <div
-                    className="
-                    px-4
-                    py-2
-                    bg-green-400
-                    text-white
-                    text-xs
-                    font-black
-                    uppercase
-                    tracking-[0.15em]
-                    "
-                  >
-                    {
-                      report.status
-                    }
-                  </div>
-                </div>
-
-                {/* TITLE */}
-                <div
-                  className="
-                  absolute
-                  bottom-0
-                  left-0
-                  right-0
-                  p-5
-                  sm:p-7
-                  "
-                >
-                  <div
-                    className="
-                    inline-flex
-                    items-center
-                    gap-2
-                    px-3
-                    py-2
-                    bg-white/90
-                    border
-                    border-green-100
-                    mb-5
-                    "
-                  >
-                    <FiAlertTriangle className="text-green-500" />
-
-                    <span
-                      className="
-                      text-[11px]
-                      font-black
-                      uppercase
-                      tracking-[0.15em]
-                      text-green-700
-                      "
-                    >
-                      {
-                        report.severity
-                      }
-                    </span>
-                  </div>
-
-                  <h3
-                    className="
-                    text-2xl
-                    sm:text-3xl
-                    font-black
-                    text-white
-                    leading-tight
-                    "
-                  >
-                    {
-                      report.title
-                    }
-                  </h3>
-                </div>
-              </div>
-
-              {/* CONTENT */}
-              <div
-                className="
-                relative
-                z-10
-                p-5
-                sm:p-7
-                "
-              >
-                {/* DESCRIPTION */}
-                <p
-                  className="
-                  text-sm
-                  sm:text-base
-                  leading-relaxed
-                  text-black/65
-                  "
-                >
-                  {
-                    report.description
-                  }
-                </p>
-
-                {/* LOCATION */}
-                <div
-                  className="
-                  flex
-                  flex-col
-                  sm:flex-row
-                  sm:items-center
-                  sm:justify-between
-                  gap-5
-                  mt-7
-                  "
-                >
-                  <div className="flex items-center gap-4">
                     <div
                       className="
-                      w-12
-                      h-12
-                      bg-gradient-to-br
-                      from-green-400
-                      to-green-500
-                      text-white
-                      flex
-                      items-center
-                      justify-center
+                      absolute
+                      inset-0
+                      bg-gradient-to-t
+                      from-black/80
+                      via-black/20
+                      to-transparent
                       "
-                    >
-                      <FiMapPin />
-                    </div>
+                    />
 
-                    <div>
-                      <p
+                    <div className="absolute bottom-0 left-0 p-5 w-full">
+                      <div
                         className="
-                        text-[11px]
+                        inline-flex
+                        items-center
+                        gap-2
+                        px-3
+                        py-2
+                        bg-green-500
+                        text-white
+                        text-[10px]
+                        font-black
                         uppercase
                         tracking-[0.18em]
-                        text-black/40
+                        mb-4
                         "
                       >
-                        Location
-                      </p>
+                        <FiImage />
+                        Evidence Uploaded
+                      </div>
 
-                      <h4 className="font-black text-sm sm:text-base">
+                      <h3 className="text-white text-2xl font-black leading-tight">
                         {
-                          report.location
+                          report.title
                         }
-                      </h4>
+                      </h3>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <FiCalendar className="text-green-500" />
-
-                    <span
+                  {/* CONTENT */}
+                  <div className="p-5 sm:p-7">
+                    {/* TOP */}
+                    <div
                       className="
-                      text-sm
-                      text-black/60
+                      flex
+                      flex-col
+                      lg:flex-row
+                      lg:items-start
+                      lg:justify-between
+                      gap-5
                       "
                     >
-                      {
-                        report.date
-                      }
-                    </span>
-                  </div>
-                </div>
+                      <div>
+                        <div
+                          className="
+                          flex
+                          flex-wrap
+                          items-center
+                          gap-4
+                          "
+                        >
+                          <div
+                            className={`
+                            inline-flex
+                            items-center
+                            gap-2
+                            px-3
+                            py-2
+                            text-xs
+                            font-bold
+                            uppercase
+                            tracking-[0.15em]
+                            border
+                            ${
+                              darkMode
+                                ? `
+                                  bg-green-500/10
+                                  border-green-500/20
+                                  text-green-400
+                                `
+                                : `
+                                  bg-green-50
+                                  border-green-200
+                                  text-green-700
+                                `
+                            }
+                            `}
+                          >
+                            <FiCheckCircle />
+                            {
+                              report.status
+                            }
+                          </div>
 
-                {/* PROGRESS */}
-                <div className="mt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <FiClock className="text-green-500" />
+                          <div
+                            className={`
+                            flex
+                            items-center
+                            gap-2
+                            text-sm
+                            ${
+                              darkMode
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            }
+                            `}
+                          >
+                            <FiMapPin />
+                            {
+                              report.location
+                            }
+                          </div>
+                        </div>
 
-                      <span
-                        className="
-                        text-sm
-                        text-black/60
-                        "
+                        <p
+                          className={`
+                          mt-5
+                          max-w-2xl
+                          text-sm
+                          leading-relaxed
+                          ${
+                            darkMode
+                              ? "text-gray-400"
+                              : "text-gray-600"
+                          }
+                          `}
+                        >
+                          {
+                            report.description
+                          }
+                        </p>
+                      </div>
+
+                      {/* AI */}
+                      <div
+                        className={`
+                        border
+                        p-4
+                        min-w-[180px]
+                        ${
+                          darkMode
+                            ? `
+                              bg-white/[0.03]
+                              border-white/10
+                            `
+                            : `
+                              bg-[#FAFAFA]
+                              border-gray-200
+                            `
+                        }
+                        `}
                       >
-                        Government Response
-                      </span>
+                        <p
+                          className={`
+                          text-[10px]
+                          uppercase
+                          tracking-[0.2em]
+                          ${
+                            darkMode
+                              ? "text-gray-500"
+                              : "text-gray-400"
+                          }
+                          `}
+                        >
+                          AI Verification
+                        </p>
+
+                        <h4
+                          className={`
+                          mt-3
+                          text-4xl
+                          font-black
+                          ${
+                            darkMode
+                              ? "text-white"
+                              : "text-black"
+                          }
+                          `}
+                        >
+                          {report.ai}
+                        </h4>
+
+                        <p className="mt-2 text-green-500 text-sm font-semibold">
+                          Detection Accuracy
+                        </p>
+                      </div>
                     </div>
 
-                    <span
-                      className="
-                      text-xl
-                      font-black
-                      text-green-500
-                      "
-                    >
-                      {
-                        report.progress
-                      }
-                      %
-                    </span>
-                  </div>
-
-                  {/* BAR */}
-                  <div
-                    className="
-                    relative
-                    h-3
-                    overflow-hidden
-                    bg-green-100
-                    "
-                  >
-                    <motion.div
-                      initial={{
-                        width: 0,
-                      }}
-                      whileInView={{
-                        width: `${report.progress}%`,
-                      }}
-                      transition={{
-                        duration: 1.2,
-                      }}
-                      className="
-                      h-full
-                      bg-gradient-to-r
-                      from-green-300
-                      via-green-400
-                      to-green-500
-                      "
-                    />
-                  </div>
-                </div>
-
-                {/* INFO */}
-                <div
-                  className="
-                  mt-6
-                  p-4
-                  border
-                  border-green-100
-                  bg-green-50
-                  "
-                >
-                  <p
-                    className="
-                    text-sm
-                    leading-relaxed
-                    text-green-700
-                    font-medium
-                    "
-                  >
-                    {report.editable
-                      ? "This report can still be updated before official processing begins."
-                      : "Government processing already started for this report."}
-                  </p>
-                </div>
-
-                {/* FOOTER */}
-                <div
-                  className="
-                  mt-7
-                  pt-6
-                  border-t
-                  border-green-100
-                  flex
-                  flex-col
-                  sm:flex-row
-                  sm:items-center
-                  sm:justify-between
-                  gap-5
-                  "
-                >
-                  {/* VERIFIED */}
-                  <div className="flex items-center gap-2">
-                    <FiCheckCircle className="text-green-500" />
-
-                    <span
-                      className="
-                      text-sm
-                      text-black/60
-                      "
-                    >
-                      Verified by AI + Citizens
-                    </span>
-                  </div>
-
-                  {/* BUTTONS */}
-                  <div className="flex items-center gap-3">
-                    {/* DELETE */}
-                    <motion.button
-                      whileHover={
-                        report.editable
-                          ? {
-                              scale: 1.05,
+                    {/* DETAILS */}
+                    <div className="mt-7 flex flex-wrap gap-3">
+                      {[
+                        report.severity,
+                        "AI Verified",
+                        "Photo Evidence",
+                        "Location Tagged",
+                      ].map(
+                        (
+                          field,
+                          i
+                        ) => (
+                          <div
+                            key={i}
+                            className={`
+                            px-4
+                            py-3
+                            border
+                            text-sm
+                            font-medium
+                            ${
+                              darkMode
+                                ? `
+                                  bg-white/[0.03]
+                                  border-white/10
+                                  text-gray-300
+                                `
+                                : `
+                                  bg-[#FAFAFA]
+                                  border-gray-200
+                                  text-gray-700
+                                `
                             }
-                          : {}
-                      }
-                      whileTap={
-                        report.editable
-                          ? {
-                              scale: 0.95,
-                            }
-                          : {}
-                      }
-                      disabled={
-                        !report.editable
-                      }
-                      onClick={() =>
-                        report.editable &&
-                        handleDeleteClick(
-                          report
+                            `}
+                          >
+                            {field}
+                          </div>
                         )
-                      }
-                      className={`
-                      w-12
-                      h-12
-                      border
-                      flex
-                      items-center
-                      justify-center
-                      transition-all
-                      duration-300
+                      )}
+                    </div>
 
-                      ${
-                        report.editable
-                          ? `
-                          bg-green-50
-                          border-green-100
-                          text-green-600
-                          hover:bg-green-500
-                          hover:text-white
-                          `
-                          : `
-                          bg-black/[0.03]
-                          border-black/5
-                          text-black/20
-                          cursor-not-allowed
-                          `
-                      }
-                      `}
+                    {/* PROGRESS */}
+                    <div className="mt-8">
+                      <div className="flex items-center justify-between mb-3">
+                        <div
+                          className={`
+                          flex
+                          items-center
+                          gap-2
+                          text-sm
+                          ${
+                            darkMode
+                              ? "text-gray-400"
+                              : "text-gray-600"
+                          }
+                          `}
+                        >
+                          <FiClock />
+                          Government Response
+                        </div>
+
+                        <span className="text-green-500 font-bold text-sm">
+                          {
+                            report.progress
+                          }
+                          %
+                        </span>
+                      </div>
+
+                      <div
+                        className={`
+                        h-3
+                        overflow-hidden
+                        ${
+                          darkMode
+                            ? "bg-white/10"
+                            : "bg-gray-200"
+                        }
+                        `}
+                      >
+                        <motion.div
+                          initial={{
+                            width: 0,
+                          }}
+                          whileInView={{
+                            width: `${report.progress}%`,
+                          }}
+                          viewport={{
+                            once: true,
+                          }}
+                          transition={{
+                            duration: 1,
+                          }}
+                          className="h-full bg-green-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* FOOTER */}
+                    <div
+                      className="
+                      mt-8
+                      flex
+                      flex-col
+                      lg:flex-row
+                      lg:items-center
+                      lg:justify-between
+                      gap-5
+                      "
                     >
-                      <FiTrash2 />
-                    </motion.button>
+                      <div
+                        className={`
+                        flex
+                        items-center
+                        gap-2
+                        text-sm
+                        ${
+                          darkMode
+                            ? "text-gray-500"
+                            : "text-gray-500"
+                        }
+                        `}
+                      >
+                        <FiCalendar />
+                        Submitted •{" "}
+                        {report.date}
+                      </div>
 
-                    {/* EDIT */}
-                    <motion.button
-                      whileHover={
-                        report.editable
-                          ? {
-                              scale: 1.04,
-                            }
-                          : {}
-                      }
-                      whileTap={
-                        report.editable
-                          ? {
-                              scale: 0.95,
-                            }
-                          : {}
-                      }
-                      disabled={
-                        !report.editable
-                      }
-                      onClick={() =>
-                        report.editable &&
-                        handleEdit(
-                          report
-                        )
-                      }
-                      className={`
-                      px-5
-                      py-3
-                      font-black
-                      flex
-                      items-center
-                      gap-3
-                      transition-all
-                      duration-300
-
-                      ${
-                        report.editable
-                          ? `
-                          bg-gradient-to-r
-                          from-green-400
-                          to-green-500
-                          text-white
-                          `
-                          : `
-                          bg-black/[0.03]
-                          text-black/25
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {/* DELETE */}
+                        <motion.button
+                          whileTap={{
+                            scale: 0.95,
+                          }}
+                          disabled={
+                            !report.editable
+                          }
+                          onClick={() =>
+                            report.editable &&
+                            handleDeleteClick(
+                              report
+                            )
+                          }
+                          className={`
+                          h-14
+                          w-14
                           border
-                          border-black/5
-                          cursor-not-allowed
-                          `
-                      }
-                      `}
-                    >
-                      {report.editable
-                        ? "Edit Report"
-                        : "Locked"}
+                          flex
+                          items-center
+                          justify-center
+                          transition-all
+                          duration-300
+                          ${
+                            report.editable
+                              ? `
+                                bg-red-500/10
+                                border-red-500/20
+                                text-red-500
+                                hover:bg-red-500
+                                hover:text-white
+                              `
+                              : `
+                                bg-gray-500/10
+                                border-gray-500/10
+                                text-gray-500
+                                cursor-not-allowed
+                              `
+                          }
+                          `}
+                        >
+                          <FiTrash2 />
+                        </motion.button>
 
-                      <FiArrowUpRight />
-                    </motion.button>
+                        {/* EDIT */}
+                        <motion.button
+                          whileHover={{
+                            scale: 1.02,
+                          }}
+                          whileTap={{
+                            scale: 0.98,
+                          }}
+                          disabled={
+                            !report.editable
+                          }
+                          onClick={() =>
+                            report.editable &&
+                            handleEdit(
+                              report
+                            )
+                          }
+                          className={`
+                          h-14
+                          px-6
+                          transition-all
+                          duration-300
+                          font-bold
+                          uppercase
+                          tracking-[0.15em]
+                          flex
+                          items-center
+                          justify-center
+                          gap-3
+                          flex-1
+                          sm:flex-none
+                          ${
+                            report.editable
+                              ? `
+                                bg-green-500
+                                hover:bg-green-400
+                                text-white
+                              `
+                              : `
+                                bg-gray-500/10
+                                text-gray-500
+                                cursor-not-allowed
+                              `
+                          }
+                          `}
+                        >
+                          {report.editable
+                            ? "Edit Report"
+                            : "Locked"}
+
+                          <FiArrowUpRight />
+                        </motion.button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* SIDE BAR */}
-              <div
-                className="
-                absolute
-                left-0
-                top-0
-                bottom-0
-                w-[4px]
-                bg-gradient-to-b
-                from-green-300
-                via-green-400
-                to-green-500
-                "
-              />
-            </motion.div>
-          )
-        )}
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* EMPTY */}
+      {filteredReports.length ===
+        0 && (
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          className={`
+          mt-10
+          border
+          p-10
+          text-center
+          ${
+            darkMode
+              ? `
+                bg-[#09131B]
+                border-white/10
+              `
+              : `
+                bg-white
+                border-gray-200
+              `
+          }
+          `}
+        >
+          <div
+            className="
+            mx-auto
+            w-20
+            h-20
+            bg-green-500
+            text-white
+            flex
+            items-center
+            justify-center
+            text-3xl
+            mb-6
+            "
+          >
+            <FiSearch />
+          </div>
+
+          <h3
+            className={`
+            text-3xl
+            font-black
+            ${
+              darkMode
+                ? "text-white"
+                : "text-black"
+            }
+            `}
+          >
+            No Reports Found
+          </h3>
+
+          <p
+            className={`
+            mt-4
+            max-w-lg
+            mx-auto
+            leading-relaxed
+            ${
+              darkMode
+                ? "text-gray-400"
+                : "text-gray-600"
+            }
+            `}
+          >
+            Try searching with a
+            different report title,
+            location, or status.
+          </p>
+        </motion.div>
+      )}
 
       {/* DELETE MODAL */}
       <AnimatePresence>
@@ -1070,39 +1012,51 @@ const ReportCardsGrid = ({
                 scale: 0.9,
                 opacity: 0,
               }}
-              className="
+              className={`
               w-full
               max-w-md
-              bg-white
-              border
-              border-green-100
               p-8
-              "
+              ${
+                darkMode
+                  ? `
+                    bg-[#09131B]
+                    border
+                    border-white/10
+                  `
+                  : "bg-white"
+              }
+              `}
             >
               <h3
-                className="
+                className={`
                 text-3xl
                 font-black
                 mb-4
-                "
+                ${
+                  darkMode
+                    ? "text-white"
+                    : "text-black"
+                }
+                `}
               >
                 Delete Report?
               </h3>
 
               <p
-                className="
-                text-black/60
-                leading-relaxed
-                "
+                className={
+                  darkMode
+                    ? "text-gray-400"
+                    : "text-gray-600"
+                }
               >
-                This report will be permanently removed.
+                This report will be
+                permanently removed.
               </p>
 
               <div
                 className="
                 mt-8
                 flex
-                items-center
                 justify-end
                 gap-4
                 "
@@ -1113,14 +1067,25 @@ const ReportCardsGrid = ({
                       false
                     )
                   }
-                  className="
+                  className={`
                   px-5
                   py-3
-                  border
-                  border-green-100
-                  bg-green-50
                   font-semibold
-                  "
+                  ${
+                    darkMode
+                      ? `
+                        bg-white/5
+                        border
+                        border-white/10
+                        text-white
+                      `
+                      : `
+                        border
+                        border-gray-200
+                        bg-gray-100
+                      `
+                  }
+                  `}
                 >
                   Cancel
                 </button>
@@ -1132,7 +1097,7 @@ const ReportCardsGrid = ({
                   className="
                   px-5
                   py-3
-                  bg-green-500
+                  bg-red-500
                   text-white
                   font-black
                   "
@@ -1167,7 +1132,7 @@ const ReportCardsGrid = ({
             flex
             items-center
             justify-center
-            p-3
+            p-4
             overflow-y-auto
             "
           >
@@ -1184,24 +1149,40 @@ const ReportCardsGrid = ({
                 opacity: 0,
                 scale: 0.95,
               }}
-              className="
+              className={`
               relative
               w-full
               max-w-2xl
-              bg-white
-              border
-              border-green-100
-              "
+              ${
+                darkMode
+                  ? `
+                    bg-[#09131B]
+                    border
+                    border-white/10
+                  `
+                  : "bg-white"
+              }
+              `}
             >
-              {/* HEADER */}
-              <div className="p-6 sm:p-8 border-b border-green-100">
+              <div
+                className={`
+                p-6
+                sm:p-8
+                border-b
+                ${
+                  darkMode
+                    ? "border-white/10"
+                    : "border-gray-200"
+                }
+                `}
+              >
                 <button
                   onClick={() =>
                     setShowEditModal(
                       false
                     )
                   }
-                  className="
+                  className={`
                   absolute
                   top-5
                   right-5
@@ -1210,25 +1191,27 @@ const ReportCardsGrid = ({
                   flex
                   items-center
                   justify-center
-                  text-black/60
-                  "
+                  ${
+                    darkMode
+                      ? "text-gray-400"
+                      : "text-black/60"
+                  }
+                  `}
                 >
                   <FiX />
                 </button>
 
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-4">
                   <div
                     className="
-                    w-16
-                    h-16
-                    bg-gradient-to-br
-                    from-green-400
-                    to-green-500
+                    w-14
+                    h-14
+                    bg-green-500
                     text-white
                     flex
                     items-center
                     justify-center
-                    text-2xl
+                    text-xl
                     "
                   >
                     <FiEdit3 />
@@ -1236,21 +1219,28 @@ const ReportCardsGrid = ({
 
                   <div>
                     <h2
-                      className="
+                      className={`
                       text-3xl
                       font-black
-                      "
+                      ${
+                        darkMode
+                          ? "text-white"
+                          : "text-black"
+                      }
+                      `}
                     >
                       Edit Report
                     </h2>
 
                     <p
-                      className="
-                      mt-2
-                      text-black/60
-                      "
+                      className={`mt-1 ${
+                        darkMode
+                          ? "text-gray-400"
+                          : "text-gray-600"
+                      }`}
                     >
-                      Update your report details.
+                      Update report
+                      details.
                     </p>
                   </div>
                 </div>
@@ -1258,11 +1248,23 @@ const ReportCardsGrid = ({
 
               {/* FORM */}
               <div className="p-6 sm:p-8 space-y-6">
-                {/* TITLE */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-black mb-3">
+                  <label
+                    className={`
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    font-black
+                    mb-3
+                    ${
+                      darkMode
+                        ? "text-white"
+                        : "text-black"
+                    }
+                    `}
+                  >
                     <FiFileText className="text-green-500" />
-
                     Report Title
                   </label>
 
@@ -1271,9 +1273,7 @@ const ReportCardsGrid = ({
                     value={
                       formData.title
                     }
-                    onChange={(
-                      e
-                    ) =>
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
                         title:
@@ -1281,23 +1281,46 @@ const ReportCardsGrid = ({
                             .value,
                       })
                     }
-                    className="
+                    className={`
                     w-full
                     px-5
                     py-4
-                    border
-                    border-green-100
-                    bg-green-50/40
                     outline-none
-                    "
+                    border
+                    ${
+                      darkMode
+                        ? `
+                          bg-white/[0.03]
+                          border-white/10
+                          text-white
+                        `
+                        : `
+                          bg-gray-50
+                          border-gray-200
+                          text-black
+                        `
+                    }
+                    `}
                   />
                 </div>
 
-                {/* LOCATION */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-black mb-3">
+                  <label
+                    className={`
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    font-black
+                    mb-3
+                    ${
+                      darkMode
+                        ? "text-white"
+                        : "text-black"
+                    }
+                    `}
+                  >
                     <FiMapPin className="text-green-500" />
-
                     Location
                   </label>
 
@@ -1306,9 +1329,7 @@ const ReportCardsGrid = ({
                     value={
                       formData.location
                     }
-                    onChange={(
-                      e
-                    ) =>
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
                         location:
@@ -1316,23 +1337,46 @@ const ReportCardsGrid = ({
                             .value,
                       })
                     }
-                    className="
+                    className={`
                     w-full
                     px-5
                     py-4
-                    border
-                    border-green-100
-                    bg-green-50/40
                     outline-none
-                    "
+                    border
+                    ${
+                      darkMode
+                        ? `
+                          bg-white/[0.03]
+                          border-white/10
+                          text-white
+                        `
+                        : `
+                          bg-gray-50
+                          border-gray-200
+                          text-black
+                        `
+                    }
+                    `}
                   />
                 </div>
 
-                {/* DESCRIPTION */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-black mb-3">
-                    <FiImage className="text-green-500" />
-
+                  <label
+                    className={`
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    font-black
+                    mb-3
+                    ${
+                      darkMode
+                        ? "text-white"
+                        : "text-black"
+                    }
+                    `}
+                  >
+                    <FiFileText className="text-green-500" />
                     Description
                   </label>
 
@@ -1341,9 +1385,7 @@ const ReportCardsGrid = ({
                     value={
                       formData.description
                     }
-                    onChange={(
-                      e
-                    ) =>
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
                         description:
@@ -1351,20 +1393,30 @@ const ReportCardsGrid = ({
                             .value,
                       })
                     }
-                    className="
+                    className={`
                     w-full
                     px-5
                     py-4
-                    border
-                    border-green-100
-                    bg-green-50/40
                     outline-none
                     resize-none
-                    "
+                    border
+                    ${
+                      darkMode
+                        ? `
+                          bg-white/[0.03]
+                          border-white/10
+                          text-white
+                        `
+                        : `
+                          bg-gray-50
+                          border-gray-200
+                          text-black
+                        `
+                    }
+                    `}
                   />
                 </div>
 
-                {/* BUTTONS */}
                 <div
                   className="
                   flex
@@ -1380,14 +1432,25 @@ const ReportCardsGrid = ({
                         false
                       )
                     }
-                    className="
+                    className={`
                     px-6
                     py-4
-                    border
-                    border-green-100
-                    bg-green-50
                     font-bold
-                    "
+                    ${
+                      darkMode
+                        ? `
+                          bg-white/5
+                          border
+                          border-white/10
+                          text-white
+                        `
+                        : `
+                          border
+                          border-gray-200
+                          bg-gray-100
+                        `
+                    }
+                    `}
                   >
                     Cancel
                   </button>
@@ -1399,9 +1462,7 @@ const ReportCardsGrid = ({
                     className="
                     px-6
                     py-4
-                    bg-gradient-to-r
-                    from-green-400
-                    to-green-500
+                    bg-green-500
                     text-white
                     font-black
                     flex
@@ -1411,7 +1472,6 @@ const ReportCardsGrid = ({
                     "
                   >
                     Save Changes
-
                     <FiSave />
                   </button>
                 </div>

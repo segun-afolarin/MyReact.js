@@ -1,70 +1,66 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
   FiActivity,
-  FiMapPin,
   FiShield,
-  FiClock,
   FiTrendingUp,
-  FiZap,
+  FiCheckCircle,
+  FiMapPin,
+  FiAlertTriangle,
+  FiClock,
+  FiLayers,
 } from "react-icons/fi";
 
 const DashboardPageHeader = ({
   darkMode,
 }) => {
-  const heroContent = [
+  const stats = [
     {
-      title1: "Report Problems",
-      title2: "Create Change",
-      paragraph:
-        "Help expose damaged roads, flooding, unsafe areas, and infrastructure failures before they become bigger dangers.",
+      title: "Reports",
+      value: "2.4K",
     },
 
     {
-      title1: "Your Voice",
-      title2: "Protects Communities",
-      paragraph:
-        "Every report helps communities respond faster and pushes attention toward neglected public infrastructure.",
+      title: "Verified",
+      value: "1.8K",
     },
 
     {
-      title1: "Smarter Cities",
-      title2: "Start With Citizens",
-      paragraph:
-        "NationAura combines citizen reports and AI monitoring to improve safety, awareness, and accountability.",
-    },
-
-    {
-      title1: "See Something",
-      title2: "Report It Instantly",
-      paragraph:
-        "Turn real-world problems into actionable civic intelligence using live reporting and smart tracking tools.",
-    },
-
-    {
-      title1: "Do not Ignore",
-      title2: "Critical Issues",
-      paragraph:
-        "Your report could prevent accidents, reduce risks, and help emergency teams react before situations worsen.",
-    },
-
-    {
-      title1: "Citizens First",
-      title2: "Build Stronger Cities",
-      paragraph:
-        "Real change begins when communities speak up, report faster, and work together to improve public safety.",
-    },
-
-    {
-      title1: "Track issues",
-      title2: "Protect Lives",
-      paragraph:
-        "Monitor dangerous areas, follow live reports, and help authorities identify critical situations earlier.",
+      title: "Resolved",
+      value: "91%",
     },
   ];
+
+  const heroContent = [
+  {
+    title1: "Community",
+    title2: "Reports",
+    paragraph:
+      "View and confirm reports shared by people around your location. Help verify real community issues before they are officially forwarded to the government for awareness and action.",
+  },
+
+  {
+    title1: "Live",
+    title2: "Verification",
+    paragraph:
+      "Every report goes through a live community verification process and requires 5 user confirmations before it becomes fully verified and ready for government review.",
+  },
+
+  {
+    title1: "Nearby",
+    title2: "Incidents",
+    paragraph:
+      "Stay updated on flooding, damaged roads, power outages, abandoned projects, and other urgent incidents reported by citizens living around your area.",
+  },
+
+  {
+    title1: "Citizens",
+    title2: "Taking Action",
+    paragraph:
+      "Communities work together to confirm real incidents, improve transparency, and help important local problems reach the right authorities faster.",
+  },
+];
 
   const [currentHero, setCurrentHero] =
     useState(0);
@@ -76,26 +72,32 @@ const DashboardPageHeader = ({
           ? 0
           : prev + 1
       );
-    }, 9000);
+    }, 8500);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <section
+    <motion.section
+      initial={{
+        opacity: 0,
+        y: 30,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.6,
+      }}
       className={`
       relative
       overflow-hidden
       border
-      p-6
-      md:p-8
-      lg:p-10
-      transition-all
-      duration-300
       ${
         darkMode
           ? `
-            bg-[#071018]
+            bg-[#081018]
             border-white/10
           `
           : `
@@ -105,77 +107,79 @@ const DashboardPageHeader = ({
       }
       `}
     >
-      {/* BACKGROUND */}
+      {/* GRID BACKGROUND */}
       <div
         className="
         absolute
         inset-0
-        overflow-hidden
-        pointer-events-none
+        opacity-[0.03]
         "
-      >
-        {/* GRID */}
-        <div
-          className="
-          absolute
-          inset-0
-          opacity-[0.04]
-          bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)]
-          bg-[size:65px_65px]
-          "
-        />
+        style={{
+          backgroundImage: `
+          linear-gradient(to right, #22c55e 1px, transparent 1px),
+          linear-gradient(to bottom, #22c55e 1px, transparent 1px)
+          `,
+          backgroundSize: "45px 45px",
+        }}
+      />
 
-        {/* GLOW */}
-        <div
-          className="
-          absolute
-          top-[-120px]
-          right-[-100px]
-          w-[320px]
-          h-[320px]
-          bg-green-500/10
-          blur-[120px]
-          "
-        />
+      {/* GLOW */}
+      <motion.div
+        animate={{
+          scale: [1, 1.08, 1],
+          opacity: [0.12, 0.2, 0.12],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+        }}
+        className="
+        absolute
+        top-0
+        right-0
+        w-80
+        h-80
+        bg-green-500/10
+        blur-3xl
+        "
+      />
 
-        {/* CYBER LINE */}
-        <div
-          className="
-          absolute
-          top-0
-          left-0
-          h-[1px]
-          w-full
-          bg-gradient-to-r
-          from-transparent
-          via-green-500
-          to-transparent
-          "
-        />
-      </div>
+      {/* TOP LINE */}
+      <div
+        className="
+        absolute
+        top-0
+        left-0
+        h-[2px]
+        w-full
+        bg-gradient-to-r
+        from-transparent
+        via-green-500
+        to-transparent
+        "
+      />
 
       {/* CONTENT */}
       <div
         className="
         relative
         z-10
-        flex
-        flex-col
-        gap-8
+        p-5
+        sm:p-6
+        lg:p-8
         "
       >
         <div
           className="
-          flex
-          flex-col
-          xl:flex-row
-          xl:items-center
-          xl:justify-between
-          gap-8
+          grid
+          grid-cols-1
+          xl:grid-cols-[1fr_360px]
+          gap-6
+          items-start
           "
         >
-          {/* LEFT */}
-          <div className="max-w-4xl">
+          {/* LEFT SIDE */}
+          <div>
             {/* BADGE */}
             <motion.div
               initial={{
@@ -187,7 +191,7 @@ const DashboardPageHeader = ({
                 y: 0,
               }}
               transition={{
-                duration: 0.4,
+                delay: 0.2,
               }}
               className={`
               inline-flex
@@ -196,13 +200,13 @@ const DashboardPageHeader = ({
               border
               px-4
               py-2
-              mb-6
+              mb-5
               ${
                 darkMode
                   ? `
                     bg-green-500/10
                     border-green-500/20
-                    text-green-400
+                    text-green-300
                   `
                   : `
                     bg-green-50
@@ -212,22 +216,50 @@ const DashboardPageHeader = ({
               }
               `}
             >
-              <FiShield />
+              <span
+                className="
+                relative
+                flex
+                w-2.5
+                h-2.5
+                "
+              >
+                <span
+                  className="
+                  absolute
+                  inline-flex
+                  h-full
+                  w-full
+                  animate-ping
+                  bg-green-400
+                  "
+                />
+
+                <span
+                  className="
+                  relative
+                  inline-flex
+                  h-2.5
+                  w-2.5
+                  bg-green-500
+                  "
+                />
+              </span>
 
               <span
                 className="
-                text-[11px]
-                font-black
+                text-xs
+                font-semibold
+                tracking-[0.15em]
                 uppercase
-                tracking-[0.2em]
                 "
               >
-                NationAura Live Network
+                Community Reports Network
               </span>
             </motion.div>
 
-            {/* DYNAMIC HERO */}
-            <div className="min-h-[250px] sm:min-h-[280px]">
+            {/* HERO CONTENT */}
+            <div className="min-h-[230px] sm:min-h-[270px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentHero}
@@ -250,12 +282,13 @@ const DashboardPageHeader = ({
                   {/* TITLE */}
                   <motion.h1
                     className={`
-                    text-[2.4rem]
-                    sm:text-[3.3rem]
-                    lg:text-[5rem]
-                    leading-[0.92]
-                    tracking-[-0.06em]
+                    text-[40px]
+                    sm:text-[56px]
+                    lg:text-[78px]
+                    leading-[0.9]
+                    tracking-[-0.07em]
                     font-black
+                    break-words
                     ${
                       darkMode
                         ? "text-white"
@@ -293,11 +326,17 @@ const DashboardPageHeader = ({
                         y: 0,
                       }}
                       transition={{
-                        delay: 0.25,
+                        delay: 0.3,
                       }}
                       className="
                       block
-                      text-green-500
+                      mt-1
+                      bg-gradient-to-r
+                      from-green-400
+                      via-emerald-500
+                      to-green-600
+                      bg-clip-text
+                      text-transparent
                       "
                     >
                       {
@@ -307,7 +346,7 @@ const DashboardPageHeader = ({
                     </motion.span>
                   </motion.h1>
 
-                  {/* DESCRIPTION */}
+                  {/* PARAGRAPH */}
                   <motion.p
                     initial={{
                       opacity: 0,
@@ -318,10 +357,10 @@ const DashboardPageHeader = ({
                       y: 0,
                     }}
                     transition={{
-                      delay: 0.4,
+                      delay: 0.5,
                     }}
                     className={`
-                   mt-6
+                    mt-6
                     max-w-2xl
                     text-sm
                     sm:text-base
@@ -342,40 +381,38 @@ const DashboardPageHeader = ({
               </AnimatePresence>
             </div>
 
-            {/* FEATURE TAGS */}
+            {/* STATS */}
             <motion.div
               initial={{
                 opacity: 0,
-                y: 15,
+                y: 20,
               }}
               animate={{
                 opacity: 1,
                 y: 0,
               }}
               transition={{
-                delay: 0.3,
+                delay: 0.5,
               }}
               className="
-              flex
-              flex-wrap
-              gap-3
               mt-2
+              grid
+              grid-cols-3
+              gap-3
               "
             >
-              {[
-                "Live Reports",
-                "AI Detection",
-                "Fast Response",
-                "Community Safety",
-              ].map((item, index) => (
-                <div
+              {stats.map((item, index) => (
+                <motion.div
                   key={index}
+                  whileHover={{
+                    y: -4,
+                    scale: 1.02,
+                  }}
                   className={`
-                  px-4
-                  py-3
+                  relative
+                  overflow-hidden
                   border
-                  text-sm
-                  font-semibold
+                  p-4
                   transition-all
                   duration-300
                   ${
@@ -383,20 +420,57 @@ const DashboardPageHeader = ({
                       ? `
                         bg-white/[0.03]
                         border-white/10
-                        text-white
                         hover:bg-white/[0.05]
                       `
                       : `
                         bg-[#FAFAFA]
                         border-gray-200
-                        text-black
                         hover:bg-white
                       `
                   }
                   `}
                 >
-                  {item}
-                </div>
+                  <div
+                    className="
+                    absolute
+                    top-0
+                    left-0
+                    h-full
+                    w-[2px]
+                    bg-green-500
+                    "
+                  />
+
+                  <h3
+                    className={`
+                    text-xl
+                    sm:text-2xl
+                    font-black
+                    ${
+                      darkMode
+                        ? "text-white"
+                        : "text-black"
+                    }
+                    `}
+                  >
+                    {item.value}
+                  </h3>
+
+                  <p
+                    className={`
+                    mt-1
+                    text-xs
+                    sm:text-sm
+                    ${
+                      darkMode
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    }
+                    `}
+                  >
+                    {item.title}
+                  </p>
+                </motion.div>
               ))}
             </motion.div>
           </div>
@@ -405,27 +479,24 @@ const DashboardPageHeader = ({
           <motion.div
             initial={{
               opacity: 0,
-              scale: 0.96,
+              x: 20,
             }}
             animate={{
               opacity: 1,
-              scale: 1,
+              x: 0,
             }}
             transition={{
-              duration: 0.5,
-              delay: 0.25,
+              delay: 0.5,
             }}
             className={`
             relative
             overflow-hidden
             border
-            p-6
-            min-w-[310px]
-            max-w-full
+            p-5
             ${
               darkMode
                 ? `
-                  bg-[#0D1720]
+                  bg-white/[0.03]
                   border-white/10
                 `
                 : `
@@ -435,59 +506,105 @@ const DashboardPageHeader = ({
             }
             `}
           >
-            {/* PANEL LINE */}
+            {/* PANEL GLOW */}
             <div
               className="
               absolute
-              top-0
-              left-0
-              h-[2px]
-              w-full
-              bg-gradient-to-r
-              from-green-500
-              via-emerald-400
-              to-transparent
+              top-[-60px]
+              right-[-40px]
+              w-40
+              h-40
+              bg-green-500/10
+              blur-3xl
               "
             />
 
+            {/* HEADER */}
             <div
               className="
               relative
               z-10
-              space-y-5
+              flex
+              items-center
+              justify-between
               "
             >
-              {/* STATUS */}
+              <div>
+                <p
+                  className={`
+                  text-xs
+                  uppercase
+                  tracking-[0.2em]
+                  ${
+                    darkMode
+                      ? "text-gray-500"
+                      : "text-gray-400"
+                  }
+                  `}
+                >
+                  Oversight Analytics
+                </p>
+
+                <h3
+                  className={`
+                  mt-2
+                  text-2xl
+                  font-black
+                  leading-tight
+                  ${
+                    darkMode
+                      ? "text-white"
+                      : "text-black"
+                  }
+                  `}
+                >
+                  Civic Monitoring
+                  <span className="block text-green-500">
+                    Intelligence
+                  </span>
+                </h3>
+              </div>
+
+              <motion.div
+                animate={{
+                  rotate: [0, 8, -8, 0],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                }}
+                className="
+                w-14
+                h-14
+                bg-gradient-to-br
+                from-green-600
+                to-emerald-700
+                text-white
+                flex
+                items-center
+                justify-center
+                text-xl
+                shadow-[0_10px_30px_rgba(34,197,94,0.35)]
+                "
+              >
+                <FiActivity />
+              </motion.div>
+            </div>
+
+            {/* RESPONSE SCORE */}
+            <div className="relative z-10 mt-8">
               <div
                 className="
                 flex
-                items-center
+                items-end
                 justify-between
-                gap-4
                 "
               >
                 <div>
-                  <p
+                  <h2
                     className={`
-                    text-xs
-                    uppercase
-                    tracking-[0.2em]
-                    mb-2
-                    ${
-                      darkMode
-                        ? "text-gray-500"
-                        : "text-gray-400"
-                    }
-                    `}
-                  >
-                    Live Operations
-                  </p>
-
-                  <h3
-                    className={`
-                    text-xl
+                    text-5xl
                     font-black
-                    uppercase
                     ${
                       darkMode
                         ? "text-white"
@@ -495,97 +612,117 @@ const DashboardPageHeader = ({
                     }
                     `}
                   >
-                    Monitoring Active
-                  </h3>
+                    94%
+                  </h2>
+
+                  <p
+                    className={`
+                    mt-2
+                    text-sm
+                    ${
+                      darkMode
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    }
+                    `}
+                  >
+                    Verification Accuracy
+                  </p>
                 </div>
 
                 <div
                   className="
-                  relative
-                  w-14
-                  h-14
                   flex
                   items-center
-                  justify-center
-                  border
-                  border-green-500/20
-                  bg-green-500/10
+                  gap-2
                   text-green-500
+                  font-semibold
                   "
                 >
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.5, 0, 0.5],
-                    }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2,
-                    }}
-                    className="
-                    absolute
-                    inset-0
-                    bg-green-500/10
-                    "
-                  />
+                  <FiTrendingUp />
 
-                  <FiActivity className="text-2xl" />
+                  +18%
                 </div>
               </div>
 
-              {/* LIVE MESSAGE */}
+              {/* BAR */}
               <div
                 className={`
-                border
-                p-4
+                mt-5
+                h-3
+                overflow-hidden
                 ${
                   darkMode
-                    ? `
-                      bg-green-500/[0.03]
-                      border-green-500/10
-                    `
-                    : `
-                      bg-green-50
-                      border-green-200
-                    `
+                    ? "bg-white/10"
+                    : "bg-gray-200"
                 }
                 `}
               >
-                <p
-                  className={`
-                  text-sm
-                  leading-relaxed
-                  ${
-                    darkMode
-                      ? "text-gray-300"
-                      : "text-gray-700"
-                  }
-                  `}
-                >
-                  Live reports are helping
-                  communities detect risks
-                  faster and improve response
-                  times.
-                </p>
-              </div>
-
-              {/* STATS */}
-              <div
-                className="
-                grid
-                grid-cols-2
-                gap-4
-                "
-              >
                 <motion.div
+                  initial={{
+                    width: 0,
+                  }}
+                  animate={{
+                    width: "94%",
+                  }}
+                  transition={{
+                    duration: 1.3,
+                    delay: 0.8,
+                  }}
+                  className="
+                  h-full
+                  bg-gradient-to-r
+                  from-green-500
+                  to-emerald-600
+                  "
+                />
+              </div>
+            </div>
+
+            {/* METRICS */}
+            <div
+              className="
+              relative
+              z-10
+              mt-6
+              grid
+              grid-cols-2
+              gap-3
+              "
+            >
+              {[
+                {
+                  icon: <FiMapPin />,
+                  label: "Active Zones",
+                  value: "148",
+                },
+
+                {
+                  icon: <FiClock />,
+                  label: "Avg Response",
+                  value: "2.4h",
+                },
+
+                {
+                  icon: <FiCheckCircle />,
+                  label: "Resolved",
+                  value: "892",
+                },
+
+                {
+                  icon: <FiLayers />,
+                  label: "Monitoring",
+                  value: "Live",
+                },
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
                   whileHover={{
                     y: -4,
                   }}
                   className={`
                   border
                   p-4
-                  transition-all
-                  duration-300
                   ${
                     darkMode
                       ? `
@@ -608,23 +745,23 @@ const DashboardPageHeader = ({
                     mb-3
                     "
                   >
-                    <FiMapPin />
+                    {item.icon}
 
                     <span
                       className="
                       text-[11px]
                       uppercase
-                      font-bold
                       tracking-[0.15em]
+                      font-bold
                       "
                     >
-                      Active Zones
+                      {item.label}
                     </span>
                   </div>
 
                   <h4
                     className={`
-                    text-3xl
+                    text-2xl
                     font-black
                     ${
                       darkMode
@@ -633,109 +770,97 @@ const DashboardPageHeader = ({
                     }
                     `}
                   >
-                    148
+                    {item.value}
                   </h4>
                 </motion.div>
+              ))}
+            </div>
 
-                <motion.div
-                  whileHover={{
-                    y: -4,
-                  }}
-                  className={`
-                  border
-                  p-4
-                  transition-all
-                  duration-300
-                  ${
-                    darkMode
-                      ? `
-                        bg-white/[0.03]
-                        border-white/10
-                      `
-                      : `
-                        bg-white
-                        border-gray-200
-                      `
-                  }
-                  `}
-                >
-                  <div
-                    className="
-                    flex
-                    items-center
-                    gap-2
-                    text-emerald-400
-                    mb-3
-                    "
-                  >
-                    <FiClock />
-
-                    <span
-                      className="
-                      text-[11px]
-                      uppercase
-                      font-bold
-                      tracking-[0.15em]
-                      "
-                    >
-                      Response
-                    </span>
-                  </div>
-
-                  <h4
-                    className={`
-                    text-3xl
-                    font-black
-                    ${
-                      darkMode
-                        ? "text-white"
-                        : "text-black"
-                    }
-                    `}
-                  >
-                    2.4h
-                  </h4>
-                </motion.div>
-              </div>
-
-              {/* BUTTON */}
-              <motion.div
-                whileHover={{
-                  scale: 1.02,
-                }}
-                whileTap={{
-                  scale: 0.98,
-                }}
+            {/* PRIORITY ALERT */}
+            <motion.div
+              whileHover={{
+                y: -4,
+              }}
+              className={`
+              relative
+              z-10
+              mt-6
+              border
+              p-4
+              ${
+                darkMode
+                  ? `
+                    bg-amber-500/10
+                    border-amber-500/20
+                  `
+                  : `
+                    bg-amber-50
+                    border-amber-200
+                  `
+              }
+              `}
+            >
+              <div
+                className="
+                flex
+                items-start
+                gap-4
+                "
               >
-                <Link
-                  to="/report"
+                <div
                   className="
-                  w-full
-                  h-14
+                  w-11
+                  h-11
+                  shrink-0
+                  bg-amber-500
+                  text-white
                   flex
                   items-center
                   justify-center
-                  gap-3
-                  bg-green-500
-                  text-white
-                  font-black
-                  uppercase
-                  tracking-[0.15em]
-                  transition-all
-                  duration-300
-                  hover:bg-green-400
                   "
                 >
-                  <FiTrendingUp />
+                  <FiAlertTriangle />
+                </div>
 
-                  Submit Report
-                </Link>
-              </motion.div>
-            </div>
+                <div>
+                  <h4
+                    className={`
+                    font-bold
+                    ${
+                      darkMode
+                        ? "text-white"
+                        : "text-black"
+                    }
+                    `}
+                  >
+                    High Priority Activity
+                  </h4>
+
+                  <p
+                    className={`
+                    mt-2
+                    text-sm
+                    leading-relaxed
+                    ${
+                      darkMode
+                        ? "text-gray-300"
+                        : "text-gray-600"
+                    }
+                    `}
+                  >
+                    Multiple critical road and
+                    flooding reports require
+                    urgent verification before
+                    escalation to emergency
+                    response authorities.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

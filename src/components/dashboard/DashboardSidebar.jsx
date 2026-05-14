@@ -6,13 +6,14 @@ import {
 } from "framer-motion";
 
 import {
-  FiGrid,
+  FiHome,
+  FiSend,
+  FiFolder,
+  FiUser,
   FiMap,
-  FiFileText,
-  FiUsers,
   FiBell,
+  FiBarChart2,
   FiSettings,
-  FiMessageCircle,
   FiLogOut,
   FiChevronRight,
 } from "react-icons/fi";
@@ -40,23 +41,25 @@ const DashboardSidebar = ({
     {
       title: "Dashboard",
       path: "/CitizenDashboard",
-      icon: <FiGrid />,
+      icon: <FiHome />,
     },
 
     {
-      title: "Live Reports",
+      title: "Community Reports",
       path: "/SubmitReport",
-      icon: <FiFileText />,
+      icon: <FiFolder />,
     },
+
     {
       title: "Submit Report",
       path: "/report",
-      icon: <FiFileText />,
+      icon: <FiSend />,
     },
+
     {
       title: "My Reports",
       path: "/reports",
-      icon: <FiUsers />,
+      icon: <FiBarChart2 />,
     },
 
     {
@@ -74,7 +77,14 @@ const DashboardSidebar = ({
     {
       title: "AI Analytics",
       path: "/analytics",
-      icon: <FiMessageCircle />,
+      icon: <FiBarChart2 />,
+    },
+
+    // NEW PROFILE LINK
+    {
+      title: "Profile",
+      path: "/profile",
+      icon: <FiUser />,
     },
   ];
 

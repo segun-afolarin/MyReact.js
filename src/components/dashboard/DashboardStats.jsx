@@ -853,7 +853,7 @@ const DashboardStats = ({
                     tracking-[-0.06em]
                     "
                   >
-                    Jos, Nigeria
+                    Kwara, Nigeria
                   </h3>
                 </div>
               </div>
