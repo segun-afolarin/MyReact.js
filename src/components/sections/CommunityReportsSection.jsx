@@ -96,7 +96,8 @@ const CommunityReportsSection = () => {
         z-10
         max-w-7xl
         mx-auto
-        px-6
+        px-4
+        sm:px-6
         lg:px-12
         "
       >
@@ -134,7 +135,6 @@ const CommunityReportsSection = () => {
             gap-2
             px-5
             py-2
-            rounded-full
             bg-white
             border
             border-black/5
@@ -170,7 +170,8 @@ const CommunityReportsSection = () => {
           <p
             className="
             mt-6
-            text-lg
+            text-base
+            sm:text-lg
             text-gray-600
             leading-relaxed
             max-w-3xl
@@ -231,8 +232,8 @@ const CommunityReportsSection = () => {
                 className={`
                 relative
                 overflow-hidden
-                rounded-[36px]
-                min-h-[500px]
+                min-h-[450px]
+                sm:min-h-[500px]
                 cursor-pointer
                 group
                 shadow-[0_25px_80px_rgba(0,0,0,0.10)]
@@ -304,7 +305,6 @@ const CommunityReportsSection = () => {
                     className="
                     px-4
                     py-2
-                    rounded-full
                     bg-red-500/90
                     backdrop-blur-xl
                     text-white
@@ -324,7 +324,6 @@ const CommunityReportsSection = () => {
                     gap-2
                     px-3
                     py-2
-                    rounded-full
                     bg-white/10
                     border
                     border-white/10
@@ -338,7 +337,6 @@ const CommunityReportsSection = () => {
                       className="
                       w-2
                       h-2
-                      rounded-full
                       bg-green-400
                       animate-pulse
                       "
@@ -357,7 +355,8 @@ const CommunityReportsSection = () => {
                   bottom-0
                   left-0
                   w-full
-                  p-7
+                  p-6
+                  sm:p-7
                   z-20
                   "
                 >
@@ -368,7 +367,6 @@ const CommunityReportsSection = () => {
                     inline-flex
                     items-center
                     gap-2
-                    rounded-full
                     bg-green-600/90
                     text-white
                     px-4
@@ -412,7 +410,8 @@ const CommunityReportsSection = () => {
                       }}
 
                       className="
-                      text-3xl
+                      text-2xl
+                      sm:text-3xl
                       font-black
                       leading-[1]
                       tracking-tight
@@ -431,6 +430,8 @@ const CommunityReportsSection = () => {
                     mt-5
                     text-gray-200
                     leading-relaxed
+                    text-sm
+                    sm:text-base
                     "
                   >
                     {report.description}
@@ -443,6 +444,7 @@ const CommunityReportsSection = () => {
                     flex
                     items-center
                     justify-between
+                    gap-4
                     "
                   >
 
@@ -499,7 +501,6 @@ const CommunityReportsSection = () => {
                     inset-0
                     border-2
                     border-green-400/60
-                    rounded-[36px]
                     pointer-events-none
                     "
                   />
