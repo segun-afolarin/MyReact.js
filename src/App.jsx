@@ -14,7 +14,9 @@ import CommunityVoicesPage  from "./pages/CommunityVoicesPage"
 import PolicyPage from "./pages/PolicyPage";
 import CitizenDashboard from "./pages/CitizenDashboard"
 import AboutPage from "./pages/AboutPage";
-import SubmitReport from "./pages/SubmitReport"
+import SubmitReport from "./pages/SubmitReport";
+import Contact from "./pages/Contact";
+import CommunityAlert from "./pages/CommunityAlert"
 import Mission from "./pages/Mission";
 import ReportIncident from"./pages/ReportIncident";
 import Profile from "./pages/Profile";
@@ -24,8 +26,7 @@ import HelpCenter from "./pages/help-center";
 import FAQPage from "./pages/FAQ";
 import MyReportsDashboard from "./pages/MyReportsDashboard";
 import Documentation from "./pages/Documentation";
-import ContactPage from "./pages/Contact";
-import Signup from "./pages/Signup"
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import { Import } from "lucide-react";
 
@@ -60,7 +61,12 @@ function App() {
             path="/reports"
             element={<MyReportsDashboard />}
           />
-
+            <Route
+            path="/CommunityAlert"
+            element={<CommunityAlert />}
+          />
+          
+          
 
           {/* ABOUT */}
           <Route
@@ -103,7 +109,7 @@ function App() {
           {/* CONTACT */}
           <Route
             path="/contact"
-            element={<ContactPage />}
+            element={<Contact />}
           />
           <Route
             path="/CitizenDashboard"

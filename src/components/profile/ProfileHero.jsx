@@ -326,7 +326,7 @@ useEffect(() => {
                   "
                 >
                   <FiMapPin />
-                  Abuja, Nigeria
+                  Kwara State, Nigeria
                 </div>
 
                 <div
