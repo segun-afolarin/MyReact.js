@@ -67,6 +67,11 @@ const DashboardSidebar = ({
       path: "/map",
       icon: <FiMap />,
     },
+    {
+      title: "ViewReportDetails",
+      path: "/details",
+      icon: <FiMap />,
+    },
 
     {
       title: "Community Alerts",

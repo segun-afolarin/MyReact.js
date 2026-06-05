@@ -1,547 +1,422 @@
+import { useEffect, useState } from "react";
+
 import { motion } from "framer-motion";
 
 import {
-  FiMapPin,
-  FiUsers,
+  FiUploadCloud,
   FiCpu,
-  FiBriefcase,
+  FiUsers,
+  FiShield,
   FiTool,
   FiCheckCircle,
   FiClock,
   FiActivity,
-  FiArrowUpRight,
 } from "react-icons/fi";
 
 const timeline = [
   {
     title: "Report Submitted",
     description:
-      "Road damage evidence submitted with geo-location and AI tracking enabled instantly.",
-    time: "2 May • 09:14 AM",
-    icon: <FiMapPin />,
+      "Citizen uploads issue evidence, location details, and report information into the platform.",
     status: "Completed",
-    progress: 100,
-    note: "Evidence uploaded successfully.",
+    icon: FiUploadCloud,
   },
-
   {
-    title: "Community Verified",
+    title: "AI Verification",
     description:
-      "Nearby citizens confirmed the issue severity and boosted report visibility.",
-    time: "2 May • 11:42 AM",
-    icon: <FiUsers />,
-    status: "Verified",
-    progress: 100,
-    note: "27 nearby confirmations received.",
+      "AI validates report authenticity, detects duplicates, and analyzes severity level.",
+    status: "Processing",
+    icon: FiCpu,
   },
-
   {
-    title: "AI Risk Analysis",
+    title: "Community Validation",
     description:
-      "NationAura AI flagged the report as high-risk and escalated it for review.",
-    time: "2 May • 01:10 PM",
-    icon: <FiCpu />,
-    status: "AI Complete",
-    progress: 100,
-    note: "Critical infrastructure risk detected.",
+      "Nearby citizens help confirm the issue and strengthen report credibility.",
+    status: "Completed",
+    icon: FiUsers,
   },
-
   {
-    title: "Agency Assigned",
+    title: "Government Review",
     description:
-      "Government response teams officially acknowledged the report.",
-    time: "3 May • 08:20 AM",
-    icon: <FiBriefcase />,
-    status: "Assigned",
-    progress: 85,
-    note: "Agency response activated.",
+      "Relevant authorities receive and review the issue for action and prioritization.",
+    status: "Pending",
+    icon: FiShield,
   },
-
   {
-    title: "Repair In Progress",
+    title: "Resolution Action",
     description:
-      "Repair teams are currently working on-site with reconstruction underway.",
-    time: "5 May • 02:35 PM",
-    icon: <FiTool />,
-    status: "In Progress",
-    progress: 72,
-    note: "Drainage reconstruction started.",
-  },
-
-  {
-    title: "Resolution Pending",
-    description:
-      "Repairs are nearing completion and awaiting final citizen verification.",
-    time: "Expected • 7 May",
-    icon: <FiCheckCircle />,
-    status: "Final Review",
-    progress: 45,
-    note: "Awaiting public confirmation.",
+      "Repair teams, inspections, or government interventions are carried out.",
+    status: "Awaiting Action",
+    icon: FiTool,
   },
 ];
 
-const ResolutionTimeline = ({
-  darkMode,
-}) => {
+const stats = [
+  {
+    icon: FiCheckCircle,
+    value: "2,847+",
+    label: "Reports Resolved",
+  },
+  {
+    icon: FiActivity,
+    value: "94%",
+    label: "AI Accuracy",
+  },
+  {
+    icon: FiClock,
+    value: "31",
+    label: "States Active",
+  },
+];
+
+const quotes = [
+  "Every resolved report represents a citizen who refused to stay silent.",
+  "Transparency turns citizen voices into government action.",
+  "One report can transform an entire community.",
+  "Real change begins when citizens speak up.",
+  "Technology and people together can rebuild trust.",
+];
+
+const ResolutionTimeline = () => {
+  const [activeQuote, setActiveQuote] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveQuote((prev) =>
+        prev === quotes.length - 1 ? 0 : prev + 1
+      );
+    }, 9000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="relative">
-      {/* HEADER */}
-      <div className="mb-10">
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.5,
-          }}
-          viewport={{ once: true }}
-          className={`
-          inline-flex
-          items-center
-          gap-3
-          px-4
-          py-3
-          border
-          mb-5
-          ${
-            darkMode
-              ? `
-                bg-[#081019]
-                border-white/10
-                text-green-300
-              `
-              : `
-                bg-white
-                border-gray-200
-                text-green-700
-              `
-          }
-          `}
-        >
-          <FiActivity />
+    <section className="relative overflow-hidden bg-white py-24 px-6 lg:px-12">
+      {/* GREEN GLOW */}
+      <div className="absolute top-0 right-0 w-[350px] h-[350px] bg-green-500/10 blur-3xl rounded-full" />
 
-          <span
-            className="
-            text-[11px]
-            uppercase
-            tracking-[0.25em]
-            font-black
-            "
-          >
-            RESOLUTION TIMELINE
-          </span>
-        </motion.div>
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/10 blur-3xl rounded-full" />
 
-        <motion.h2
-          initial={{
-            opacity: 0,
-            y: 30,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.6,
-          }}
-          viewport={{ once: true }}
-          className="
-          text-4xl
-          sm:text-5xl
-          lg:text-6xl
-          font-black
-          leading-[0.95]
-          tracking-[-0.05em]
-          "
-        >
-          Track Report
-          <span className="text-green-500">
-            {" "}
-            Resolution
-          </span>
-        </motion.h2>
-
-        <motion.p
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            delay: 0.1,
-            duration: 0.6,
-          }}
-          viewport={{ once: true }}
-          className={`
-          mt-5
-          max-w-3xl
-          text-sm
-          sm:text-base
-          leading-relaxed
-          ${
-            darkMode
-              ? "text-white/65"
-              : "text-black/65"
-          }
-          `}
-        >
-          Follow how reports move from
-          citizen submission to
-          verification, AI review, and
-          government action.
-        </motion.p>
-      </div>
-
-      {/* TIMELINE */}
+      {/* GRID */}
       <div
         className="
-        relative
-        grid
-        grid-cols-1
-        xl:grid-cols-2
-        gap-5
-        "
-      >
-        {timeline.map(
-          (item, index) => (
-            <motion.div
-              key={index}
+        absolute
+        inset-0
+        opacity-[0.03]
+        bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)]
+        bg-[size:45px_45px]
+      "
+      />
+
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-20 lg:grid-cols-2 lg:items-start">
+        {/* LEFT CONTENT */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="sticky top-24"
+        >
+          <span
+            className="
+            mb-5
+            inline-flex
+            items-center
+            gap-2
+            border
+            border-green-200
+            bg-green-50
+            px-4
+            py-2
+            text-[11px]
+            font-black
+            uppercase
+            tracking-[0.2em]
+            text-green-700
+          "
+          >
+            <FiActivity />
+
+            Resolution Timeline
+          </span>
+
+          <h2 className="max-w-xl text-4xl font-black leading-[0.95] tracking-[-0.06em] text-black sm:text-5xl lg:text-6xl">
+            Track Report
+            <span className="block text-green-500">
+              Resolution
+            </span>
+          </h2>
+
+          <p className="mt-6 max-w-xl text-base sm:text-lg leading-8 text-gray-600">
+            Follow how citizen reports move from submission to AI verification,
+            authority review, and real-world government action — all within one
+            transparent civic response system.
+          </p>
+
+          {/* QUOTE */}
+          <div className="mt-8 border-l-4 border-green-500 pl-5 min-h-[80px] flex items-center">
+            <motion.p
+              key={activeQuote}
               initial={{
                 opacity: 0,
-                y: 40,
+                y: 10,
               }}
-              whileInView={{
+              animate={{
                 opacity: 1,
                 y: 0,
               }}
               transition={{
-                duration: 0.5,
-                delay: index * 0.08,
+                duration: 0.6,
               }}
-              viewport={{ once: true }}
-              whileHover={{
-                y: -4,
-              }}
-              className={`
-              relative
-              overflow-hidden
-              border
-              transition-all
-              duration-300
-              ${
-                darkMode
-                  ? `
-                    bg-[#081019]
-                    border-white/10
-                    hover:border-green-500/30
-                  `
-                  : `
-                    bg-white
-                    border-gray-200
-                    hover:border-green-300
-                  `
-              }
-              `}
+              className="text-base font-medium italic leading-7 text-gray-700"
             >
-              {/* TOP LINE */}
-              <div
-                className="
-                absolute
-                top-0
-                left-0
-                h-[3px]
-                w-full
-                bg-gradient-to-r
-                from-green-400
-                via-green-500
-                to-transparent
-                "
-              />
+              “{quotes[activeQuote]}”
+            </motion.p>
+          </div>
 
-              <div className="p-5 sm:p-6">
-                {/* TOP */}
-                <div
+          {/* STATS */}
+          <div className="mt-12 grid gap-5 sm:grid-cols-3">
+            {stats.map((item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                  }}
+                  viewport={{ once: true }}
                   className="
-                  flex
-                  items-start
-                  justify-between
-                  gap-4
-                  "
+                  relative
+                  overflow-hidden
+                  border
+                  border-green-100
+                  bg-white
+                  p-5
+                  shadow-[0_10px_40px_rgba(34,197,94,0.06)]
+                  transition-all
+                  duration-300
+                  hover:-translate-y-1
+                  hover:shadow-[0_20px_60px_rgba(34,197,94,0.12)]
+                "
                 >
-                  {/* LEFT */}
-                  <div className="flex gap-4">
-                    {/* ICON */}
+                  {/* TOP LINE */}
+                  <div
+                    className="
+                    absolute
+                    top-0
+                    left-0
+                    h-[2px]
+                    w-full
+                    bg-gradient-to-r
+                    from-green-500
+                    to-transparent
+                  "
+                  />
+
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.35)]">
+                    <Icon className="text-xl" />
+                  </div>
+
+                  <h3 className="text-2xl font-black text-black">
+                    {item.value}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    {item.label}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* RIGHT TIMELINE */}
+        <div className="relative">
+          {/* LINE */}
+          <div className="absolute left-[27px] top-0 hidden h-full w-[2px] bg-gradient-to-b from-green-500 via-green-300 to-transparent lg:block" />
+
+          <div className="space-y-8">
+            {timeline.map((item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{
+                    opacity: 0,
+                    x: 50,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    x: 0,
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    delay: index * 0.1,
+                  }}
+                  viewport={{ once: true }}
+                  className="relative flex gap-5"
+                >
+                  {/* ICON */}
+                  <div
+                    className="
+                    relative
+                    z-10
+                    hidden
+                    h-14
+                    w-14
+                    flex-shrink-0
+                    items-center
+                    justify-center
+                    bg-green-500
+                    text-white
+                    shadow-[0_0_40px_rgba(34,197,94,0.35)]
+                    lg:flex
+                  "
+                  >
+                    <Icon className="text-2xl" />
+                  </div>
+
+                  {/* CARD */}
+                  <div
+                    className="
+                    relative
+                    overflow-hidden
+                    w-full
+                    border
+                    border-green-100
+                    bg-white
+                    p-7
+                    shadow-[0_10px_40px_rgba(34,197,94,0.06)]
+                    transition-all
+                    duration-300
+                    hover:-translate-y-1
+                    hover:shadow-[0_20px_60px_rgba(34,197,94,0.12)]
+                  "
+                  >
+                    {/* TOP LINE */}
                     <div
                       className="
-                      w-14
-                      h-14
-                      flex
-                      items-center
-                      justify-center
-                      bg-green-50
-                      text-green-600
-                      text-xl
-                      border
-                      border-green-100
-                      "
-                    >
-                      {item.icon}
-                    </div>
+                      absolute
+                      top-0
+                      left-0
+                      h-[2px]
+                      w-full
+                      bg-gradient-to-r
+                      from-green-500
+                      via-emerald-400
+                      to-transparent
+                    "
+                    />
 
-                    {/* TEXT */}
-                    <div>
-                      <div
+                    {/* ACTIVE GLOW */}
+                    {item.status === "Processing" && (
+                      <motion.div
+                        animate={{
+                          x: ["-100%", "100%"],
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2,
+                        }}
                         className="
-                        flex
-                        flex-wrap
-                        items-center
-                        gap-3
-                        "
-                      >
-                        <h3
-                          className="
-                          text-2xl
-                          font-black
-                          leading-tight
+                        absolute
+                        inset-0
+                        bg-gradient-to-r
+                        from-transparent
+                        via-green-500/10
+                        to-transparent
+                      "
+                      />
+                    )}
+
+                    <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        {/* MOBILE ICON */}
+                        <div className="mb-4 flex items-center gap-3 lg:hidden">
+                          <div
+                            className="
+                            flex
+                            h-12
+                            w-12
+                            items-center
+                            justify-center
+                            bg-green-500
+                            text-white
                           "
-                        >
+                          >
+                            <Icon className="text-xl" />
+                          </div>
+                        </div>
+
+                        <h3 className="text-2xl font-black tracking-[-0.03em] text-black">
                           {item.title}
                         </h3>
 
-                        <div
-                          className="
-                          px-3
-                          py-1.5
-                          bg-green-50
-                          border
-                          border-green-100
-                          text-green-700
-                          text-[10px]
-                          uppercase
-                          tracking-[0.15em]
-                          font-black
-                          "
-                        >
-                          {item.status}
-                        </div>
+                        <p className="mt-3 max-w-2xl leading-7 text-gray-600">
+                          {item.description}
+                        </p>
                       </div>
 
-                      <div
+                      <span
                         className={`
-                        mt-3
-                        flex
+                        inline-flex
+                        w-fit
                         items-center
-                        gap-2
-                        text-sm
+                        justify-center
+                        px-4
+                        py-2
+                        text-[10px]
+                        font-black
+                        uppercase
+                        tracking-[0.18em]
                         ${
-                          darkMode
-                            ? "text-white/50"
-                            : "text-black/50"
+                          item.status === "Completed"
+                            ? "bg-green-500 text-white"
+                            : item.status === "Processing"
+                            ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                            : "bg-gray-100 border border-gray-200 text-gray-500"
                         }
-                        `}
+                      `}
                       >
-                        <FiClock className="text-green-500" />
+                        {item.status}
+                      </span>
+                    </div>
 
-                        {item.time}
-                      </div>
+                    {/* PROGRESS BAR */}
+                    <div className="mt-6 h-2 w-full overflow-hidden bg-green-100">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{
+                          width:
+                            item.status === "Completed"
+                              ? "100%"
+                              : item.status === "Processing"
+                              ? "70%"
+                              : item.status === "Pending"
+                              ? "45%"
+                              : "20%",
+                        }}
+                        transition={{ duration: 1 }}
+                        viewport={{ once: true }}
+                        className="
+                        h-full
+                        bg-gradient-to-r
+                        from-green-500
+                        to-emerald-400
+                      "
+                      />
                     </div>
                   </div>
-
-                  {/* STEP */}
-                  <div
-                    className="
-                    text-right
-                    "
-                  >
-                    <p
-                      className={`
-                      text-[10px]
-                      uppercase
-                      tracking-[0.2em]
-                      ${
-                        darkMode
-                          ? "text-white/40"
-                          : "text-black/40"
-                      }
-                      `}
-                    >
-                      Stage
-                    </p>
-
-                    <h4
-                      className="
-                      mt-1
-                      text-2xl
-                      font-black
-                      text-green-500
-                      "
-                    >
-                      0{index + 1}
-                    </h4>
-                  </div>
-                </div>
-
-                {/* DESC */}
-                <p
-                  className={`
-                  mt-6
-                  text-sm
-                  sm:text-base
-                  leading-relaxed
-                  ${
-                    darkMode
-                      ? "text-white/65"
-                      : "text-black/65"
-                  }
-                  `}
-                >
-                  {item.description}
-                </p>
-
-                {/* PROGRESS */}
-                <div className="mt-7">
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`
-                      text-sm
-                      ${
-                        darkMode
-                          ? "text-white/50"
-                          : "text-black/50"
-                      }
-                      `}
-                    >
-                      Progress
-                    </span>
-
-                    <span
-                      className="
-                      text-lg
-                      font-black
-                      text-green-500
-                      "
-                    >
-                      {item.progress}%
-                    </span>
-                  </div>
-
-                  <div
-                    className={`
-                    h-3
-                    overflow-hidden
-                    ${
-                      darkMode
-                        ? "bg-white/10"
-                        : "bg-gray-100"
-                    }
-                    `}
-                  >
-                    <motion.div
-                      initial={{
-                        width: 0,
-                      }}
-                      whileInView={{
-                        width: `${item.progress}%`,
-                      }}
-                      transition={{
-                        duration: 1,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      className="
-                      h-full
-                      bg-gradient-to-r
-                      from-green-400
-                      via-green-500
-                      to-emerald-400
-                      "
-                    />
-                  </div>
-                </div>
-
-                {/* FOOTER */}
-                <div
-                  className={`
-                  mt-7
-                  pt-5
-                  border-t
-                  flex
-                  flex-col
-                  sm:flex-row
-                  sm:items-center
-                  sm:justify-between
-                  gap-4
-                  ${
-                    darkMode
-                      ? "border-white/10"
-                      : "border-gray-200"
-                  }
-                  `}
-                >
-                  <div>
-                    <p
-                      className={`
-                      text-sm
-                      ${
-                        darkMode
-                          ? "text-white/45"
-                          : "text-black/45"
-                      }
-                      `}
-                    >
-                      Latest Update
-                    </p>
-
-                    <h4
-                      className="
-                      mt-1
-                      font-semibold
-                      text-green-600
-                      "
-                    >
-                      {item.note}
-                    </h4>
-                  </div>
-
-                  <motion.button
-                    whileHover={{
-                      scale: 1.02,
-                    }}
-                    whileTap={{
-                      scale: 0.97,
-                    }}
-                    className="
-                    px-5
-                    py-3
-                    bg-green-500
-                    hover:bg-green-600
-                    text-white
-                    font-bold
-                    flex
-                    items-center
-                    gap-2
-                    transition-all
-                    duration-300
-                    "
-                  >
-                    View Details
-
-                    <FiArrowUpRight />
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          )
-        )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );

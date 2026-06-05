@@ -17,6 +17,7 @@ import AboutPage from "./pages/AboutPage";
 import SubmitReport from "./pages/SubmitReport"
 import Mission from "./pages/Mission";
 import ReportIncident from"./pages/ReportIncident";
+import Profile from "./pages/Profile";
 import Impact from "./pages/Impact";
 import Government from "./pages/government";
 import HelpCenter from "./pages/help-center";
@@ -26,6 +27,7 @@ import Documentation from "./pages/Documentation";
 import ContactPage from "./pages/Contact";
 import Signup from "./pages/Signup"
 import NotFound from "./pages/NotFound";
+import { Import } from "lucide-react";
 
 function App() {
   return (
@@ -86,6 +88,10 @@ function App() {
           <Route
             path="/help-center"
             element={<HelpCenter />}
+          />
+          <Route
+            path="/Profile"
+            element={<Profile />}
           />
 
           {/* FAQ */}

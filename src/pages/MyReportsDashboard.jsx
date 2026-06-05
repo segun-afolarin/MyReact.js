@@ -13,31 +13,22 @@ import CommunityVerificationFeed from "../components/reports/CommunityVerificati
 
 const MyReportsDashboard = () => {
   /* DARK MODE */
-  const [darkMode, setDarkMode] =
-    useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   /* DESKTOP SIDEBAR */
-  const [sidebarOpen, setSidebarOpen] =
-    useState(
-      typeof window !== "undefined"
-        ? window.innerWidth >= 1280
-        : true
-    );
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1280 : true
+  );
 
   /* MOBILE SIDEBAR */
-  const [mobileSidebar, setMobileSidebar] =
-    useState(false);
+  const [mobileSidebar, setMobileSidebar] = useState(false);
 
   /* DARK MODE EFFECT */
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add(
-        "dark"
-      );
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove(
-        "dark"
-      );
+      document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
 
@@ -50,100 +41,42 @@ const MyReportsDashboard = () => {
         setSidebarOpen(true);
       }
     };
-
     handleResize();
-
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
+    // ── ROOT: NO overflow-hidden — it would clip the fixed modal overlay ──
     <div
       className={`
-      relative
-      min-h-screen
-      overflow-hidden
-      transition-all
-      duration-500
-      ${
-        darkMode
-          ? "bg-[#071017] text-white"
-          : "bg-[#F3F5F7] text-black"
-      }
+        relative
+        min-h-screen
+        transition-all
+        duration-500
+        ${darkMode ? "bg-[#071017] text-white" : "bg-[#F3F5F7] text-black"}
       `}
     >
-      {/* GLOBAL BACKGROUND */}
-      <div
-        className="
-        pointer-events-none
-        absolute
-        inset-0
-        overflow-hidden
-        "
-      >
+      {/* GLOBAL BACKGROUND — pointer-events-none so it never blocks the modal */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
         {/* TOP GLOW */}
-        <div
-          className="
-          absolute
-          top-[-220px]
-          left-[-140px]
-          w-[460px]
-          h-[460px]
-          bg-green-500/10
-          blur-3xl
-          rounded-full
-          "
-        />
-
+        <div className="absolute top-[-220px] left-[-140px] w-[460px] h-[460px] bg-green-500/10 blur-3xl rounded-full" />
         {/* RIGHT GLOW */}
-        <div
-          className="
-          absolute
-          top-[15%]
-          right-[-160px]
-          w-[400px]
-          h-[400px]
-          bg-emerald-500/10
-          blur-3xl
-          rounded-full
-          "
-        />
-
+        <div className="absolute top-[15%] right-[-160px] w-[400px] h-[400px] bg-emerald-500/10 blur-3xl rounded-full" />
         {/* BOTTOM GLOW */}
-        <div
-          className="
-          absolute
-          bottom-[-200px]
-          left-[20%]
-          w-[320px]
-          h-[320px]
-          bg-green-400/10
-          blur-3xl
-          rounded-full
-          "
-        />
-
+        <div className="absolute bottom-[-200px] left-[20%] w-[320px] h-[320px] bg-green-400/10 blur-3xl rounded-full" />
         {/* GRID */}
         <div
-          className="
-          absolute
-          inset-0
-          opacity-[0.03]
-          bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)]
-          bg-[size:80px_80px]
-          "
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right,#22c55e 1px,transparent 1px),linear-gradient(to bottom,#22c55e 1px,transparent 1px)",
+            backgroundSize: "80px 80px",
+          }}
         />
       </div>
 
-      {/* HEADER */}
+      {/* HEADER — z-[60] keeps it below the modal overlay (z-[9999]) */}
       <DashboardHeader
         darkMode={darkMode}
         setDarkMode={setDarkMode}
@@ -153,7 +86,7 @@ const MyReportsDashboard = () => {
         setMobileSidebar={setMobileSidebar}
       />
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR — z-[55] sits below header and well below modal */}
       <DashboardSidebar
         sidebarOpen={sidebarOpen}
         mobileSidebar={mobileSidebar}
@@ -161,78 +94,47 @@ const MyReportsDashboard = () => {
         darkMode={darkMode}
       />
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CONTENT — z-10, shifted by sidebar width */}
       <main
         className={`
-        relative
-        z-10
-        transition-all
-        duration-500
-        pt-24
-        md:pt-28
-        pb-32
-        px-4
-        sm:px-6
-        lg:px-8
-        ${
-          sidebarOpen
-            ? "xl:ml-[290px]"
-            : "xl:ml-[96px]"
-        }
+          relative
+          z-10
+          transition-all
+          duration-500
+          pt-24
+          md:pt-28
+          pb-32
+          px-4
+          sm:px-6
+          lg:px-8
+          ${sidebarOpen ? "xl:ml-[290px]" : "xl:ml-[96px]"}
         `}
       >
         {/* WRAPPER */}
-        <div
-          className="
-          max-w-[1700px]
-          mx-auto
-          space-y-8
-          "
-        >
+        <div className="max-w-[1700px] mx-auto space-y-8">
+
           {/* HERO */}
-          <ReportHero
-            darkMode={darkMode}
-          />
+          <ReportHero darkMode={darkMode} />
 
           {/* IMPACT OVERVIEW */}
-          <ImpactOverviewCards
-            darkMode={darkMode}
-          />
+          <ImpactOverviewCards darkMode={darkMode} />
 
-           {/* REPORTS GRID */}
-          <ReportCardsGrid
-            darkMode={darkMode}
-          />
+          {/* REPORTS GRID — modal renders as fixed portal above everything */}
+          <ReportCardsGrid darkMode={darkMode} />
+
           {/* TIMELINE */}
-          <ResolutionTimeline
-            darkMode={darkMode}
-          />
+          <ResolutionTimeline darkMode={darkMode} />
 
-         
-
-          {/* AI + GOVERNMENT */}
-          <section
-            className="
-            grid
-            grid-cols-1
-            2xl:grid-cols-[0.8fr_1.2fr]
-            gap-6
-            items-start
-            "
-          >
-          </section>
+          {/* AI + GOVERNMENT (placeholder grid kept for future sections) */}
+          <section className="grid grid-cols-1 2xl:grid-cols-[0.8fr_1.2fr] gap-6 items-start" />
 
           {/* COMMUNITY FEED */}
-          <CommunityVerificationFeed
-            darkMode={darkMode}
-          />
+          <CommunityVerificationFeed darkMode={darkMode} />
         </div>
       </main>
 
-      {/* MOBILE NAVIGATION */}
-      <FloatingBottomNav
-        darkMode={darkMode}
-      />
+      {/* MOBILE NAVIGATION — z-[60] same as header, below modal */}
+      <FloatingBottomNav darkMode={darkMode} />
     </div>
   );
 };
