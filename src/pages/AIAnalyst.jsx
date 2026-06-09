@@ -4,16 +4,17 @@ import DashboardHeader from "../components/dashboard/DashboardHeader";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import FloatingBottomNav from "../components/dashboard/FloatingBottomNav";
 
-import AlertsHero from "../components/community-alerts/AlertsHero";
-import AlertsStatus from "../components/community-alerts/AlertsStatus";
-import AlertsStats from "../components/community-alerts/AlertsStats";
-import AlertsMap from "../components/community-alerts/AlertsMap";
-import AlertsFeed from "../components/community-alerts/AlertsFeed";
-import AlertsPulse from "../components/community-alerts/AlertsPulse";
-import AlertsForecast from "../components/community-alerts/AlertsForecast";
-import AlertsEmergency from "../components/community-alerts/AlertsEmergency";
+import AIHero from "../components/ai-analyst/AIHero";
+import AIHealthOverview from "../components/ai-analyst/AIHealthOverview";
+import AIInsightsFeed from "../components/ai-analyst/AIInsightsFeed";
+import AITrendAnalysis from "../components/ai-analyst/AITrendAnalysis";
+import AIGovernmentPerformance from "../components/ai-analyst/AIGovernmentPerformance";
+import AIPriorityIssues from "../components/ai-analyst/AIPriorityIssues";
+import AIPredictions from "../components/ai-analyst/AIPredictions";
+import AIRecommendations from "../components/ai-analyst/AIRecommendations";
+import AIChatAnalyst from "../components/ai-analyst/AIChatAnalyst";
 
-const CommunityAlert = () => {
+const AIAnalyst = () => {
   const [darkMode, setDarkMode] =
     useState(false);
 
@@ -77,7 +78,7 @@ const CommunityAlert = () => {
         }
       `}
     >
-      {/* BACKGROUND EFFECTS */}
+      {/* Background Effects */}
       <div
         className="
           absolute
@@ -170,39 +171,40 @@ const CommunityAlert = () => {
       >
         <div className="max-w-[1850px] mx-auto">
           <div className="flex flex-col gap-6">
+            <AIHero darkMode={darkMode} />
 
-            <AlertsHero
+            <AIHealthOverview
               darkMode={darkMode}
             />
 
-            <AlertsStatus
+            <AIInsightsFeed
               darkMode={darkMode}
             />
 
-            <AlertsStats
+
+            <AITrendAnalysis
               darkMode={darkMode}
             />
 
-            <AlertsMap
+            <AIGovernmentPerformance
               darkMode={darkMode}
             />
 
-            <AlertsFeed
+            <AIPriorityIssues
               darkMode={darkMode}
             />
 
-            <AlertsPulse
+            <AIPredictions
               darkMode={darkMode}
             />
 
-            <AlertsForecast
+            <AIRecommendations
               darkMode={darkMode}
             />
 
-            <AlertsEmergency
+            <AIChatAnalyst
               darkMode={darkMode}
             />
-
           </div>
         </div>
       </main>
@@ -214,4 +216,4 @@ const CommunityAlert = () => {
   );
 };
 
-export default CommunityAlert;
+export default AIAnalyst;

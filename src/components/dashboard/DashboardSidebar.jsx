@@ -62,11 +62,6 @@ const DashboardSidebar = ({
       icon: <FiBarChart2 />,
     },
 
-    {
-      title: "Infrastructure Map",
-      path: "/map",
-      icon: <FiMap />,
-    },
   
 
     {
@@ -77,7 +72,7 @@ const DashboardSidebar = ({
 
     {
       title: "AI Analytics",
-      path: "/analytics",
+      path: "/AIAnalyst",
       icon: <FiBarChart2 />,
     },
 

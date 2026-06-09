@@ -21,6 +21,7 @@ import Mission from "./pages/Mission";
 import ReportIncident from"./pages/ReportIncident";
 import Profile from "./pages/Profile";
 import Impact from "./pages/Impact";
+import AIAnalyst from "./pages/AIAnalyst"
 import Government from "./pages/government";
 import HelpCenter from "./pages/help-center";
 import FAQPage from "./pages/FAQ";
@@ -88,6 +89,10 @@ function App() {
           <Route
             path="/impact"
             element={<Impact />}
+          />
+          <Route
+            path="/AIAnalyst"
+            element={<AIAnalyst />}
           />
 
           {/* HELP CENTER */}

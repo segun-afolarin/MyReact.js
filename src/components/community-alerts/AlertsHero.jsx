@@ -185,7 +185,7 @@ const AlertsHero = ({ darkMode }) => {
             {/* BUTTONS */}
             <div className="mt-7 flex flex-col sm:flex-row gap-4">
               <Link
-                to="/report"
+                to="/SubmitReport"
                 className="px-6 py-3 bg-green-600 text-white font-semibold flex items-center justify-center gap-2"
               >
                 Report Alert <FiArrowUpRight />
