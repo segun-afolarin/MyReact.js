@@ -37,52 +37,50 @@ const DashboardSidebar = ({
     typeof window !== "undefined" &&
     window.innerWidth < 768;
 
-  const menuItems = [
-    {
-      title: "Dashboard",
-      path: "/CitizenDashboard",
-      icon: <FiHome />,
-    },
+const menuItems = [
+  {
+    title: "Dashboard",
+    path: "/CitizenDashboard",
+    icon: <FiHome />,
+  },
 
-    {
-      title: "Community Reports",
-      path: "/SubmitReport",
-      icon: <FiFolder />,
-    },
+  {
+    title: "Community Reports",
+    path: "/SubmitReport",
+    icon: <FiFolder />,
+  },
 
-    {
-      title: "Submit Report",
-      path: "/report",
-      icon: <FiSend />,
-    },
+  {
+    title: "Submit Report",
+    path: "/report",
+    icon: <FiSend />,
+  },
 
-    {
-      title: "My Reports",
-      path: "/reports",
-      icon: <FiBarChart2 />,
-    },
+  {
+    title: "My Reports",
+    path: "/reports",
+    icon: <FiBarChart2 />,
+  },
 
-  
+  {
+    title: "Community Alerts",
+    path: "/CommunityAlert",
+    icon: <FiBell />,
+  },
 
-    {
-      title: "Community Alerts",
-      path: "/CommunityAlert",
-      icon: <FiBell />,
-    },
+  {
+    title: "AI Analytics",
+    path: "/AIAnalyst",
+    icon: <FiBarChart2 />,
+  },
 
-    {
-      title: "AI Analytics",
-      path: "/AIAnalyst",
-      icon: <FiBarChart2 />,
-    },
 
-    // NEW PROFILE LINK
-    {
-      title: "Profile",
-      path: "/profile",
-      icon: <FiUser />,
-    },
-  ];
+  {
+    title: "Profile",
+    path: "/profile",
+    icon: <FiUser />,
+  },
+];
 
   return (
     <>
@@ -669,143 +667,253 @@ const DashboardSidebar = ({
             }
             `}
           >
-            {/* SETTINGS */}
-            <motion.button
-              whileHover={{
-                x: 4,
-              }}
-              whileTap={{
-                scale: 0.97,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 260,
-                damping: 18,
-              }}
-              className={`
-              group
-              relative
-              h-[56px]
-              flex
-              items-center
-              transition-all
-              duration-300
-              ${
-                sidebarOpen || isMobile
-                  ? "gap-4 px-4"
-                  : "justify-center items-center"
-              }
-              ${
-                darkMode
-                  ? `
-                    text-gray-300
-                    hover:bg-white/[0.05]
-                    hover:text-white
-                  `
-                  : `
-                    text-gray-600
-                    hover:bg-[#F3F4F6]
-                    hover:text-black
-                  `
-              }
-              `}
-            >
-              <FiSettings className="text-[20px]" />
+           {/* SETTINGS */}
+<Link
 
-              <AnimatePresence mode="wait">
-                {(sidebarOpen ||
-                  isMobile) && (
-                  <motion.span
-                    initial={{
-                      opacity: 0,
-                    }}
-                    animate={{
-                      opacity: 1,
-                    }}
-                    exit={{
-                      opacity: 0,
-                    }}
-                    transition={{
-                      duration: 0.2,
-                    }}
-                    className="
-                    text-sm
-                    font-medium
-                    "
-                  >
-                    Settings
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+to="/settings"
 
-            {/* LOGOUT */}
-            <motion.button
-              whileHover={{
-                x: 4,
-              }}
-              whileTap={{
-                scale: 0.97,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 260,
-                damping: 18,
-              }}
-              className="
-              group
-              relative
-              h-[56px]
-              flex
-              items-center
-              text-red-500
-              hover:bg-red-500/10
-              transition-all
-              duration-300
-              "
-            >
-              <div
-                className={`
-                flex
-                items-center
-                w-full
-                ${
-                  sidebarOpen ||
-                  isMobile
-                    ? "gap-4 px-4"
-                    : "justify-center items-center"
-                }
-                `}
-              >
-                <FiLogOut className="text-[20px]" />
+onClick={()=>{
+  if(window.innerWidth < 1280){
+    setMobileSidebar(false);
+  }
+}}
 
-                <AnimatePresence mode="wait">
-                  {(sidebarOpen ||
-                    isMobile) && (
-                    <motion.span
-                      initial={{
-                        opacity: 0,
-                      }}
-                      animate={{
-                        opacity: 1,
-                      }}
-                      exit={{
-                        opacity: 0,
-                      }}
-                      transition={{
-                        duration: 0.2,
-                      }}
-                      className="
-                      text-sm
-                      font-medium
-                      "
-                    >
-                      Logout
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.button>
+className={`
+
+group
+relative
+h-[56px]
+flex
+items-center
+transition-all
+duration-300
+overflow-hidden
+
+
+${
+  location.pathname === "/settings"
+
+  ?
+
+  `
+  bg-green-600
+  text-white
+  shadow-[0_12px_30px_rgba(34,197,94,0.30)]
+  `
+
+  :
+
+  darkMode
+
+  ?
+
+  `
+  text-gray-300
+  hover:bg-white/[0.05]
+  hover:text-white
+  `
+
+  :
+
+  `
+  text-gray-600
+  hover:bg-[#F3F4F6]
+  hover:text-black
+  `
+
+}
+
+
+${
+ sidebarOpen || isMobile
+ ? "gap-4 px-4"
+ : "justify-center items-center"
+}
+
+`}
+
+>
+
+
+{/* ACTIVE BAR */}
+
+{
+location.pathname === "/settings" && (
+
+<motion.div
+
+layoutId="activeSidebar"
+
+transition={{
+ type:"spring",
+ stiffness:280,
+ damping:22,
+}}
+
+className="
+absolute
+left-0
+top-0
+bottom-0
+w-1.5
+bg-white
+"
+
+/>
+
+)
+}
+
+
+
+<FiSettings className="text-[20px] relative z-10" />
+
+
+
+<AnimatePresence mode="wait">
+
+{(sidebarOpen || isMobile) && (
+
+<motion.span
+
+initial={{
+opacity:0,
+}}
+
+animate={{
+opacity:1,
+}}
+
+exit={{
+opacity:0,
+}}
+
+transition={{
+duration:0.2,
+}}
+
+className="
+relative
+z-10
+text-sm
+font-medium
+"
+
+>
+
+Settings
+
+</motion.span>
+
+)}
+
+</AnimatePresence>
+
+
+
+</Link>
+
+         {/* LOGOUT */}
+
+<Link
+
+to="/logout"
+
+onClick={()=>{
+
+localStorage.clear();
+
+sessionStorage.clear();
+
+if(window.innerWidth < 1280){
+  setMobileSidebar(false);
+}
+
+}}
+
+className={`
+
+group
+relative
+h-[56px]
+flex
+items-center
+transition-all
+duration-300
+overflow-hidden
+
+
+text-red-500
+hover:bg-red-500/10
+
+
+${
+ sidebarOpen || isMobile
+ ? "gap-4 px-4"
+ : "justify-center items-center"
+}
+
+`}
+
+>
+
+
+<FiLogOut 
+className="
+text-[20px]
+relative
+z-10
+"
+/>
+
+
+
+<AnimatePresence mode="wait">
+
+{(sidebarOpen || isMobile) && (
+
+<motion.span
+
+initial={{
+opacity:0,
+x:-8,
+}}
+
+animate={{
+opacity:1,
+x:0,
+}}
+
+exit={{
+opacity:0,
+x:-8,
+}}
+
+transition={{
+duration:0.2,
+}}
+
+className="
+relative
+z-10
+text-sm
+font-medium
+whitespace-nowrap
+"
+
+>
+
+Logout
+
+</motion.span>
+
+)}
+
+</AnimatePresence>
+
+
+
+</Link>
           </div>
         </div>
       </motion.aside>

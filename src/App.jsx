@@ -14,12 +14,14 @@ import CommunityVoicesPage  from "./pages/CommunityVoicesPage"
 import PolicyPage from "./pages/PolicyPage";
 import CitizenDashboard from "./pages/CitizenDashboard"
 import AboutPage from "./pages/AboutPage";
+import Settings from "./pages/Settings";
 import SubmitReport from "./pages/SubmitReport";
 import Contact from "./pages/Contact";
 import CommunityAlert from "./pages/CommunityAlert"
 import Mission from "./pages/Mission";
 import ReportIncident from"./pages/ReportIncident";
 import Profile from "./pages/Profile";
+import Logout from "./pages/Logout";
 import Impact from "./pages/Impact";
 import AIAnalyst from "./pages/AIAnalyst"
 import Government from "./pages/government";
@@ -65,6 +67,10 @@ function App() {
             <Route
             path="/CommunityAlert"
             element={<CommunityAlert />}
+          />
+            <Route
+            path="/Settings"
+            element={<Settings />}
           />
           
           
@@ -124,6 +130,10 @@ function App() {
             path="/Signup"
             element={<Signup />}
           />
+          <Route
+path="/logout"
+element={<Logout />}
+/>
           <Route
             path="/Documentation"
             element={<Documentation />}
