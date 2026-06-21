@@ -16,39 +16,34 @@ const ReportsHero = ({
 
 const heroContent = [
 
-{
- title1:"Your Reports",
- title2:"Command Center",
- paragraph:
- "Manage every report you submitted, monitor progress, and see how your contribution is improving your community."
-},
+  {
+    title1: "Your Reports",
+    title2: "Command Center",
+    paragraph:
+      "This is your personal civic control room where every report you submit comes to life. Track progress, monitor verification, and see how your actions are directly shaping safer, smarter, and more accountable communities around you."
+  },
 
+  {
+    title1: "Track Every",
+    title2: "Community Action",
+    paragraph:
+      "Follow each stage of your reports in real time — from submission to verification and final government response. Stay fully informed as your contributions move through the system and create measurable change in your environment."
+  },
 
-{
- title1:"Track Every",
- title2:"Community Action",
- paragraph:
- "Follow verification, authority response, and resolution updates from one intelligent civic dashboard."
-},
+  {
+    title1: "Your Evidence",
+    title2: "Creates Impact",
+    paragraph:
+      "Every report you submit becomes part of a growing system of truth. Verified evidence helps authorities detect issues faster, prioritize urgent problems, and deliver real solutions that improve daily life in your community."
+  },
 
-
-{
- title1:"Your Evidence",
- title2:"Creates Impact",
- paragraph:
- "Every verified report helps identify problems faster and supports better decisions."
-},
-
-
-{
- title1:"Stay Connected",
- title2:"To Change",
- paragraph:
- "Monitor your civic activities and see real progress from the issues you raise."
-}
-
+  {
+    title1: "Stay Connected",
+    title2: "To Change",
+    paragraph:
+      "You are not just reporting issues — you are actively shaping progress. Stay connected to every update, every confirmation, and every resolution as your voice continues to drive meaningful civic transformation."
+  }
 ];
-
 
 
 const stats=[

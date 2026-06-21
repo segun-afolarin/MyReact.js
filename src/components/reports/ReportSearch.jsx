@@ -19,8 +19,9 @@ const ReportSearch = ({
 
       className={`
         sticky
-        top-[90px]   /* 🔥 IMPORTANT FIX (accounts for header height) */
-        z-50
+        top-20
+        md:top-24
+        z-40
         w-full
         border-b
         backdrop-blur-xl
@@ -30,6 +31,27 @@ const ReportSearch = ({
           : "bg-white/95 border-gray-200"
         }
       `}
+      /*
+        ⚠️ FIXES APPLIED:
+
+        1. `top` now uses `top-20 md:top-24` (Tailwind spacing scale,
+           80px / 96px) instead of an arbitrary `top-[90px]`. This now
+           matches `<main>`'s actual padding-top in MyReportsDashboard
+           (`pt-24 md:pt-28`, i.e. header height + a little breathing
+           room) so the bar locks exactly under the header instead of
+           overlapping it or leaving a gap.
+
+        2. `z-50` → `z-40`. DashboardHeader almost certainly sits at a
+           higher z-index (commonly 50) since it's fixed/sticky too —
+           if both are z-50, stacking order becomes unpredictable across
+           browsers. Keeping this one step below the header avoids it
+           rendering on top of the header on scroll.
+
+        3. This is now the ONLY sticky wrapper for the search bar — the
+           parent page no longer wraps it in a second sticky div. Sticky
+           elements nested inside other sticky elements with different
+           `top` offsets is what broke this originally.
+      */
     >
 
       <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -72,7 +94,9 @@ const ReportSearch = ({
           {/* ACTIONS */}
           <div className="flex items-center gap-3">
 
-            <button className={`
+            <button
+              type="button"
+              className={`
               h-12 px-4 flex items-center gap-2 text-sm font-medium border
               ${darkMode
                 ? "border-white/10 text-white hover:bg-white/5"
@@ -83,7 +107,13 @@ const ReportSearch = ({
               Filter
             </button>
 
-            <button className={`
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setFilter("All");
+              }}
+              className={`
               h-12 px-4 flex items-center gap-2 text-sm font-medium border
               ${darkMode
                 ? "border-white/10 text-white hover:bg-white/5"
@@ -104,6 +134,7 @@ const ReportSearch = ({
           {filters.map((item) => (
             <button
               key={item}
+              type="button"
               onClick={() => setFilter(item)}
               className={`
                 whitespace-nowrap

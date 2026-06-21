@@ -18,7 +18,7 @@ const footerLinks = {
     },
     {
       name: "Government Portal",
-      path: "/government",
+      path: "/Government",
     },
     {
       name: "AI Verification",

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext"; // ← adjust path if needed
 
 import {
   FiAlertTriangle,
@@ -53,6 +54,14 @@ const stats = [
 const DashboardStats = ({
   darkMode,
 }) => {
+  const { user } = useAuth();
+
+  // Real saved location from the user's profile (set during LocationSetup),
+  // falling back gracefully if either piece is somehow missing.
+  const userState   = user?.state?.trim();
+  const userCountry = user?.country?.trim() || "Nigeria";
+  const regionLabel = userState ? `${userState}, ${userCountry}` : "Setting up...";
+
   return (
    <section className="relative mt-10 sm:mt-14 overflow-hidden bg-transparent">
   {/* BACKGROUND */}
@@ -853,7 +862,7 @@ const DashboardStats = ({
                     tracking-[-0.06em]
                     "
                   >
-                    Kwara, Nigeria
+                    {regionLabel}
                   </h3>
                 </div>
               </div>
@@ -865,7 +874,7 @@ const DashboardStats = ({
               </p>
 
               <motion.a
-                href="/location-control"
+                href="/location-setup"
                 whileHover={{
                   x: 5,
                   scale: 1.03,

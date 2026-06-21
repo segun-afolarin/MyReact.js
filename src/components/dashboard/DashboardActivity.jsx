@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useState } from "react";
 
@@ -16,6 +16,9 @@ import {
   FiPlus,
   FiNavigation,
   FiUsers,
+  FiX,
+  FiUploadCloud,
+  FiLoader,
 } from "react-icons/fi";
 
 const nearbyReports = [
@@ -96,6 +99,207 @@ const cardVariants = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// CONFIRMATION MODAL
+// Handles the whole upload → verifying → submitted flow for one report.
+// Fully self-contained, no network calls — everything here is simulated.
+// ─────────────────────────────────────────────────────────────────────────
+const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
+  // stage: "upload" → "verifying" → "submitted"
+  const [stage, setStage] = useState("upload");
+  const [preview, setPreview] = useState("");
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreview(reader.result);
+      setStage("verifying");
+
+      // Simulated AI verification delay — no backend call, just a timer
+      setTimeout(() => {
+        setStage("submitted");
+        onSubmitted(); // bumps the confirmation count on the parent card
+      }, 2600);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={(e) => {
+        // Only allow closing by clicking the backdrop once submitted —
+        // prevents accidentally losing progress mid-upload/verify.
+        if (e.target === e.currentTarget && stage === "submitted") onClose();
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        className={`
+        relative w-full max-w-md border overflow-hidden
+        ${darkMode ? "bg-[#0C1712] border-white/10" : "bg-white border-gray-200"}
+        `}
+      >
+        {/* CLOSE — only enabled at submitted stage */}
+        {stage === "submitted" && (
+          <button
+            onClick={onClose}
+            className={`
+            absolute top-4 right-4 w-9 h-9 flex items-center justify-center z-10
+            ${darkMode ? "bg-white/[0.06] text-white hover:bg-white/[0.12]" : "bg-gray-100 text-black hover:bg-gray-200"}
+            `}
+          >
+            <FiX />
+          </button>
+        )}
+
+        <div className="p-6 sm:p-8">
+          {/* REPORT CONTEXT — shown at every stage so user knows what they're confirming */}
+          <p className={`text-xs uppercase tracking-[0.15em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            {report.type}
+          </p>
+          <h3 className={`mt-1 text-lg font-bold leading-snug ${darkMode ? "text-white" : "text-black"}`}>
+            {report.title}
+          </h3>
+
+          {/* ── STAGE 1: UPLOAD ─────────────────────────────────────────── */}
+          {stage === "upload" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-6"
+            >
+              <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                To confirm this report, upload a photo showing the issue still
+                exists at this location. This helps our AI verify accuracy
+                before forwarding it to authorities.
+              </p>
+
+              <label
+                className={`
+                mt-5 flex flex-col items-center justify-center gap-3
+                border-2 border-dashed h-48 cursor-pointer transition-colors
+                ${darkMode
+                  ? "border-white/15 hover:border-green-500/40 bg-white/[0.02]"
+                  : "border-gray-300 hover:border-green-400 bg-[#FAFAFA]"}
+                `}
+              >
+                <FiUploadCloud className="text-3xl text-green-500" />
+                <span className={`text-sm font-semibold ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  Tap to upload a photo
+                </span>
+                <span className="text-xs text-gray-500">JPG or PNG</span>
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                />
+              </label>
+
+              <button
+                onClick={onClose}
+                className={`
+                mt-4 w-full h-11 text-sm font-semibold border transition-colors
+                ${darkMode ? "border-white/10 text-gray-300 hover:bg-white/[0.04]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}
+                `}
+              >
+                Cancel
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── STAGE 2: VERIFYING ──────────────────────────────────────── */}
+          {stage === "verifying" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-6 flex flex-col items-center text-center py-4"
+            >
+              {preview && (
+                <div className="w-full h-40 mb-5 overflow-hidden border border-white/10">
+                  <img src={preview} alt="Uploaded evidence" className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
+                className="w-14 h-14 flex items-center justify-center bg-green-500/10 text-green-500 text-2xl"
+              >
+                <FiLoader />
+              </motion.div>
+
+              <h4 className={`mt-5 font-bold ${darkMode ? "text-white" : "text-black"}`}>
+                AI is verifying your photo...
+              </h4>
+              <p className={`mt-2 text-sm max-w-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Checking image quality, location consistency, and matching it
+                against this report.
+              </p>
+
+              {/* indeterminate progress shimmer */}
+              <div className={`mt-5 w-full h-1.5 overflow-hidden ${darkMode ? "bg-white/10" : "bg-gray-200"}`}>
+                <motion.div
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-600"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ width: "50%" }}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── STAGE 3: SUBMITTED ──────────────────────────────────────── */}
+          {stage === "submitted" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              className="mt-6 flex flex-col items-center text-center py-4"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 18 }}
+                className="w-16 h-16 flex items-center justify-center bg-green-500 text-white text-3xl"
+              >
+                <FiCheckCircle />
+              </motion.div>
+
+              <h4 className={`mt-5 text-xl font-black ${darkMode ? "text-white" : "text-black"}`}>
+                Confirmation Submitted
+              </h4>
+              <p className={`mt-2 text-sm max-w-xs leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Thank you. Your photo confirmation has been added to this
+                report. Once enough citizens confirm, it will be escalated to
+                the appropriate authority.
+              </p>
+
+              <button
+                onClick={onClose}
+                className="mt-6 w-full h-12 bg-green-500 text-white font-bold hover:bg-green-400 transition-colors"
+              >
+                Close
+              </button>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const DashboardActivity = ({ darkMode }) => {
   const [reports, setReports] =
     useState(nearbyReports);
@@ -103,19 +307,29 @@ const DashboardActivity = ({ darkMode }) => {
   const [confirmedReports, setConfirmedReports] =
     useState([]);
 
-  const handleConfirm = (index) => {
+  // Which report index currently has the modal open (null = closed)
+  const [activeModalIndex, setActiveModalIndex] = useState(null);
+
+  const openConfirmModal = (index) => {
     if (confirmedReports.includes(index)) return;
+    setActiveModalIndex(index);
+  };
 
-    const updatedReports = [...reports];
+  const closeModal = () => setActiveModalIndex(null);
 
-    updatedReports[index].confirmations += 1;
+  // Called by the modal once the simulated AI verification finishes —
+  // this is the moment the confirmation count actually increments.
+  const handleVerifiedSubmit = (index) => {
+    setReports((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        confirmations: updated[index].confirmations + 1,
+      };
+      return updated;
+    });
 
-    setReports(updatedReports);
-
-    setConfirmedReports([
-      ...confirmedReports,
-      index,
-    ]);
+    setConfirmedReports((prev) => [...prev, index]);
   };
 
   return (
@@ -845,7 +1059,7 @@ const DashboardActivity = ({ darkMode }) => {
                       </div>
                     </motion.div>
 
-                    {/* ACTION */}
+                    {/* ACTION — opens the upload/verify modal instead of confirming instantly */}
                     <motion.button
                       whileHover={
                         confirmed
@@ -862,7 +1076,7 @@ const DashboardActivity = ({ darkMode }) => {
                         stiffness: 300,
                       }}
                       onClick={() =>
-                        handleConfirm(index)
+                        openConfirmModal(index)
                       }
                       disabled={confirmed}
                       className={`
@@ -956,6 +1170,18 @@ const DashboardActivity = ({ darkMode }) => {
           })}
         </motion.div>
       </div>
+
+      {/* CONFIRMATION MODAL — rendered once, driven by activeModalIndex */}
+      <AnimatePresence>
+        {activeModalIndex !== null && (
+          <ConfirmationModal
+            report={reports[activeModalIndex]}
+            darkMode={darkMode}
+            onClose={closeModal}
+            onSubmitted={() => handleVerifiedSubmit(activeModalIndex)}
+          />
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 };

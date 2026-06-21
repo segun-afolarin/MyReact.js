@@ -48,7 +48,6 @@ const MyReportsDashboard = () => {
       className={`
         relative
         min-h-screen
-        overflow-hidden
         transition-all
         duration-300
 
@@ -59,8 +58,19 @@ const MyReportsDashboard = () => {
         }
       `}
     >
+      {/*
+        ⚠️ FIX: removed `overflow-hidden` from this root div.
+        `overflow: hidden` (or `overflow-x: hidden`) on any ancestor of a
+        `position: sticky` element breaks its stickiness — the browser
+        treats that ancestor as the scroll container instead of the
+        viewport, so the sticky element stops tracking scroll correctly.
+        The decorative background blobs below don't need page-level
+        overflow clipping; they're already positioned with negative
+        offsets inside a div that itself doesn't scroll content.
+      */}
+
       {/* BACKGROUND */}
-      <div className="absolute inset-0 pointer-events-none overflow-x-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
 
         <div className="absolute top-[-180px] left-[-120px] w-[420px] h-[420px] bg-green-500/10 blur-[120px]" />
 
@@ -119,16 +129,20 @@ const MyReportsDashboard = () => {
             {/* STATS */}
             <ReportStats darkMode={darkMode} />
 
-            {/* 🔥 STICKY SEARCH WRAPPER (FIXED BEHAVIOUR) */}
-            <div className="sticky top-[80px] z-50">
-              <ReportSearch
-                darkMode={darkMode}
-                search={search}
-                setSearch={setSearch}
-                filter={filter}
-                setFilter={setFilter}
-              />
-            </div>
+            {/*
+              ⚠️ FIX: no wrapper div here anymore. ReportSearch now owns
+              its own `sticky` positioning internally — wrapping it in
+              another `sticky` div caused two stacked sticky contexts
+              with mismatched `top` values (80px here vs 90px inside the
+              component), which is why it wasn't locking properly.
+            */}
+            <ReportSearch
+              darkMode={darkMode}
+              search={search}
+              setSearch={setSearch}
+              filter={filter}
+              setFilter={setFilter}
+            />
 
             {/* GRID */}
             <ReportGrid
