@@ -22,7 +22,6 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 // ── RESPONSE INTERCEPTOR ─────────────────────────────────────────────────────
 // Watches for 401 — clears storage and redirects to /Signup (not /auth)
 api.interceptors.response.use(

@@ -1,3 +1,5 @@
+// src/pages/LocationSetup.jsx
+
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Select from "react-select";
@@ -25,101 +27,58 @@ L.Icon.Default.mergeOptions({
 });
 
 // ---------------------------------------------------------------------------
-// NationAura is Nigeria-only — states replace the old multi-country picker
+// Nigeria states
 // ---------------------------------------------------------------------------
 
 const locations = [
-
-  { label: "Abia State", value: "Abia State" },
-
-  { label: "Adamawa State", value: "Adamawa State" },
-
-  { label: "Akwa Ibom State", value: "Akwa Ibom State" },
-
-  { label: "Anambra State", value: "Anambra State" },
-
-  { label: "Bauchi State", value: "Bauchi State" },
-
-  { label: "Bayelsa State", value: "Bayelsa State" },
-
-  { label: "Benue State", value: "Benue State" },
-
-  { label: "Borno State", value: "Borno State" },
-
+  { label: "Abia State",        value: "Abia State"        },
+  { label: "Adamawa State",     value: "Adamawa State"     },
+  { label: "Akwa Ibom State",   value: "Akwa Ibom State"   },
+  { label: "Anambra State",     value: "Anambra State"     },
+  { label: "Bauchi State",      value: "Bauchi State"      },
+  { label: "Bayelsa State",     value: "Bayelsa State"     },
+  { label: "Benue State",       value: "Benue State"       },
+  { label: "Borno State",       value: "Borno State"       },
   { label: "Cross River State", value: "Cross River State" },
-
-  { label: "Delta State", value: "Delta State" },
-
-  { label: "Ebonyi State", value: "Ebonyi State" },
-
-  { label: "Edo State", value: "Edo State" },
-
-  { label: "Ekiti State", value: "Ekiti State" },
-
-  { label: "Enugu State", value: "Enugu State" },
-
-  { label: "FCT Abuja", value: "FCT Abuja" },
-
-  { label: "Gombe State", value: "Gombe State" },
-
-  { label: "Imo State", value: "Imo State" },
-
-  { label: "Kaduna State", value: "Kaduna State" },
-
-  { label: "Kano State", value: "Kano State" },
-
-  { label: "Katsina State", value: "Katsina State" },
-
-  { label: "Kebbi State", value: "Kebbi State" },
-
-  { label: "Kogi State", value: "Kogi State" },
-
-  { label: "Kwara State", value: "Kwara State" },
-
-  { label: "Lagos State", value: "Lagos State" },
-
-  { label: "Nasarawa State", value: "Nasarawa State" },
-
-  { label: "Niger State", value: "Niger State" },
-
-  { label: "Ogun State", value: "Ogun State" },
-
-  { label: "Ondo State", value: "Ondo State" },
-
-  { label: "Osun State", value: "Osun State" },
-
-  { label: "Oyo State", value: "Oyo State" },
-
-  { label: "Plateau State", value: "Plateau State" },
-
-  { label: "Rivers State", value: "Rivers State" },
-
-  { label: "Sokoto State", value: "Sokoto State" },
-
-  { label: "Taraba State", value: "Taraba State" },
-
-  { label: "Yobe State", value: "Yobe State" },
-
-  { label: "Zamfara State", value: "Zamfara State" },
-
+  { label: "Delta State",       value: "Delta State"       },
+  { label: "Ebonyi State",      value: "Ebonyi State"      },
+  { label: "Edo State",         value: "Edo State"         },
+  { label: "Ekiti State",       value: "Ekiti State"       },
+  { label: "Enugu State",       value: "Enugu State"       },
+  { label: "FCT Abuja",         value: "FCT Abuja"         },
+  { label: "Gombe State",       value: "Gombe State"       },
+  { label: "Imo State",         value: "Imo State"         },
+  { label: "Kaduna State",      value: "Kaduna State"      },
+  { label: "Kano State",        value: "Kano State"        },
+  { label: "Katsina State",     value: "Katsina State"     },
+  { label: "Kebbi State",       value: "Kebbi State"       },
+  { label: "Kogi State",        value: "Kogi State"        },
+  { label: "Kwara State",       value: "Kwara State"       },
+  { label: "Lagos State",       value: "Lagos State"       },
+  { label: "Nasarawa State",    value: "Nasarawa State"    },
+  { label: "Niger State",       value: "Niger State"       },
+  { label: "Ogun State",        value: "Ogun State"        },
+  { label: "Ondo State",        value: "Ondo State"        },
+  { label: "Osun State",        value: "Osun State"        },
+  { label: "Oyo State",         value: "Oyo State"         },
+  { label: "Plateau State",     value: "Plateau State"     },
+  { label: "Rivers State",      value: "Rivers State"      },
+  { label: "Sokoto State",      value: "Sokoto State"      },
+  { label: "Taraba State",      value: "Taraba State"      },
+  { label: "Yobe State",        value: "Yobe State"        },
+  { label: "Zamfara State",     value: "Zamfara State"     },
 ];
 
-// Normalizes whatever a geocoder returns (e.g. "Plateau", "Plateau State",
-// "Federal Capital Territory") into one of our exact `locations` values.
 const matchNigerianState = (rawState) => {
   if (!rawState) return "";
   const n = rawState.trim().toLowerCase().replace(/\s+state$/, "");
-  if (n === "federal capital territory" || n === "fct" || n === "abuja") {
-    return "FCT Abuja";
-  }
-  const found = locations.find(
-    (s) => s.value.toLowerCase().replace(" state", "") === n
-  );
+  if (n === "federal capital territory" || n === "fct" || n === "abuja") return "FCT Abuja";
+  const found = locations.find((s) => s.value.toLowerCase().replace(" state", "") === n);
   return found ? found.value : "";
 };
 
 // ---------------------------------------------------------------------------
-// Reverse geocode — Nominatim → BigDataCloud fallback
+// Reverse geocoding — Nominatim with BigDataCloud fallback
 // ---------------------------------------------------------------------------
 
 const reverseGeocodeNominatim = async (lat, lng) => {
@@ -129,14 +88,13 @@ const reverseGeocodeNominatim = async (lat, lng) => {
   );
   if (!res.ok) throw new Error("Nominatim failed");
   const data = await res.json();
-  const a = data.address || {};
+  const a    = data.address || {};
   const street = [a.house_number, a.road || a.pedestrian || a.street].filter(Boolean).join(" ");
   return {
     address: street || a.neighbourhood || a.suburb || a.village || "",
     state:   matchNigerianState(a.state || a.region || a.county || ""),
     country: a.country || "",
     city:    a.city || a.town || a.village || a.suburb || "",
-    display: data.display_name || "",
     source:  "nominatim",
   };
 };
@@ -152,7 +110,6 @@ const reverseGeocodeBigDataCloud = async (lat, lng) => {
     state:   matchNigerianState(data.principalSubdivision || ""),
     country: data.countryName || "",
     city:    data.city || data.locality || "",
-    display: `${data.locality}, ${data.principalSubdivision}, ${data.countryName}`,
     source:  "bigdatacloud",
   };
 };
@@ -200,7 +157,7 @@ const selectStyles = {
 };
 
 // ---------------------------------------------------------------------------
-// Map helpers — click to reposition marker
+// Map helpers
 // ---------------------------------------------------------------------------
 
 const ChangeView = ({ center, zoom }) => {
@@ -211,13 +168,8 @@ const ChangeView = ({ center, zoom }) => {
   return null;
 };
 
-// Lets the user click anywhere on the map to correct their position
 const ClickToPlace = ({ onPlace }) => {
-  useMapEvents({
-    click(e) {
-      onPlace(e.latlng.lat, e.latlng.lng);
-    },
-  });
+  useMapEvents({ click(e) { onPlace(e.latlng.lat, e.latlng.lng); } });
   return null;
 };
 
@@ -254,15 +206,13 @@ const TextField = ({ label, required, error, value, onChange, placeholder, name,
 );
 
 // ---------------------------------------------------------------------------
-// Accuracy warning banner
+// Banners
 // ---------------------------------------------------------------------------
 
 const AccuracyBanner = ({ accuracy, onDismiss }) => {
   if (!accuracy || accuracy <= 500) return null;
-
   const km = (accuracy / 1000).toFixed(0);
   const isVeryPoor = accuracy > 10000;
-
   return (
     <AnimatePresence>
       <motion.div
@@ -280,7 +230,7 @@ const AccuracyBanner = ({ accuracy, onDismiss }) => {
           <span className="font-semibold">
             {isVeryPoor
               ? `Low GPS accuracy (~${km}km radius) — your device used cell towers instead of GPS.`
-              : `Moderate accuracy (~${(accuracy).toFixed(0)}m).`}
+              : `Moderate accuracy (~${accuracy.toFixed(0)}m).`}
           </span>
           {" "}The fields have been pre-filled but{" "}
           <span className="font-semibold">please correct them</span>{" "}
@@ -288,17 +238,11 @@ const AccuracyBanner = ({ accuracy, onDismiss }) => {
           <span className="font-semibold">click the map</span>{" "}
           to drop the pin on your exact location.
         </div>
-        <button onClick={onDismiss} className="shrink-0 text-current opacity-60 hover:opacity-100">
-          ×
-        </button>
+        <button onClick={onDismiss} className="shrink-0 text-current opacity-60 hover:opacity-100">×</button>
       </motion.div>
     </AnimatePresence>
   );
 };
-
-// ---------------------------------------------------------------------------
-// Outside-Nigeria warning banner
-// ---------------------------------------------------------------------------
 
 const OutsideNigeriaBanner = ({ onDismiss }) => (
   <AnimatePresence>
@@ -311,19 +255,12 @@ const OutsideNigeriaBanner = ({ onDismiss }) => (
       <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="flex-1">
         <span className="font-semibold">This pin looks like it's outside Nigeria.</span>{" "}
-        NationAura currently only supports civic reporting within Nigeria — please drag the
-        pin to a Nigerian address, or use the GPS button again, before continuing.
+        NationAura currently only supports civic reporting within Nigeria — please drag the pin to a Nigerian address.
       </div>
-      <button onClick={onDismiss} className="shrink-0 text-current opacity-60 hover:opacity-100">
-        ×
-      </button>
+      <button onClick={onDismiss} className="shrink-0 text-current opacity-60 hover:opacity-100">×</button>
     </motion.div>
   </AnimatePresence>
 );
-
-// ---------------------------------------------------------------------------
-// Permission banner
-// ---------------------------------------------------------------------------
 
 const PermissionBanner = ({ status }) => {
   if (!status || status === "granted" || status === "prompt") return null;
@@ -352,13 +289,12 @@ const PermissionBanner = ({ status }) => {
 // Main
 // ---------------------------------------------------------------------------
 
-// Geographic center of Nigeria — sensible default before GPS/manual entry
 const DEFAULT_LAT = 9.0820;
 const DEFAULT_LNG = 8.6753;
 
 const LocationSetup = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const navigate     = useNavigate();
+  const { user, refreshUser } = useAuth();
 
   const [loc, setLoc] = useState({
     address: "", state: "", country: "Nigeria",
@@ -389,17 +325,22 @@ const LocationSetup = () => {
     });
   }, []);
 
-  // Pre-fill from localStorage
+  // Pre-fill from existing user location if they're editing
   useEffect(() => {
-    const saved = localStorage.getItem("userLocation");
-    if (saved) {
-      try {
-        const p = JSON.parse(saved);
-        setLoc((prev) => ({ ...prev, ...p, country: "Nigeria" }));
-        if (p.lat && p.lng) { setDetected(true); setMapZoom(14); }
-      } catch { /* ignore */ }
+    if (user?.address || user?.state) {
+      setLoc((prev) => ({
+        ...prev,
+        address: user.address || "",
+        state:   user.state   || "",
+        lat:     user.latitude  ? parseFloat(user.latitude)  : DEFAULT_LAT,
+        lng:     user.longitude ? parseFloat(user.longitude) : DEFAULT_LNG,
+      }));
+      if (user.latitude && user.longitude) {
+        setDetected(true);
+        setMapZoom(14);
+      }
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
@@ -427,7 +368,6 @@ const LocationSetup = () => {
       }));
       setErrors({});
 
-      // Show accuracy warning if GPS was imprecise
       if (acc && acc > 500) {
         setAccuracy(acc);
         setShowAccWarn(true);
@@ -477,7 +417,7 @@ const LocationSetup = () => {
     );
   };
 
-  // ── Map click — user corrects pin manually ────────────────────────────────
+  // ── Map click ─────────────────────────────────────────────────────────────
   const handleMapClick = async (lat, lng) => {
     setLoc((prev) => ({ ...prev, lat, lng }));
     setDetected(true);
@@ -489,7 +429,7 @@ const LocationSetup = () => {
     await fillFromCoords(lat, lng);
   };
 
-  // ── Confirm + save ────────────────────────────────────────────────────────
+  // ── Confirm + save to backend ─────────────────────────────────────────────
   const confirmLocation = async () => {
     const errs = {};
     if (!loc.address.trim()) errs.address = "Street address is required.";
@@ -504,20 +444,20 @@ const LocationSetup = () => {
     setSaving(true);
 
     const payload = {
-      address: loc.address.trim(), state: loc.state.trim(),
-      country: "Nigeria", latitude: loc.lat, longitude: loc.lng,
+      address:   loc.address.trim(),
+      state:     loc.state.trim(),
+      country:   "Nigeria",
+      latitude:  loc.lat,
+      longitude: loc.lng,
     };
 
-    localStorage.setItem("userLocation", JSON.stringify(payload));
-
     try {
-      const { data } = await api.post("/user/location", payload);
+      // POST to backend — this saves to the DB
+      await api.post("/user/location", payload);
 
-      // Keep the cached user object in sync so route guards / dashboard
-      // greetings immediately see has_location: true without needing a
-      // refresh or re-login.
-      const updatedUser = { ...user, ...data.user };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // Re-fetch the full user object from backend so every component
+      // immediately sees the updated state/address/has_location fields
+      await refreshUser();
 
       setSaving(false);
       showToast("Location saved! Redirecting…", "success");
@@ -535,8 +475,6 @@ const LocationSetup = () => {
         firstFieldError || data?.message || "Could not save your location. Please try again.",
         "error"
       );
-      // Deliberately NOT navigating away — the user stays on this page
-      // since their location was not actually saved to the backend.
     }
   };
 
@@ -612,15 +550,10 @@ const LocationSetup = () => {
                 : detected ? "Re-detect my location" : "Use my current location"}
             </button>
 
-            {/* Accuracy warning — shown when GPS was imprecise */}
             {showAccWarn && (
-              <AccuracyBanner
-                accuracy={accuracy}
-                onDismiss={() => setShowAccWarn(false)}
-              />
+              <AccuracyBanner accuracy={accuracy} onDismiss={() => setShowAccWarn(false)} />
             )}
 
-            {/* Outside-Nigeria warning — shown when a detected pin isn't in Nigeria */}
             {outsideNigeria && (
               <OutsideNigeriaBanner onDismiss={() => setOutsideNigeria(false)} />
             )}
@@ -681,13 +614,11 @@ const LocationSetup = () => {
               </div>
             </div>
 
-            {/* Map click hint */}
             {mapClickHint && (
               <div className="flex items-start gap-2 border border-green-200 bg-green-50 p-3 text-xs text-green-800">
                 <FiEdit2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
-                  <span className="font-semibold">Tip:</span> Click anywhere on the map →
-                  to drop the pin on your exact street and auto-fill the address fields.
+                  <span className="font-semibold">Tip:</span> Click anywhere on the map to drop the pin on your exact street and auto-fill the address fields.
                 </span>
               </div>
             )}
@@ -714,7 +645,10 @@ const LocationSetup = () => {
                 <span className="tabular-nums">{completedFields}/2</span>
               </div>
               <div className="h-[3px] w-full bg-stone-200">
-                <div className="h-full bg-green-800 transition-all duration-500 ease-out" style={{ width: `${(completedFields / 2) * 100}%` }} />
+                <div
+                  className="h-full bg-green-800 transition-all duration-500 ease-out"
+                  style={{ width: `${(completedFields / 2) * 100}%` }}
+                />
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs leading-relaxed text-stone-400">
@@ -752,20 +686,22 @@ const LocationSetup = () => {
             {detected && (
               <div className="pointer-events-auto border border-green-800 bg-green-900 px-3 py-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-green-50">
-                  {accuracy ? (accuracy > 1000 ? `~${(accuracy/1000).toFixed(0)}km accuracy` : `~${accuracy.toFixed(0)}m accuracy`) : "GPS locked"}
+                  {accuracy
+                    ? accuracy > 1000
+                      ? `~${(accuracy / 1000).toFixed(0)}km accuracy`
+                      : `~${accuracy.toFixed(0)}m accuracy`
+                    : "GPS locked"}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Click hint overlay */}
           <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
             <div className="border border-stone-200 bg-white/90 px-3 py-1.5 text-[11px] text-stone-500 backdrop-blur-sm">
               Click map to reposition pin
             </div>
           </div>
 
-          {/* Loading overlay while reverse geocoding from map click */}
           {loading && loadingStage === "address" && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
               <div className="flex items-center gap-2 border border-stone-200 bg-white px-4 py-3 text-sm font-medium text-stone-700 shadow">

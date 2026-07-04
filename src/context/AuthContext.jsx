@@ -9,20 +9,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  const [error,   setError]   = useState(null);
   const [isReady, setIsReady] = useState(false);
 
-  // ── On mount: verify stored token is still valid server-side ──────────────
+  // ── On mount: verify token + fetch fresh user from backend ────────────────
+  // We never trust localStorage for user data — only for the token.
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -32,60 +25,61 @@ export const AuthProvider = ({ children }) => {
     api
       .get("/user")
       .then(({ data }) => {
-        setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        setUser(data.user ?? data);
       })
       .catch(() => {
-        // Token is invalid — clear everything
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
         setUser(null);
       })
-      .finally(() => setIsReady(true)); // ← always set ready, even on failure
+      .finally(() => setIsReady(true));
   }, []);
 
-  // ── Helper: extract the most useful error message from Laravel's response ──
-  // Laravel returns validation errors as:
-  // { message: "Validation failed.", errors: { email: [...], password: [...] } }
-  // This function picks the first specific field error, falling back to message.
+  // ── refreshUser: re-fetch user from backend ───────────────────────────────
+  // Call this after any mutation that changes user fields (location, profile…)
+  // so every component that reads `user` immediately gets the updated data.
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get("/user");
+      const fresh = data.user ?? data;
+      setUser(fresh);
+      return fresh;
+    } catch {
+      // Token expired mid-session — clear and redirect
+      localStorage.removeItem("token");
+      setUser(null);
+      navigate("/Signup", { replace: true });
+      return null;
+    }
+  }, [navigate]);
+
+  // ── Extract the most useful error string from Laravel's response ──────────
   const extractError = (err) => {
     const data = err.response?.data;
-
-    // No response at all (network error, server down)
     if (!data) return "Cannot reach the server. Is Laravel running?";
-
-    // Pull the first error from any validation field
     if (data.errors) {
       const firstField = Object.values(data.errors)[0];
-      if (Array.isArray(firstField) && firstField.length > 0) {
-        return firstField[0];
-      }
+      if (Array.isArray(firstField) && firstField.length > 0) return firstField[0];
     }
-
-    // Fall back to the top-level message
-    if (data.message) return data.message;
-
-    return "Something went wrong. Please try again.";
+    return data.message || "Something went wrong. Please try again.";
   };
 
-  // ── Helper: send the user to the right place after auth ───────────────────
-  // A user without a saved location must complete LocationSetup before
-  // reaching the dashboard — this applies whether they just registered
-  // OR logged into an old account that never finished setup.
-  const redirectAfterAuth = (user) => {
+  // ── Route guard after login/register ─────────────────────────────────────
+  // replace: true so the auth page is NOT in browser history —
+  // pressing Back after login won't take the user back to the login form.
+  const redirectAfterAuth = useCallback((user) => {
     if (!user?.has_location) {
-      navigate("/location-setup");
+      navigate("/location-setup", { replace: true });
     } else {
-      navigate("/CitizenDashboard");
+      navigate("/CitizenDashboard", { replace: true });
     }
-  };
+  }, [navigate]);
 
-  // ── Register ───────────────────────────────────────────────────────────────
+  // ── Register ──────────────────────────────────────────────────────────────
+  // No page refresh — purely client-side state update then navigate.
   const register = useCallback(async ({ name, email, password, password_confirmation }) => {
     setLoading(true);
     setError(null);
 
-    // Safety check — make sure password_confirmation is actually set
     if (!password_confirmation || password !== password_confirmation) {
       setError("Passwords do not match.");
       setLoading(false);
@@ -97,25 +91,24 @@ export const AuthProvider = ({ children }) => {
         name,
         email,
         password,
-        password_confirmation, // Laravel's `confirmed` rule needs this exact key
+        password_confirmation,
       });
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
-      redirectAfterAuth(data.user); // ← new accounts always go to location-setup
+      setUser(data.user);           // set in memory — no page reload
+      redirectAfterAuth(data.user); // navigate() — no page reload
       return { success: true };
     } catch (err) {
-      // Log full error in dev so you can see exactly what Laravel returned
-      console.error("Register error response:", err.response?.data);
+      console.error("Register error:", err.response?.data);
       setError(extractError(err));
       return { success: false };
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, redirectAfterAuth]);
 
-  // ── Login ──────────────────────────────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────────────────────────
+  // No page refresh — purely client-side state update then navigate.
   const login = useCallback(async ({ email, password }) => {
     setLoading(true);
     setError(null);
@@ -124,13 +117,11 @@ export const AuthProvider = ({ children }) => {
       const { data } = await api.post("/login", { email, password });
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
-      redirectAfterAuth(data.user); // ← dashboard if location is set, else location-setup
+      setUser(data.user);           // set in memory — no page reload
+      redirectAfterAuth(data.user); // navigate() — no page reload
       return { success: true };
     } catch (err) {
-      console.error("Login error response:", err.response?.data);
-      // For login, use a generic message — don't reveal which field was wrong
+      console.error("Login error:", err.response?.data);
       const msg =
         err.response?.status === 401
           ? "Incorrect email or password."
@@ -140,23 +131,26 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, redirectAfterAuth]);
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
+  // ── Logout ────────────────────────────────────────────────────────────────
+  // Best-effort server revocation, then always clears local state.
+  // replace: true removes dashboard from history — Back won't re-enter the app.
   const logout = useCallback(async () => {
+    setLoading(true);
     try {
-      await api.post("/logout");
+      await api.post("/logout"); // revokes ALL tokens server-side
     } catch {
-      // Even if the server call fails, clear local state
+      // Server unreachable or token already expired — clear locally anyway
     } finally {
       localStorage.removeItem("token");
-      localStorage.removeItem("user");
       setUser(null);
-      navigate("/Signup");
+      setLoading(false);
+      navigate("/Signup", { replace: true }); // ← /Signup is your auth page
     }
   }, [navigate]);
 
-  // ── Clear error ────────────────────────────────────────────────────────────
+  // ── Clear error ───────────────────────────────────────────────────────────
   const clearError = useCallback(() => setError(null), []);
 
   return (
@@ -171,6 +165,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         register,
+        refreshUser,
         clearError,
       }}
     >

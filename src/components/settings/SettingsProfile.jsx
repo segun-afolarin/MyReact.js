@@ -5,135 +5,146 @@ import {
   FiX, FiMail, FiPhone, FiMapPin, FiLock,
   FiAward, FiCheckCircle, FiTrash2,
 } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext"; // ← adjust depth if needed
-import api from "../../api/axios"; // ← same axios instance AuthContext uses (adjust depth if needed)
+import { useAuth } from "../../context/AuthContext";
+import api from "../../api/axios";
 
 const SettingsProfile = ({ darkMode }) => {
   const { user, setUser } = useAuth();
-  // ⚠️ NOTE: your current AuthContext does NOT expose `setUser` in its
-  // provider value — only `user`. You need to add `setUser` to the
-  // `value={{ ... }}` object in AuthContext.jsx so this component (and any
-  // other) can update the cached user after a profile edit. See the
-  // AuthContext patch note at the bottom of this file.
 
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [editing, setEditing]   = useState(false);
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState("");
 
-  // imageFile holds the raw File object for upload; profile.image is just
-  // the preview (base64 or existing URL) shown in the <img>
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFile, setImageFile]           = useState(null);
+  const [draftImage, setDraftImage]         = useState("");
+  const [deleteAvatarOnSave, setDeleteAvatarOnSave] = useState(false);
 
+  // ── Committed (saved) profile — only changes after a successful API call ──
   const [profile, setProfile] = useState({
     name:     "",
     phone:    "",
     location: "",
     email:    "",
-    id:       "NA-20492",
+    id:       "NA-00000",
     image:    "",
   });
 
-  // ── Seed from auth user (source of truth from Laravel /api/user) ──────────
+  // ── Draft — lives only while editing, discarded on cancel ────────────────
+  const [draft, setDraft] = useState({});
+
+  // ── Seed from auth user ───────────────────────────────────────────────────
   useEffect(() => {
     if (user) {
-      setProfile((prev) => ({
-        ...prev,
-        name:     user.name       || prev.name,
-        email:    user.email      || prev.email,
-        phone:    user.phone      || "",
-        location: user.location   || "",
-        id:       user.id ? `NA-${String(user.id).padStart(5, "0")}` : prev.id,
-        image:    user.avatar_url || "",
-      }));
+      setProfile({
+        name:     user.name  || "",
+        email:    user.email || "",
+        phone:    user.phone || "",
+        location: user.location ||
+                  [user.address, user.state].filter(Boolean).join(", ") ||
+                  "",
+        id:    user.id ? `NA-${String(user.id).padStart(5, "0")}` : "NA-00000",
+        image: user.avatar || "",
+      });
     }
   }, [user]);
 
-  // ── Upload image (just preview + keep the File for submission) ────────────
+  // ── Open edit mode — copy committed profile into draft ───────────────────
+  const startEditing = () => {
+    setDraft({ name: profile.name, phone: profile.phone });
+    setDraftImage(profile.image);
+    setImageFile(null);
+    setDeleteAvatarOnSave(false);
+    setError("");
+    setEditing(true);
+  };
+
+  // ── Cancel — discard draft and staged deletion ────────────────────────────
+  const cancelEdit = () => {
+    setDraft({});
+    setDraftImage("");
+    setImageFile(null);
+    setDeleteAvatarOnSave(false);
+    setError("");
+    setEditing(false);
+  };
+
+  // ── Avatar: local preview only ────────────────────────────────────────────
   const uploadImage = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setImageFile(file);
+    setDeleteAvatarOnSave(false); // uploading a new one, no need to delete
     const reader = new FileReader();
-    reader.onload = () => setProfile((prev) => ({ ...prev, image: reader.result }));
+    reader.onload = () => setDraftImage(reader.result);
     reader.readAsDataURL(file);
   };
 
-  // ── Remove image ───────────────────────────────────────────────────────────
-  const removeImage = () => {
-    setProfile((prev) => ({ ...prev, image: "" }));
+  // ── Stage avatar removal — no API call until Save ────────────────────────
+  const removeDraftImage = () => {
+    setDraftImage("");
     setImageFile(null);
+    if (profile.image) setDeleteAvatarOnSave(true); // flag for deletion on save
   };
 
-  // ── Save → real Laravel call ────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
   const saveProfile = async () => {
     setSaving(true);
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("_method", "PUT"); // Laravel method-spoofing for file uploads
-      formData.append("name", profile.name);
-      formData.append("phone", profile.phone);
-      formData.append("location", profile.location);
-      if (imageFile) {
-        formData.append("avatar", imageFile);
+      // Step 1: delete avatar from DB if flagged
+      if (deleteAvatarOnSave) {
+        await api.delete("/profile/avatar");
+        setDeleteAvatarOnSave(false);
       }
 
-      // Using POST here (not put()) because of the _method spoofing above —
-      // `api` is your existing axios instance, so the Sanctum token header
-      // is already attached the same way it is for login/register.
+      // Step 2: update profile fields + optional new avatar
+      const formData = new FormData();
+      formData.append("name",  draft.name ?? "");
+      formData.append("phone", draft.phone ?? "");
+      if (imageFile) formData.append("avatar", imageFile);
+
       const { data } = await api.post("/profile", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       const updatedUser = data.user;
-
-      // Keep AuthContext's cached user in sync (see note at top re: setUser)
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      setProfile((prev) => ({
-        ...prev,
-        name: updatedUser.name,
-        phone: updatedUser.phone || "",
-        location: updatedUser.location || "",
-        image: updatedUser.avatar_url || prev.image,
-      }));
+      // Commit to displayed profile only on success
+      setProfile({
+        name:     updatedUser.name     || "",
+        email:    updatedUser.email    || "",
+        phone:    updatedUser.phone    || "",
+        location: updatedUser.location ||
+                  [updatedUser.address, updatedUser.state].filter(Boolean).join(", ") ||
+                  "",
+        id:    updatedUser.id
+                  ? `NA-${String(updatedUser.id).padStart(5, "0")}`
+                  : profile.id,
+        image: updatedUser.avatar || "",
+      });
 
+      setDraft({});
+      setDraftImage("");
       setImageFile(null);
       setEditing(false);
     } catch (err) {
       console.error("Profile update failed:", err.response?.data || err);
-
-      // Same pattern as AuthContext's extractError — show the first
-      // validation error if present, else a generic message.
-      const data = err.response?.data;
-      if (data?.errors) {
-        const firstField = Object.values(data.errors)[0];
-        setError(Array.isArray(firstField) ? firstField[0] : "Validation failed.");
+      const errData = err.response?.data;
+      if (errData?.errors) {
+        const first = Object.values(errData.errors)[0];
+        setError(Array.isArray(first) ? first[0] : "Validation failed.");
       } else {
-        setError(data?.message || "Something went wrong. Please try again.");
+        setError(errData?.message || "Something went wrong. Please try again.");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Cancel ─────────────────────────────────────────────────────────────────
-  const cancelEdit = () => {
-    if (user) {
-      setProfile((prev) => ({
-        ...prev,
-        name:     user.name     || prev.name,
-        phone:    user.phone    || "",
-        location: user.location || "",
-        image:    user.avatar_url || "",
-      }));
-    }
-    setImageFile(null);
-    setError("");
-    setEditing(false);
-  };
+  const displayImage = editing ? draftImage : profile.image;
 
   return (
     <motion.section
@@ -145,15 +156,12 @@ const SettingsProfile = ({ darkMode }) => {
         ${darkMode ? "bg-[#081019] border-green-500/20" : "bg-white border-green-200"}
       `}
     >
-      {/* GRID */}
       <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)] bg-[size:50px_50px]" />
-
-      {/* GLOW */}
       <div className="absolute top-[-120px] right-[-120px] w-[320px] h-[320px] bg-green-500/10 blur-[120px]" />
 
       <div className="relative z-10 p-5 sm:p-8 lg:p-10">
 
-        {/* ── ERROR BANNER (only shows if save fails) ─────────────────────── */}
+        {/* ── ERROR BANNER ──────────────────────────────────────────────────── */}
         {error && (
           <div className="mb-5 border border-red-500/30 bg-red-500/10 text-red-500 text-sm px-4 py-3">
             {error}
@@ -162,7 +170,7 @@ const SettingsProfile = ({ darkMode }) => {
 
         <div className="flex flex-col xl:flex-row gap-10 justify-between">
 
-          {/* ── PROFILE ─────────────────────────────────────────────────── */}
+          {/* ── PROFILE ───────────────────────────────────────────────────── */}
           <div className="flex flex-col md:flex-row gap-7 items-center">
 
             {/* AVATAR */}
@@ -172,14 +180,14 @@ const SettingsProfile = ({ darkMode }) => {
                 shadow-[0_0_50px_rgba(34,197,94,.25)]
                 ${darkMode ? "border-green-500/30 bg-green-500/10" : "border-green-300 bg-green-50"}
               `}>
-                {profile.image ? (
-                  <img src={profile.image} className="w-full h-full object-cover" alt="profile" />
+                {displayImage ? (
+                  <img src={displayImage} className="w-full h-full object-cover" alt="profile" />
                 ) : (
                   <FiUser size={55} className="text-green-500" />
                 )}
               </div>
 
-              {/* UPLOAD button — shown when editing */}
+              {/* UPLOAD BUTTON */}
               <AnimatePresence>
                 {editing && (
                   <motion.label
@@ -195,14 +203,14 @@ const SettingsProfile = ({ darkMode }) => {
                 )}
               </AnimatePresence>
 
-              {/* REMOVE IMAGE button — shown when editing and image exists */}
+              {/* TRASH BUTTON — always local, never calls API directly */}
               <AnimatePresence>
-                {editing && profile.image && (
+                {editing && displayImage && (
                   <motion.button
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0 }}
-                    onClick={removeImage}
+                    onClick={removeDraftImage}
                     title="Remove photo"
                     className="absolute top-0 left-0 w-10 h-10 bg-red-500 text-white flex items-center justify-center z-10"
                   >
@@ -211,7 +219,6 @@ const SettingsProfile = ({ darkMode }) => {
                 )}
               </AnimatePresence>
 
-              {/* VERIFIED BADGE */}
               {!editing && (
                 <div className={`
                   absolute bottom-2 right-2 translate-x-1/2 translate-y-1/2
@@ -230,11 +237,10 @@ const SettingsProfile = ({ darkMode }) => {
                 Verified Citizen
               </div>
 
-              {/* NAME — editable */}
               {editing ? (
                 <input
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  value={draft.name ?? ""}
+                  onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                   placeholder="Full name"
                   className={`
                     mt-3 w-full text-3xl sm:text-4xl font-black tracking-tight
@@ -259,10 +265,10 @@ const SettingsProfile = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* ── EDIT / SAVE BUTTONS ──────────────────────────────────────── */}
+          {/* ── EDIT / SAVE BUTTONS ───────────────────────────────────────── */}
           {!editing ? (
             <button
-              onClick={() => setEditing(true)}
+              onClick={startEditing}
               className="bg-green-500 text-black px-6 py-3 font-bold flex gap-2 items-center h-fit hover:bg-green-400 transition-colors"
             >
               <FiEdit3 />
@@ -293,53 +299,30 @@ const SettingsProfile = ({ darkMode }) => {
           )}
         </div>
 
-        {/* ── DETAIL CARDS ─────────────────────────────────────────────────── */}
+        {/* ── DETAIL CARDS ──────────────────────────────────────────────────── */}
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
-          {/* EMAIL — locked, always from auth */}
-          <Card
-            darkMode={darkMode}
-            icon={<FiMail />}
-            title="Email"
-            value={user?.email || profile.email}
-            locked
-          />
+          <Card darkMode={darkMode} icon={<FiMail />}   title="Email"      value={profile.email}    locked />
+          <Card darkMode={darkMode} icon={<FiLock />}   title="Citizen ID" value={profile.id}        locked />
 
-          {/* CITIZEN ID — locked */}
-          <Card
-            darkMode={darkMode}
-            icon={<FiLock />}
-            title="Citizen ID"
-            value={profile.id}
-            locked
-          />
-
-          {/* PHONE — editable */}
           <Card
             darkMode={darkMode}
             icon={<FiPhone />}
             title="Phone"
-            value={profile.phone}
+            value={editing ? (draft.phone ?? "") : profile.phone}
             edit={editing}
-            change={(v) => setProfile({ ...profile, phone: v })}
+            change={(v) => setDraft((d) => ({ ...d, phone: v }))}
           />
 
-          {/* LOCATION — editable */}
-          <Card
-            darkMode={darkMode}
-            icon={<FiMapPin />}
-            title="Location"
-            value={profile.location}
-            edit={editing}
-            change={(v) => setProfile({ ...profile, location: v })}
-          />
+          <Card darkMode={darkMode} icon={<FiMapPin />} title="Location"   value={profile.location} locked />
+
         </div>
       </div>
     </motion.section>
   );
 };
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
+// ─── Card ──────────────────────────────────────────────────────────────────────
 
 const Card = ({ icon, title, value, locked, edit, change, darkMode }) => (
   <div className={`
@@ -349,11 +332,9 @@ const Card = ({ icon, title, value, locked, edit, change, darkMode }) => (
       : "border-green-200 bg-green-50/40 hover:bg-green-50"}
   `}>
     <div className="text-green-500 text-xl mb-3">{icon}</div>
-
     <p className={`text-xs uppercase tracking-widest ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
       {title}
     </p>
-
     {edit ? (
       <input
         value={value}
@@ -369,7 +350,6 @@ const Card = ({ icon, title, value, locked, edit, change, darkMode }) => (
         {value || "—"}
       </h3>
     )}
-
     {locked && (
       <div className="mt-3 text-xs text-green-500/60 flex gap-1 items-center">
         <FiLock size={11} />
@@ -379,7 +359,7 @@ const Card = ({ icon, title, value, locked, edit, change, darkMode }) => (
   </div>
 );
 
-// ─── Tag ──────────────────────────────────────────────────────────────────────
+// ─── Tag ───────────────────────────────────────────────────────────────────────
 
 const Tag = ({ children, icon }) => (
   <div className="border border-green-500/20 bg-green-500/5 px-3 py-2 flex gap-2 items-center text-sm text-green-600">
@@ -389,40 +369,3 @@ const Tag = ({ children, icon }) => (
 );
 
 export default SettingsProfile;
-
-/*
-─────────────────────────────────────────────────────────────────────────────
-REQUIRED PATCH — AuthContext.jsx
-─────────────────────────────────────────────────────────────────────────────
-Your current AuthContext.jsx does NOT expose `setUser` to consumers — only
-`user`. SettingsProfile needs to update the cached user after a successful
-save (so other parts of your app immediately see the new name/phone/etc.
-without needing a page refresh).
-
-Add `setUser` to the value object near the bottom of AuthContext.jsx:
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,        // ← ADD THIS LINE
-        loading,
-        error,
-        isReady,
-        isLoggedIn: !!user,
-        login,
-        logout,
-        register,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-
-That's the only change needed in AuthContext.jsx — everything else (token
-handling, login/logout, axios instance) stays exactly as you have it, since
-SettingsProfile uses your existing `api` instance which already attaches the
-Sanctum token the same way it does for /login and /user.
-─────────────────────────────────────────────────────────────────────────────
-*/

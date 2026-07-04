@@ -1,4 +1,4 @@
-// src/pages/AuthPage.jsx  (also used as src/pages/Signup.jsx — same file)
+// src/pages/AuthPage.jsx
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,9 +14,9 @@ import { useAuth } from "../context/AuthContext";
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 const stats = [
-  { number: "12K+", label: "Infrastructure Reports" },
-  { number: "500+", label: "Communities Reached"    },
-  { number: "98%",  label: "AI Verification Accuracy" },
+  { number: "12K+", label: "Infrastructure Reports"   },
+  { number: "500+", label: "Communities Reached"       },
+  { number: "98%",  label: "AI Verification Accuracy"  },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -24,9 +24,7 @@ const stats = [
 const AuthPage = () => {
   const [isLogin, setIsLogin]           = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Local password-mismatch error (separate from server errors)
-  const [localError, setLocalError] = useState(null);
+  const [localError, setLocalError]     = useState(null);
 
   const [formData, setFormData] = useState({
     name:            "",
@@ -56,6 +54,23 @@ const AuthPage = () => {
     setFormData({ name: "", email: "", password: "", confirmPassword: "" });
   };
 
+  // ── Extract the first readable error from a Laravel 422 response ──────────
+  const extractLaravelError = (err) => {
+    const data = err?.response?.data;
+    if (!data) return "Something went wrong. Please try again.";
+
+    // Laravel sends { errors: { field: ["message"] } }
+    if (data.errors) {
+      const firstField = Object.values(data.errors)[0];
+      if (Array.isArray(firstField) && firstField.length > 0) {
+        return firstField[0];
+      }
+    }
+
+    // Fallback to top-level message
+    return data.message || "Something went wrong. Please try again.";
+  };
+
   // ── Handle submit ─────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,10 +83,16 @@ const AuthPage = () => {
         setLocalError("Please enter your email and password.");
         return;
       }
-      await login({
-        email:    formData.email.trim(),
-        password: formData.password,
-      });
+
+      try {
+        await login({
+          email:    formData.email.trim(),
+          password: formData.password,
+        });
+      } catch (err) {
+        setLocalError(extractLaravelError(err));
+      }
+
     } else {
       // ── REGISTER ───────────────────────────────────────────────────────────
       if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -86,12 +107,17 @@ const AuthPage = () => {
         setLocalError("Passwords do not match.");
         return;
       }
-      await register({
-        name:                  formData.name.trim(),
-        email:                 formData.email.trim(),
-        password:              formData.password,
-        password_confirmation: formData.confirmPassword, // exact key Laravel expects
-      });
+
+      try {
+        await register({
+          name:                  formData.name.trim(),
+          email:                 formData.email.trim(),
+          password:              formData.password,
+          password_confirmation: formData.confirmPassword,
+        });
+      } catch (err) {
+        setLocalError(extractLaravelError(err));
+      }
     }
   };
 
@@ -248,7 +274,7 @@ const AuthPage = () => {
                     </div>
                   </div>
 
-                  {/* ERROR BANNER — shows both local and server errors */}
+                  {/* ERROR BANNER */}
                   <AnimatePresence>
                     {displayError && (
                       <motion.div

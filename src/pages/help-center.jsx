@@ -1,900 +1,634 @@
 import { useState, useRef, useEffect } from "react";
-
 import { motion, AnimatePresence } from "framer-motion";
-
 import { Link } from "react-router-dom";
-
 import {
-  FiSend,
-  FiCpu,
-  FiUser,
-  FiMenu,
-  FiPlus,
-  FiSearch,
-  FiMessageSquare,
-  FiArrowLeft,
-  FiZap,
-  FiCheckCircle,
+  FiSend, FiCpu, FiUser, FiMenu, FiPlus, FiSearch,
+  FiArrowLeft, FiMapPin, FiActivity, FiUsers, FiPhone,
+  FiX, FiChevronRight, FiMoreVertical, FiBookmark,
+  FiEdit2, FiArchive, FiTrash2,
 } from "react-icons/fi";
 
-const quickQuestions = [
-  "How do I report an issue?",
-  "Track my report",
-  "Community guidelines",
-  "Contact support",
+// ---------------------------------------------------------------------------
+// Static content
+// ---------------------------------------------------------------------------
+
+const quickActions = [
+  {
+    icon: FiMapPin,
+    title: "Report an issue",
+    desc: "Roads, drainage, bridges, power, water",
+    prompt: "How do I report an issue?",
+  },
+  {
+    icon: FiActivity,
+    title: "Track a report",
+    desc: "Check status on something you filed",
+    prompt: "Track my report",
+  },
+  {
+    icon: FiUsers,
+    title: "Community guidelines",
+    desc: "What can and can't be reported",
+    prompt: "Community guidelines",
+  },
+  {
+    icon: FiPhone,
+    title: "Talk to a person",
+    desc: "Escalate to the support team",
+    prompt: "Contact support",
+  },
 ];
 
 const welcomeMessage = [
   {
     type: "assistant",
     text:
-      "Hello 👋 I’m NationAura Civic Assistant. I help citizens report, track, and resolve infrastructure issues across Nigeria. How can I help you today?",
+      "Hello — I'm the NationAura Civic Assistant. I help citizens report, track, and resolve infrastructure issues across Nigeria. What do you need help with?",
+    time: new Date(),
   },
 ];
 
+const statusTone = {
+  Resolved: "text-green-700 bg-green-50 border-green-200",
+  "In Progress": "text-amber-700 bg-amber-50 border-amber-200",
+  Assigned: "text-blue-700 bg-blue-50 border-blue-200",
+  Active: "text-green-700 bg-green-50 border-green-200",
+};
+
+const formatTime = (d) =>
+  d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
+
+const formatReply = (text) => {
+  const t = text.toLowerCase();
+
+  if (t.includes("report") && !t.includes("track"))
+    return "To report an issue: open Report Incident, add your location (auto-detected or dropped on the map), attach a photo if you have one, and describe what's wrong. It's routed to the right local agency automatically.";
+
+  if (t.includes("track"))
+    return "Every report moves through five stages: Submitted, Verified, Assigned, In Progress, Resolved. You'll get a notification each time it moves. Open Dashboard, then My Reports to see where yours stands.";
+
+  if (t.includes("guideline"))
+    return "Report real infrastructure problems only — roads, drainage, bridges, power, water. No duplicate filings, no personal disputes, and evidence should be your own photos or footage from the affected area.";
+
+  if (t.includes("support") || t.includes("contact") || t.includes("human"))
+    return "I've flagged this for our support team — they typically respond within a few hours. You can also reach them directly at support@nationaura.ng.";
+
+  if (t.includes("emergency"))
+    return "If this is a life-threatening emergency, please contact local emergency services directly first. NationAura routes civic infrastructure reports, not emergency dispatch.";
+
+  return "NationAura helps citizens report and track infrastructure issues in real time. Ask me about filing a report, checking a status, or reaching a person on the team.";
+};
+
+// ---------------------------------------------------------------------------
+// Small building blocks
+// ---------------------------------------------------------------------------
+
+const IconBox = ({ icon: Icon, tone = "green" }) => (
+  <div
+    className={`flex h-11 w-11 shrink-0 items-center justify-center text-lg ${
+      tone === "green"
+        ? "bg-green-900 text-white"
+        : "bg-stone-900 text-white"
+    }`}
+  >
+    <Icon />
+  </div>
+);
+
+const StatusDot = ({ active }) => (
+  <span className="relative flex h-2 w-2">
+    {active && (
+      <span className="absolute inline-flex h-full w-full animate-ping bg-green-500 opacity-75" />
+    )}
+    <span className={`relative inline-flex h-2 w-2 ${active ? "bg-green-500" : "bg-stone-300"}`} />
+  </span>
+);
+
+// Single conversation row: click to open, "..." to pin/rename/archive/delete.
+const ConversationItem = ({
+  chat, isActive, onSelect,
+  isRenaming, renameValue, onRenameChange, onRenameSubmit, onStartRename,
+  menuOpen, onToggleMenu,
+  confirming, onTogglePin, onArchive, onRequestDelete, onConfirmDelete,
+}) => (
+  <div data-conv-menu className="group relative">
+    <button
+      onClick={() => !isRenaming && onSelect()}
+      className={`flex w-full items-start gap-3 border px-3 py-3 text-left transition-colors ${
+        isActive ? "border-green-800 bg-green-50" : "border-transparent hover:border-stone-200 hover:bg-stone-50"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          {isRenaming ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={(e) => onRenameChange(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onRenameSubmit();
+                if (e.key === "Escape") onRenameSubmit(true);
+              }}
+              onBlur={() => onRenameSubmit()}
+              className="w-full border border-green-800 bg-white px-1.5 py-0.5 text-[13.5px] font-semibold text-stone-800 outline-none"
+            />
+          ) : (
+            <h3 className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-semibold text-stone-800">
+              {chat.pinned && <FiBookmark className="h-3 w-3 shrink-0 text-green-700" />}
+              <span className="truncate">{chat.title}</span>
+            </h3>
+          )}
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleMenu();
+            }}
+            className={`shrink-0 p-1 text-stone-400 hover:text-stone-700 ${
+              menuOpen ? "text-stone-700" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
+            }`}
+            aria-label="Conversation options"
+          >
+            <FiMoreVertical className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {!isRenaming && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <span
+              className={`border px-1.5 py-0.5 text-[10px] font-semibold ${statusTone[chat.status] || "border-stone-200 bg-stone-50 text-stone-600"}`}
+            >
+              {chat.status}
+            </span>
+            <span className="text-[11px] text-stone-400">{chat.when}</span>
+          </div>
+        )}
+      </div>
+    </button>
+
+    <AnimatePresence>
+      {menuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.12 }}
+          className="absolute right-2 top-10 z-10 w-48 border border-stone-200 bg-white shadow-lg"
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-stone-700 hover:bg-stone-50"
+          >
+            <FiBookmark className="h-3.5 w-3.5" /> {chat.pinned ? "Unpin" : "Pin conversation"}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onStartRename(); }}
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-stone-700 hover:bg-stone-50"
+          >
+            <FiEdit2 className="h-3.5 w-3.5" /> Rename
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onArchive(); }}
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-stone-700 hover:bg-stone-50"
+          >
+            <FiArchive className="h-3.5 w-3.5" /> {chat.archived ? "Unarchive" : "Archive"}
+          </button>
+          <div className="h-px bg-stone-100" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              confirming ? onConfirmDelete() : onRequestDelete();
+            }}
+            className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
+              confirming ? "bg-red-50 text-red-700" : "text-red-600 hover:bg-red-50"
+            }`}
+          >
+            <FiTrash2 className="h-3.5 w-3.5" /> {confirming ? "Click to confirm delete" : "Delete"}
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
 const HelpCenter = () => {
-  const [messages, setMessages] =
-    useState(welcomeMessage);
-
+  const [messages, setMessages] = useState(welcomeMessage);
   const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [sidebar, setSidebar] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
 
-  const [typing, setTyping] =
-    useState(false);
+  // null = a fresh, unsaved conversation — nothing added to history until
+  // the user actually sends a message.
+  const [activeChat, setActiveChat] = useState(1);
+  const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
-  const [sidebar, setSidebar] =
-    useState(window.innerWidth >= 1024);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
 
-  const [chatHistory, setChatHistory] =
-    useState([
-      "Road Damage Support",
-      "Water Supply Report",
-      "Electricity Complaint",
-    ]);
+  const [chatHistory, setChatHistory] = useState([
+    { id: 1, title: "Road Damage — Yakubu Gowon Way", status: "Resolved", when: "2h ago", pinned: true, archived: false },
+    { id: 2, title: "Water Supply Report", status: "In Progress", when: "Yesterday", pinned: false, archived: false },
+    { id: 3, title: "Electricity Complaint", status: "Assigned", when: "3 days ago", pinned: false, archived: false },
+  ]);
 
   const chatRef = useRef(null);
+  const inputRef = useRef(null);
 
-  /* AUTO SCROLL */
   useEffect(() => {
     if (chatRef.current) {
-      chatRef.current.scrollTop =
-        chatRef.current.scrollHeight;
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, typing]);
 
-  /* HANDLE RESPONSIVE SIDEBAR */
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSidebar(true);
-      } else {
-        setSidebar(false);
-      }
-    };
-
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    const handleResize = () => setSidebar(window.innerWidth >= 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  /* SEND MESSAGE */
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
-
-    const userMessage = {
-      type: "user",
-      text,
+  // Close any open conversation menu when clicking outside of it.
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.target.closest("[data-conv-menu]")) {
+        setOpenMenuId(null);
+        setConfirmDeleteId(null);
+      }
     };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-    ]);
+  const sendMessage = (text) => {
+    const clean = text.trim();
+    if (!clean || typing) return;
 
+    setMessages((prev) => [...prev, { type: "user", text: clean, time: new Date() }]);
     setInput("");
-
     setTyping(true);
+
+    // Only now — on the first real message of a fresh conversation — do we
+    // create a sidebar entry. Opening "New conversation" and never asking
+    // anything leaves no trace in the history.
+    if (activeChat === null) {
+      const newId = Date.now();
+      setChatHistory((prev) => [
+        { id: newId, title: clean.length > 40 ? clean.slice(0, 40) + "…" : clean, status: "Active", when: "Just now", pinned: false, archived: false },
+        ...prev,
+      ]);
+      setActiveChat(newId);
+    }
 
     setTimeout(() => {
       setTyping(false);
-
-      let reply =
-        "NationAura helps citizens report and track infrastructure issues in real-time.";
-
-      if (
-        text.toLowerCase().includes("report")
-      ) {
-        reply =
-          "To report an issue, upload evidence, add the location, and describe the problem. Our AI system routes it to the appropriate authority instantly.";
-      }
-
-      if (
-        text.toLowerCase().includes("track")
-      ) {
-        reply =
-          "You can monitor your report status live: Submitted → Verified → Assigned → In Progress → Resolved.";
-      }
-
-      if (
-        text.toLowerCase().includes("support")
-      ) {
-        reply =
-          "Our support team is available 24/7 to help with civic complaints, verification, and technical assistance.";
-      }
-
-      const aiReply = {
-        type: "assistant",
-        text: reply,
-      };
-
       setMessages((prev) => [
         ...prev,
-        aiReply,
+        { type: "assistant", text: formatReply(clean), time: new Date() },
       ]);
-    }, 1400);
+    }, 1100 + Math.random() * 500);
   };
 
-  /* NEW CHAT */
   const handleNewConversation = () => {
     setMessages(welcomeMessage);
-
-    const newChat =
-      "Conversation " +
-      (chatHistory.length + 1);
-
-    setChatHistory((prev) => [
-      newChat,
-      ...prev,
-    ]);
+    setActiveChat(null);
+    if (window.innerWidth < 1024) setSidebar(false);
+    inputRef.current?.focus();
   };
 
+  const togglePin = (id) => {
+    setChatHistory((prev) => prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)));
+    setOpenMenuId(null);
+  };
+
+  const toggleArchive = (id) => {
+    setChatHistory((prev) => prev.map((c) => (c.id === id ? { ...c, archived: !c.archived } : c)));
+    setOpenMenuId(null);
+  };
+
+  const deleteChat = (id) => {
+    setChatHistory((prev) => prev.filter((c) => c.id !== id));
+    if (activeChat === id) {
+      setActiveChat(null);
+      setMessages(welcomeMessage);
+    }
+    setOpenMenuId(null);
+    setConfirmDeleteId(null);
+  };
+
+  const startRename = (chat) => {
+    setRenamingId(chat.id);
+    setRenameValue(chat.title);
+    setOpenMenuId(null);
+  };
+
+  const submitRename = (cancel = false) => {
+    if (!cancel && renamingId !== null) {
+      const trimmed = renameValue.trim();
+      if (trimmed) {
+        setChatHistory((prev) => prev.map((c) => (c.id === renamingId ? { ...c, title: trimmed } : c)));
+      }
+    }
+    setRenamingId(null);
+  };
+
+  const matchesSearch = (c) => c.title.toLowerCase().includes(search.toLowerCase());
+  const pinnedList = chatHistory.filter((c) => c.pinned && !c.archived && matchesSearch(c));
+  const recentList = chatHistory.filter((c) => !c.pinned && !c.archived && matchesSearch(c));
+  const archivedList = chatHistory.filter((c) => c.archived && matchesSearch(c));
+  const nothingFound = pinnedList.length === 0 && recentList.length === 0 && (!showArchived || archivedList.length === 0);
+
+  const itemProps = (chat) => ({
+    chat,
+    isActive: activeChat === chat.id,
+    onSelect: () => setActiveChat(chat.id),
+    isRenaming: renamingId === chat.id,
+    renameValue,
+    onRenameChange: setRenameValue,
+    onRenameSubmit: submitRename,
+    onStartRename: () => startRename(chat),
+    menuOpen: openMenuId === chat.id,
+    onToggleMenu: () => {
+      setOpenMenuId((prev) => (prev === chat.id ? null : chat.id));
+      setConfirmDeleteId(null);
+    },
+    confirming: confirmDeleteId === chat.id,
+    onTogglePin: () => togglePin(chat.id),
+    onArchive: () => toggleArchive(chat.id),
+    onRequestDelete: () => setConfirmDeleteId(chat.id),
+    onConfirmDelete: () => deleteChat(chat.id),
+  });
+
   return (
-    <div
-      className="
-      h-screen
-      w-full
-      bg-[#F4F7F5]
-      overflow-hidden
-      flex
-      "
-    >
+    <div className="flex h-screen w-full overflow-hidden bg-stone-100">
+
       {/* SIDEBAR */}
       <AnimatePresence>
-
         {sidebar && (
-          <motion.div
-            initial={{
-              x: -80,
-              opacity: 0,
-            }}
+          <div className="contents">
+            {/* mobile scrim */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebar(false)}
+              className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            />
 
-            animate={{
-              x: 0,
-              opacity: 1,
-            }}
-
-            exit={{
-              x: -80,
-              opacity: 0,
-            }}
-
-            transition={{
-              duration: 0.3,
-            }}
-
-            className="
-            fixed
-            lg:relative
-            z-50
-            w-[320px]
-            h-full
-            bg-white
-            border-r
-            border-gray-200
-            flex
-            flex-col
-            shadow-xl
-            "
-          >
-            {/* TOP */}
-            <div
-              className="
-              p-6
-              border-b
-              border-gray-100
-              "
+            <motion.div
+              initial={{ x: -320, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -320, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed z-50 flex h-full w-[300px] flex-col border-r border-stone-200 bg-white lg:relative"
             >
-              {/* BACK */}
-              <Link to="/">
-                <motion.button
-                  whileHover={{
-                    x: -2,
-                  }}
+              {/* TOP */}
+              <div className="border-b border-stone-100 p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <Link
+                    to="/"
+                    className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-stone-500 transition-colors hover:text-green-800"
+                  >
+                    <FiArrowLeft className="h-3.5 w-3.5" /> Back home
+                  </Link>
+                  <button
+                    onClick={() => setSidebar(false)}
+                    className="text-stone-400 hover:text-stone-700 lg:hidden"
+                    aria-label="Close sidebar"
+                  >
+                    <FiX />
+                  </button>
+                </div>
 
-                  className="
-                  flex
-                  items-center
-                  gap-3
-                  text-gray-600
-                  hover:text-green-700
-                  transition-all
-                  duration-300
-                  mb-8
-                  "
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 overflow-hidden rounded-full bg-green-900">
+                    <img src="/images/logo.png" alt="NationAura" className="h-full w-full object-cover" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold leading-tight text-stone-900">NationAura</h2>
+                    <p className="text-xs font-medium text-green-700">Civic Assistant</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleNewConversation}
+                  className="mt-6 flex h-[48px] w-full items-center justify-center gap-2 bg-green-900 text-[14px] font-semibold text-white transition-colors hover:bg-green-800"
                 >
-                  <FiArrowLeft />
+                  <FiPlus className="h-4 w-4" /> New conversation
+                </button>
+              </div>
 
-                  Back Home
-                </motion.button>
-              </Link>
-
-              {/* LOGO */}
-              <div
-                className="
-                flex
-                items-center
-                gap-4
-                "
-              >
-                <div
-                  className="
-                  w-16
-                  h-16
-                  rounded-2xl
-                  overflow-hidden
-                  shadow-lg
-                  "
-                >
-                  <img
-                    src="/images/logo.png"
-                    alt="NationAura"
-                    className="
-                    w-full
-                    h-full
-                    object-cover
-                    "
+              {/* SEARCH */}
+              <div className="p-5 pb-3">
+                <div className="relative">
+                  <FiSearch className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search conversations"
+                    className="h-11 w-full border border-stone-200 bg-stone-50 pl-10 pr-4 text-[13.5px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-green-800 focus:bg-white"
                   />
                 </div>
-
-                <div>
-                  <h2
-                    className="
-                    text-xl
-                    font-black
-                    text-gray-900
-                    "
-                  >
-                    NationAura
-                  </h2>
-
-                  <p
-                    className="
-                    text-sm
-                    text-green-700
-                    font-medium
-                    "
-                  >
-                    Civic AI Platform
-                  </p>
-                </div>
               </div>
 
-              {/* NEW CHAT */}
-              <motion.button
-                whileHover={{
-                  scale: 1.02,
-                }}
+              {/* HISTORY */}
+              <div className="flex-1 space-y-1 overflow-y-auto px-3 pb-5">
+                {nothingFound && (
+                  <p className="px-2 py-6 text-center text-xs text-stone-400">No conversations found</p>
+                )}
 
-                whileTap={{
-                  scale: 0.98,
-                }}
+                {pinnedList.length > 0 && (
+                  <>
+                    <p className="px-2 pb-2 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-stone-400">
+                      Pinned
+                    </p>
+                    {pinnedList.map((chat) => (
+                      <ConversationItem key={chat.id} {...itemProps(chat)} />
+                    ))}
+                  </>
+                )}
 
-                onClick={
-                  handleNewConversation
-                }
+                {recentList.length > 0 && (
+                  <>
+                    <p className="px-2 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-stone-400">
+                      Recent
+                    </p>
+                    {recentList.map((chat) => (
+                      <ConversationItem key={chat.id} {...itemProps(chat)} />
+                    ))}
+                  </>
+                )}
 
-                className="
-                mt-8
-                w-full
-                h-14
-                rounded-2xl
-                bg-green-700
-                hover:bg-green-800
-                text-white
-                flex
-                items-center
-                justify-center
-                gap-3
-                font-semibold
-                transition-all
-                duration-300
-                shadow-lg
-                "
-              >
-                <FiPlus />
-
-                New Conversation
-              </motion.button>
-            </div>
-
-            {/* SEARCH */}
-            <div className="p-5">
-              <div className="relative">
-
-                <FiSearch
-                  className="
-                  absolute
-                  left-4
-                  top-1/2
-                  -translate-y-1/2
-                  text-gray-400
-                  "
-                />
-
-                <input
-                  type="text"
-                  placeholder="Search conversations..."
-
-                  className="
-                  w-full
-                  h-12
-                  rounded-2xl
-                  bg-gray-50
-                  border
-                  border-gray-200
-                  pl-11
-                  pr-4
-                  outline-none
-                  focus:border-green-400
-                  transition-all
-                  duration-300
-                  "
-                />
-
-              </div>
-            </div>
-
-            {/* HISTORY */}
-            <div
-              className="
-              flex-1
-              overflow-y-auto
-              px-4
-              pb-5
-              space-y-3
-              "
-            >
-              {chatHistory.map(
-                (chat, index) => (
-                  <motion.button
-                    key={index}
-
-                    whileHover={{
-                      x: 4,
-                    }}
-
-                    className="
-                    w-full
-                    flex
-                    items-center
-                    gap-4
-                    p-4
-                    rounded-2xl
-                    hover:bg-green-50
-                    transition-all
-                    duration-300
-                    text-left
-                    "
-                  >
-                    <div
-                      className="
-                      w-11
-                      h-11
-                      rounded-xl
-                      bg-green-100
-                      text-green-700
-                      flex
-                      items-center
-                      justify-center
-                      "
+                {archivedList.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setShowArchived((v) => !v)}
+                      className="mt-3 flex w-full items-center justify-between px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-stone-400 hover:text-stone-600"
                     >
-                      <FiMessageSquare />
-                    </div>
-
-                    <div>
-                      <h3
-                        className="
-                        text-sm
-                        font-semibold
-                        text-gray-800
-                        "
-                      >
-                        {chat}
-                      </h3>
-
-                      <p
-                        className="
-                        text-xs
-                        text-gray-500
-                        "
-                      >
-                        AI assistance
-                      </p>
-                    </div>
-                  </motion.button>
-                )
-              )}
-            </div>
-          </motion.div>
+                      <span>Archived ({archivedList.length})</span>
+                      <FiChevronRight className={`h-3 w-3 transition-transform ${showArchived ? "rotate-90" : ""}`} />
+                    </button>
+                    {showArchived && archivedList.map((chat) => (
+                      <ConversationItem key={chat.id} {...itemProps(chat)} />
+                    ))}
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
-
       </AnimatePresence>
 
       {/* MAIN */}
-      <div
-        className="
-        flex-1
-        flex
-        flex-col
-        h-full
-        "
-      >
-        {/* HEADER */}
-        <div
-          className="
-          h-20
-          px-5
-          md:px-8
-          bg-white/90
-          backdrop-blur-xl
-          border-b
-          border-gray-200
-          flex
-          items-center
-          justify-between
-          "
-        >
-          <div
-            className="
-            flex
-            items-center
-            gap-4
-            "
-          >
-            {/* MOBILE MENU */}
-            <button
-              onClick={() =>
-                setSidebar(!sidebar)
-              }
+      <div className="flex h-full flex-1 flex-col">
 
-              className="
-              lg:hidden
-              w-11
-              h-11
-              rounded-xl
-              bg-green-100
-              text-green-700
-              flex
-              items-center
-              justify-center
-              "
+        {/* HEADER */}
+        <div className="flex h-[76px] items-center justify-between border-b border-stone-200 bg-white px-5 md:px-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebar(!sidebar)}
+              className="flex h-10 w-10 items-center justify-center border border-stone-200 text-stone-600 hover:border-stone-300 lg:hidden"
+              aria-label="Toggle sidebar"
             >
               <FiMenu />
             </button>
 
-            {/* AI ICON */}
-            <motion.div
-              animate={{
-                rotate: [0, 5, -5, 0],
-              }}
-
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-              }}
-
-              className="
-              w-14
-              h-14
-              rounded-2xl
-              bg-gradient-to-br
-              from-green-600
-              to-emerald-700
-              text-white
-              flex
-              items-center
-              justify-center
-              text-2xl
-              shadow-lg
-              "
-            >
-              <FiCpu />
-            </motion.div>
+            <IconBox icon={FiCpu} />
 
             <div>
-              <h2
-                className="
-                font-bold
-                text-gray-900
-                text-lg
-                "
-              >
-                NationAura Civic Assistant
-              </h2>
-
-              <p
-                className="
-                text-sm
-                text-green-700
-                flex
-                items-center
-                gap-2
-                "
-              >
-                <FiZap />
-
-                AI-powered civic intelligence
+              <h2 className="text-[15px] font-bold text-stone-900">NationAura Civic Assistant</h2>
+              <p className="flex items-center gap-1.5 text-xs text-stone-500">
+                <StatusDot active /> Online, replies in seconds
               </p>
             </div>
           </div>
 
-          {/* STATUS */}
-          <div
-            className="
-            hidden
-            md:flex
-            items-center
-            gap-2
-            px-4
-            py-2
-            rounded-full
-            bg-green-100
-            text-green-700
-            text-sm
-            font-medium
-            "
+          <a
+            href="mailto:support@nationaura.ng"
+            className="hidden items-center gap-2 border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-600 transition-colors hover:border-green-800 hover:text-green-800 md:flex"
           >
-            <FiCheckCircle />
-
-            System Online
-          </div>
+            <FiPhone className="h-3.5 w-3.5" /> Contact support
+          </a>
         </div>
 
         {/* CHAT BODY */}
-        <div
-          ref={chatRef}
+        <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-8 md:px-8">
+          <div className="mx-auto max-w-3xl space-y-6">
 
-          className="
-          flex-1
-          overflow-y-auto
-          px-4
-          md:px-8
-          py-8
-          "
-        >
-          <div
-            className="
-            max-w-4xl
-            mx-auto
-            space-y-8
-            "
-          >
-            {/* QUICK QUESTIONS */}
+            {/* QUICK ACTIONS */}
             {messages.length === 1 && (
-              <div
-                className="
-                flex
-                flex-wrap
-                gap-3
-                "
-              >
-                {quickQuestions.map(
-                  (question, index) => (
-                    <motion.button
-                      key={index}
-
-                      whileHover={{
-                        y: -2,
-                      }}
-
-                      onClick={() =>
-                        sendMessage(question)
-                      }
-
-                      className="
-                      px-5
-                      py-3
-                      rounded-2xl
-                      bg-white
-                      border
-                      border-gray-200
-                      hover:border-green-300
-                      hover:bg-green-50
-                      transition-all
-                      duration-300
-                      text-sm
-                      text-gray-700
-                      shadow-sm
-                      "
-                    >
-                      {question}
-                    </motion.button>
-                  )
-                )}
+              <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2">
+                {quickActions.map((action, index) => (
+                  <motion.button
+                    key={index}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => sendMessage(action.prompt)}
+                    className="flex items-start gap-3 border border-stone-200 bg-white p-4 text-left transition-colors hover:border-green-800 hover:bg-green-50"
+                  >
+                    <IconBox icon={action.icon} />
+                    <div>
+                      <h3 className="text-[13.5px] font-semibold text-stone-900">{action.title}</h3>
+                      <p className="mt-0.5 text-xs text-stone-500">{action.desc}</p>
+                    </div>
+                  </motion.button>
+                ))}
               </div>
             )}
 
             {/* MESSAGES */}
-            {messages.map(
-              (message, index) => (
-                <motion.div
-                  key={index}
-
-                  initial={{
-                    opacity: 0,
-                    y: 20,
-                  }}
-
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-
-                  className={`flex ${
-                    message.type === "user"
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`
-                    flex
-                    gap-4
-                    max-w-[90%]
-                    ${
-                      message.type === "user"
-                        ? "flex-row-reverse"
-                        : ""
-                    }
-                    `}
-                  >
-                    {/* ICON */}
+            {messages.map((message, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`flex max-w-[85%] gap-3 ${message.type === "user" ? "flex-row-reverse" : ""}`}>
+                  <IconBox
+                    icon={message.type === "assistant" ? FiCpu : FiUser}
+                    tone={message.type === "assistant" ? "green" : "dark"}
+                  />
+                  <div>
                     <div
-                      className={`
-                      w-11
-                      h-11
-                      rounded-2xl
-                      flex
-                      items-center
-                      justify-center
-                      text-white
-                      flex-shrink-0
-                      ${
-                        message.type ===
-                        "assistant"
-                          ? "bg-gradient-to-br from-green-600 to-emerald-700"
-                          : "bg-gray-900"
-                      }
-                      `}
-                    >
-                      {message.type ===
-                      "assistant" ? (
-                        <FiCpu />
-                      ) : (
-                        <FiUser />
-                      )}
-                    </div>
-
-                    {/* BUBBLE */}
-                    <div
-                      className={`
-                      rounded-[28px]
-                      px-6
-                      py-5
-                      text-[15px]
-                      leading-relaxed
-                      shadow-sm
-                      ${
-                        message.type ===
-                        "assistant"
-                          ? "bg-white text-gray-700"
-                          : "bg-green-700 text-white"
-                      }
-                      `}
+                      className={`border px-5 py-3.5 text-[14.5px] leading-relaxed ${
+                        message.type === "assistant"
+                          ? "border-stone-200 bg-white text-stone-700"
+                          : "border-green-900 bg-green-900 text-white"
+                      }`}
                     >
                       {message.text}
                     </div>
+                    <p
+                      className={`mt-1.5 text-[10.5px] text-stone-400 ${
+                        message.type === "user" ? "text-right" : ""
+                      }`}
+                    >
+                      {formatTime(message.time)}
+                    </p>
                   </div>
-                </motion.div>
-              )
-            )}
+                </div>
+              </motion.div>
+            ))}
 
             {/* TYPING */}
             <AnimatePresence>
-
               {typing && (
                 <motion.div
-                  initial={{
-                    opacity: 0,
-                  }}
-
-                  animate={{
-                    opacity: 1,
-                  }}
-
-                  exit={{
-                    opacity: 0,
-                  }}
-
-                  className="
-                  flex
-                  items-center
-                  gap-4
-                  "
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-3"
                 >
-                  <div
-                    className="
-                    w-11
-                    h-11
-                    rounded-2xl
-                    bg-gradient-to-br
-                    from-green-600
-                    to-emerald-700
-                    text-white
-                    flex
-                    items-center
-                    justify-center
-                    "
-                  >
-                    <FiCpu />
-                  </div>
-
-                  <div
-                    className="
-                    bg-white
-                    rounded-[24px]
-                    px-6
-                    py-5
-                    flex
-                    items-center
-                    gap-2
-                    shadow-sm
-                    "
-                  >
-                    <span
-                      className="
-                      w-2
-                      h-2
-                      rounded-full
-                      bg-green-600
-                      animate-bounce
-                      "
-                    />
-
-                    <span
-                      className="
-                      w-2
-                      h-2
-                      rounded-full
-                      bg-green-600
-                      animate-bounce
-                      "
-                    />
-
-                    <span
-                      className="
-                      w-2
-                      h-2
-                      rounded-full
-                      bg-green-600
-                      animate-bounce
-                      "
-                    />
+                  <IconBox icon={FiCpu} />
+                  <div className="flex items-center gap-1.5 border border-stone-200 bg-white px-5 py-4">
+                    <span className="h-1.5 w-1.5 animate-bounce bg-green-700 [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce bg-green-700 [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce bg-green-700" />
                   </div>
                 </motion.div>
               )}
-
             </AnimatePresence>
           </div>
         </div>
 
         {/* INPUT */}
-        <div
-          className="
-          border-t
-          border-gray-200
-          bg-white/90
-          backdrop-blur-xl
-          px-4
-          md:px-8
-          py-5
-          "
-        >
-          <div
-            className="
-            max-w-4xl
-            mx-auto
-            "
-          >
-            <div className="relative">
-
+        <div className="border-t border-stone-200 bg-white px-4 py-5 md:px-8">
+          <div className="mx-auto max-w-3xl">
+            <div className="flex items-center gap-3">
               <input
+                ref={inputRef}
                 type="text"
-
                 value={input}
-
-                onChange={(e) =>
-                  setInput(e.target.value)
-                }
-
+                onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    sendMessage(input);
-                  }
+                  if (e.key === "Enter") sendMessage(input);
                 }}
-
                 placeholder="Message NationAura Civic Assistant..."
-
-                className="
-                w-full
-                h-16
-                rounded-3xl
-                bg-white
-                border
-                border-gray-200
-                px-6
-                pr-20
-                outline-none
-                focus:border-green-400
-                transition-all
-                duration-300
-                text-gray-700
-                shadow-sm
-                "
+                className="h-[52px] flex-1 border border-stone-200 bg-white px-4 text-[14.5px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-green-800"
               />
-
-              <motion.button
-                whileHover={{
-                  scale: 1.05,
-                }}
-
-                whileTap={{
-                  scale: 0.96,
-                }}
-
-                onClick={() =>
-                  sendMessage(input)
-                }
-
-                className="
-                absolute
-                right-3
-                top-1/2
-                -translate-y-1/2
-                w-12
-                h-12
-                rounded-2xl
-                bg-green-700
-                hover:bg-green-800
-                text-white
-                flex
-                items-center
-                justify-center
-                transition-all
-                duration-300
-                shadow-lg
-                "
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || typing}
+                aria-label="Send message"
+                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center bg-green-900 text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <FiSend />
-              </motion.button>
-
+                <FiSend className="h-4 w-4" />
+              </button>
             </div>
+            <p className="mt-2.5 text-center text-[11px] text-stone-400">
+              For life-threatening emergencies, contact local emergency services directly.
+            </p>
           </div>
         </div>
       </div>

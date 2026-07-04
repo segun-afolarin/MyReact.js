@@ -4,10 +4,10 @@ import {
   FiShield, FiAward, FiTrendingUp, FiCheckCircle,
   FiMapPin, FiActivity, FiArrowUpRight,
 } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext"; // ← adjust path if needed
+import { useAuth } from "../../context/AuthContext";
 
 const ProfileHero = ({ darkMode }) => {
-  const { user } = useAuth(); // ← get logged-in user
+  const { user } = useAuth();
 
   // Build initials from the real name — e.g. "Ada Okafor" → "AO"
   const initials = user?.name
@@ -18,6 +18,17 @@ const ProfileHero = ({ darkMode }) => {
         .toUpperCase()
         .slice(0, 2)
     : "NA";
+
+  // Avatar image URL from API
+  const avatarUrl = user?.avatar || null;
+
+  // If avatar fails to load, fall back to initials
+  const [imgError, setImgError] = useState(false);
+
+  // Reset error if avatar URL changes (e.g. after upload)
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
 
   const stats = [
     { label: "Reports Submitted", value: "128"   },
@@ -72,10 +83,21 @@ const ProfileHero = ({ darkMode }) => {
           {/* LEFT */}
           <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
 
-            {/* AVATAR — shows real initials */}
+            {/* AVATAR — real photo or initials fallback */}
             <div className="relative">
-              <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-gradient-to-br from-green-500 via-emerald-400 to-green-700 flex items-center justify-center text-4xl font-black text-white shadow-[0_0_50px_rgba(34,197,94,0.35)]">
-                {initials}
+              <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-full overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.35)]">
+                {avatarUrl && !imgError ? (
+                  <img
+                    src={avatarUrl}
+                    alt={user?.name || "Profile"}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-400 to-green-700 flex items-center justify-center text-4xl font-black text-white">
+                    {initials}
+                  </div>
+                )}
               </div>
               <div className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-green-500 border-4 border-white dark:border-[#081019] flex items-center justify-center">
                 <FiCheckCircle className="text-white" />
@@ -125,7 +147,7 @@ const ProfileHero = ({ darkMode }) => {
               <div className="mt-5 flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5">
                   <FiMapPin />
-                  Kwara State, Nigeria
+                  {user?.state ? `${user.state}, Nigeria` : "Nigeria"}
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5">
                   <FiAward />
