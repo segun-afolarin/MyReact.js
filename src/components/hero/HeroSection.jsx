@@ -73,7 +73,6 @@ const HeroSection = () => {
   const [chipIndex, setChipIndex] = useState(0);
   const [confirmCount, setConfirmCount] = useState(0);
 
-  // Rotate the headline + supporting line every 6s
   useEffect(() => {
     const t = setInterval(() => setSlide((s) => (s + 1) % heroSlides.length), 6000);
     return () => clearInterval(t);
@@ -84,9 +83,6 @@ const HeroSection = () => {
     return () => clearInterval(t);
   }, []);
 
-  // While the phone is on the "awaiting confirmation" screen, tick the
-  // confirmation counter up from 0 to 5 so it visibly waits, rather than
-  // just declaring the report confirmed instantly.
   useEffect(() => {
     if (flowSteps[step].key !== "confirm") return;
     setConfirmCount(0);
@@ -108,12 +104,78 @@ const HeroSection = () => {
   const showConfirmDots = currentKey === "confirm" || currentKey === "confirmed";
   const filledDots = currentKey === "confirmed" ? 5 : confirmCount;
 
+  // ---- Shared screen content (identical across phone/laptop/desktop) ----
+  const ScreenHeader = ({ compact }) => (
+    <div className={`bg-gradient-to-r from-green-600 to-emerald-700 ${compact ? "px-5 pt-8 pb-4" : "px-6 py-4"}`}>
+      <p className="text-[10px] sm:text-[11px] tracking-[0.14em] uppercase text-white/60">New Report</p>
+      <h4 className="text-base sm:text-lg font-bold mt-1 text-white">{flowSteps[step].label}</h4>
+    </div>
+  );
+
+  const ScreenBody = () => (
+    <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-8">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -16 }}
+          transition={{ duration: 0.35 }}
+          className="flex flex-col items-center text-center"
+        >
+          <div
+            className={`w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-5 sm:mb-6 ${
+              step === 4 ? "bg-green-50 text-green-600" : "bg-gray-50 text-black"
+            }`}
+          >
+            <Icon size={28} className="sm:w-8 sm:h-8" />
+          </div>
+          <p className="text-xs sm:text-sm font-medium text-black">{currentNote}</p>
+          {showConfirmDots && (
+            <div className="flex items-center gap-1.5 mt-3">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <span
+                  key={i}
+                  className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                    i < filledDots ? "bg-green-500" : "bg-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="flex items-center gap-2 mt-6 sm:mt-8">
+        {flowSteps.map((s, i) => (
+          <span
+            key={s.key}
+            className={`h-1.5 transition-all duration-300 ${
+              i === step ? "w-5 sm:w-[22px] bg-green-500" : "w-1.5 bg-gray-200"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const ScreenFooter = () => (
+    <div className="px-5 sm:px-6 pb-6 sm:pb-8 pt-4">
+      <div
+        className={`w-full py-3 sm:py-3.5 text-center text-xs sm:text-sm font-semibold ${
+          step === 4 ? "bg-green-500 text-white" : "bg-gradient-to-r from-green-600 to-emerald-700 text-white"
+        }`}
+      >
+        {step === 4 ? "Report tracked" : "Next step"}
+      </div>
+    </div>
+  );
+
   return (
     <section
       className="relative overflow-hidden pt-24 sm:pt-28 lg:pt-[84px]"
       style={{ background: "linear-gradient(135deg, #052E16 0%, #166534 100%)" }}
     >
-      {/* GRID BACKGROUND */}
       <div
         className="absolute inset-0 opacity-[0.05] pointer-events-none"
         style={{
@@ -123,7 +185,6 @@ const HeroSection = () => {
         }}
       />
 
-      {/* GLOW */}
       <motion.div
         animate={{ scale: [1, 1.12, 1], opacity: [0.18, 0.3, 0.18] }}
         transition={{ duration: 6, repeat: Infinity }}
@@ -148,12 +209,9 @@ const HeroSection = () => {
               <span className="absolute inline-flex h-full w-full animate-ping bg-emerald-300" />
               <span className="relative inline-flex h-2.5 w-2.5 bg-emerald-400" />
             </span>
-            <span className="text-xs font-semibold tracking-[0.15em] uppercase">
-              Live Civic Network
-            </span>
+            <span className="text-xs font-semibold tracking-[0.15em] uppercase">Live Civic Network</span>
           </div>
 
-          {/* ROTATING HEADLINE */}
           <div className="min-h-[128px] sm:min-h-[152px] lg:min-h-[176px]">
             <AnimatePresence mode="wait">
               <motion.div
@@ -173,16 +231,13 @@ const HeroSection = () => {
             </AnimatePresence>
           </div>
 
-          {/* SLIDE INDICATORS */}
           <div className="flex items-center justify-center lg:justify-start gap-2">
             {heroSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setSlide(i)}
                 aria-label={`Show headline ${i + 1}`}
-                className={`h-1.5 transition-all duration-300 ${
-                  slide === i ? "w-7 bg-white" : "w-1.5 bg-white/30"
-                }`}
+                className={`h-1.5 transition-all duration-300 ${slide === i ? "w-7 bg-white" : "w-1.5 bg-white/30"}`}
               />
             ))}
           </div>
@@ -219,15 +274,14 @@ const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* RIGHT: PHONE MOCKUP */}
+        {/* RIGHT: DEVICE MOCKUP — phone on mobile, laptop on lg, desktop monitor on xl+ */}
         <motion.div
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
           className="relative flex justify-center lg:justify-end pt-4 lg:pt-0"
         >
-          {/* floating chip */}
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 lg:-left-2 z-20 hidden sm:block">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 lg:left-auto lg:right-2 xl:right-6 z-20 hidden sm:block">
             <AnimatePresence mode="wait">
               <motion.div
                 key={chipIndex}
@@ -243,81 +297,77 @@ const HeroSection = () => {
             </AnimatePresence>
           </div>
 
-          {/* phone frame */}
-          <div
-            className="relative w-[240px] sm:w-[290px] lg:w-[300px] rounded-[36px] sm:rounded-[42px] p-2.5 sm:p-3 bg-black"
-            style={{ boxShadow: "0 40px 90px rgba(0,0,0,0.45)" }}
-          >
-            <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 w-20 sm:w-24 h-4 sm:h-5 rounded-full z-10 bg-black" />
-            <div className="rounded-[26px] sm:rounded-[32px] overflow-hidden h-[400px] sm:h-[500px] lg:h-[520px] flex flex-col bg-white">
-              {/* screen header */}
-              <div className="px-5 sm:px-6 pt-8 sm:pt-9 pb-4 bg-gradient-to-r from-green-600 to-emerald-700">
-                <p className="text-[10px] sm:text-[11px] tracking-[0.14em] uppercase text-white/60">
-                  New Report
-                </p>
-                <h4 className="text-base sm:text-lg font-bold mt-1 text-white">
-                  {flowSteps[step].label}
-                </h4>
-              </div>
+          {/* ===== PHONE — shown below lg ===== */}
+          <div className="block lg:hidden">
+            <div
+              className="relative w-[240px] sm:w-[290px] rounded-[40px] sm:rounded-[46px] p-[3px] bg-gradient-to-b from-neutral-700 to-neutral-900"
+              style={{ boxShadow: "0 40px 90px rgba(0,0,0,0.45)" }}
+            >
+              <div className="rounded-[37px] sm:rounded-[43px] p-2.5 sm:p-3 bg-black">
+                {/* side buttons */}
+                <span className="absolute -left-[3px] top-24 w-[3px] h-8 bg-neutral-800 rounded-r-sm" />
+                <span className="absolute -left-[3px] top-36 w-[3px] h-12 bg-neutral-800 rounded-r-sm" />
+                <span className="absolute -right-[3px] top-32 w-[3px] h-16 bg-neutral-800 rounded-l-sm" />
 
-              {/* screen body */}
-              <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-8">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={step}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -16 }}
-                    transition={{ duration: 0.35 }}
-                    className="flex flex-col items-center text-center"
-                  >
-                    <div
-                      className={`w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-5 sm:mb-6 ${
-                        step === 4 ? "bg-green-50 text-green-600" : "bg-gray-50 text-black"
-                      }`}
-                    >
-                      <Icon size={28} className="sm:w-8 sm:h-8" />
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-black">
-                      {currentNote}
-                    </p>
-                    {showConfirmDots && (
-                      <div className="flex items-center gap-1.5 mt-3">
-                        {[0, 1, 2, 3, 4].map((i) => (
-                          <span
-                            key={i}
-                            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                              i < filledDots ? "bg-green-500" : "bg-gray-200"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+                {/* dynamic island / notch */}
+                <div className="absolute top-4 sm:top-5 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-4 sm:h-5 rounded-full z-10 bg-black" />
 
-                <div className="flex items-center gap-2 mt-6 sm:mt-8">
-                  {flowSteps.map((s, i) => (
-                    <span
-                      key={s.key}
-                      className={`h-1.5 transition-all duration-300 ${
-                        i === step ? "w-5 sm:w-[22px] bg-green-500" : "w-1.5 bg-gray-200"
-                      }`}
-                    />
-                  ))}
+                <div className="rounded-[28px] sm:rounded-[34px] overflow-hidden h-[400px] sm:h-[500px] flex flex-col bg-white">
+                  <ScreenHeader compact />
+                  <ScreenBody />
+                  <ScreenFooter />
                 </div>
               </div>
+              {/* home indicator */}
+              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 rounded-full bg-white/70" />
+            </div>
+          </div>
 
-              {/* screen footer */}
-              <div className="px-5 sm:px-6 pb-6 sm:pb-8 pt-4">
-                <div
-                  className={`w-full py-3 sm:py-3.5 text-center text-xs sm:text-sm font-semibold ${
-                    step === 4 ? "bg-green-500 text-white" : "bg-gradient-to-r from-green-600 to-emerald-700 text-white"
-                  }`}
-                >
-                  {step === 4 ? "Report tracked" : "Next step"}
+          {/* ===== LAPTOP — shown lg to <xl ===== */}
+          <div className="hidden lg:block xl:hidden">
+            <div className="relative w-[500px]" style={{ filter: "drop-shadow(0 35px 60px rgba(0,0,0,0.4))" }}>
+              {/* lid / screen bezel */}
+              <div className="rounded-t-[10px] rounded-b-[3px] border-[9px] border-b-[3px] border-neutral-800 bg-neutral-800">
+                {/* camera dot */}
+                <div className="absolute top-[1px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-neutral-600 z-10" />
+                <div className="overflow-hidden h-[300px] flex flex-col bg-white">
+                  <ScreenHeader />
+                  <ScreenBody />
+                  <ScreenFooter />
                 </div>
               </div>
+              {/* base / chassis */}
+              <div className="relative h-[14px] bg-gradient-to-b from-neutral-300 to-neutral-400 rounded-b-[2px]">
+                <div className="absolute inset-x-0 top-0 h-[3px] bg-neutral-500/40" />
+              </div>
+              {/* wedge foot that extends wider than the lid, like a real laptop base */}
+              <div className="relative mx-auto -mt-[1px]" style={{ width: "112%", marginLeft: "-6%" }}>
+                <div className="h-[10px] bg-gradient-to-b from-neutral-200 to-neutral-350 rounded-b-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)]" style={{ background: "linear-gradient(to bottom, #e5e5e5, #b8b8b8)" }} />
+                {/* trackpad notch cut */}
+                <div className="absolute left-1/2 -translate-x-1/2 -top-[1px] w-24 h-[5px] bg-neutral-400/50 rounded-b-md" />
+              </div>
+            </div>
+          </div>
+
+          {/* ===== DESKTOP MONITOR — shown xl and up ===== */}
+          <div className="hidden xl:block">
+            <div className="relative" style={{ filter: "drop-shadow(0 40px 70px rgba(0,0,0,0.4))" }}>
+              {/* monitor bezel */}
+              <div className="w-[580px] rounded-[14px] border-[12px] border-neutral-900 bg-neutral-900">
+                {/* camera dot */}
+                <div className="absolute top-[2px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-neutral-700 z-10" />
+                <div className="overflow-hidden h-[340px] flex flex-col bg-white rounded-[2px]">
+                  <ScreenHeader />
+                  <ScreenBody />
+                  <ScreenFooter />
+                </div>
+              </div>
+              {/* bottom chin */}
+              <div className="w-[580px] h-[10px] bg-neutral-900 rounded-b-md" />
+              {/* neck */}
+              <div className="mx-auto w-[46px] h-[54px] bg-gradient-to-b from-neutral-700 to-neutral-800" />
+              {/* weighted circular base */}
+              <div className="mx-auto w-[200px] h-[16px] bg-gradient-to-b from-neutral-600 to-neutral-800 rounded-[50%] -mt-1" />
             </div>
           </div>
         </motion.div>
@@ -329,9 +379,7 @@ const HeroSection = () => {
           <div className="ticker-track flex items-center gap-6 sm:gap-10 pr-6 sm:pr-10 whitespace-nowrap">
             {[...tickerItems, ...tickerItems].map((item, i) => (
               <div key={i} className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-                <span className="text-[10px] sm:text-[11px] px-2 py-1 bg-white/[0.06] text-gray-300">
-                  {item.code}
-                </span>
+                <span className="text-[10px] sm:text-[11px] px-2 py-1 bg-white/[0.06] text-gray-300">{item.code}</span>
                 <span className="text-xs sm:text-sm text-gray-300">{item.text}</span>
                 <span className={`text-[9px] sm:text-[10px] tracking-[0.12em] font-semibold ${statusColor[item.status]}`}>
                   {item.status}
