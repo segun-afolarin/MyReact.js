@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -8,6 +9,56 @@ import {
   FiUpload,
   FiUsers,
 } from "react-icons/fi";
+
+// Tracks whether the page is currently scrolling up or down,
+// so cards can slide in from the direction that matches the scroll.
+const useScrollDirection = () => {
+  const [direction, setDirection] = useState("down");
+  const lastY = useRef(0);
+
+  useEffect(() => {
+    lastY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const diff = currentY - lastY.current;
+
+      if (Math.abs(diff) > 4) {
+        setDirection(diff > 0 ? "down" : "up");
+        lastY.current = currentY;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return direction;
+};
+
+// Even cards slide from the left, odd cards from the right when
+// scrolling down — and it mirrors when scrolling up, so the whole
+// grid feels like it's being pulled in from both sides.
+const cardVariants = {
+  hidden: (side) => ({
+    opacity: 0,
+    x: side === "left" ? -140 : 140,
+    rotate: side === "left" ? -3 : 3,
+    scale: 0.94,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    rotate: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 90,
+      damping: 14,
+      mass: 0.7,
+    },
+  },
+};
 
 const features = [
   {
@@ -60,6 +111,8 @@ const features = [
 ];
 
 const FeaturesSection = () => {
+  const scrollDirection = useScrollDirection();
+
   return (
     <section
       className="
@@ -195,177 +248,48 @@ const FeaturesSection = () => {
           </p>
         </motion.div>
 
-        {/* MOBILE SLIDER */}
+        {/* RESPONSIVE GRID — same card styling on every breakpoint, no slider */}
         <div
           className="
-          flex
-          lg:hidden
+          grid
+          grid-cols-1
+          sm:grid-cols-2
+          lg:grid-cols-3
           gap-5
-          overflow-x-auto
+          sm:gap-6
+          lg:gap-7
           px-4
           sm:px-6
-          scrollbar-hide
-          snap-x
-          snap-mandatory
-          pb-4
-          "
-        >
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-
-              initial={{
-                opacity: 0,
-                y: 50,
-              }}
-
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-
-              transition={{
-                duration: 0.6,
-                delay: index * 0.1,
-              }}
-
-              whileHover={{
-                y: -8,
-              }}
-
-              className="
-              min-w-[320px]
-              snap-center
-              relative
-              "
-            >
-              <div
-                className="
-                relative
-                h-full
-                bg-white
-                p-8
-                shadow-[0_10px_40px_rgba(0,0,0,0.06)]
-                hover:shadow-[0_25px_80px_rgba(0,0,0,0.12)]
-                transition-all
-                duration-500
-                overflow-hidden
-                "
-              >
-                {/* TOP BAR */}
-                <div
-                  className={`
-                  absolute
-                  top-0
-                  left-0
-                  w-full
-                  h-1
-                  bg-gradient-to-r
-                  ${feature.gradient}
-                  `}
-                />
-
-                {/* FLOATING GLOW */}
-                <div
-                  className={`
-                  absolute
-                  -top-12
-                  -right-12
-                  w-36
-                  h-36
-                  rounded-full
-                  bg-gradient-to-br
-                  ${feature.gradient}
-                  opacity-[0.08]
-                  blur-3xl
-                  `}
-                />
-
-                {/* ICON */}
-                <motion.div
-                  whileHover={{
-                    rotate: 8,
-                    scale: 1.08,
-                  }}
-
-                  className={`
-                  w-16
-                  h-16
-                  flex
-                  items-center
-                  justify-center
-                  text-3xl
-                  text-white
-                  bg-gradient-to-br
-                  ${feature.gradient}
-                  shadow-lg
-                  mb-8
-                  `}
-                >
-                  {feature.icon}
-                </motion.div>
-
-                {/* TITLE */}
-                <h3
-                  className="
-                  text-2xl
-                  font-bold
-                  text-black
-                  leading-tight
-                  "
-                >
-                  {feature.title}
-                </h3>
-
-                {/* DESCRIPTION */}
-                <p
-                  className="
-                  mt-4
-                  text-gray-600
-                  leading-relaxed
-                  "
-                >
-                  {feature.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* DESKTOP GRID */}
-        <div
-          className="
-          hidden
-          lg:grid
-          grid-cols-3
-          gap-7
-          px-6
           lg:px-12
           "
         >
-          {features.map((feature, index) => (
+          {features.map((feature, index) => {
+            // even cards come from the left, odd from the right —
+            // and it flips when the user scrolls back up, so the
+            // cards feel like they're being pulled in from the
+            // direction the page is moving.
+            const baseSide = index % 2 === 0 ? "left" : "right";
+            const side =
+              scrollDirection === "up"
+                ? baseSide === "left"
+                  ? "right"
+                  : "left"
+                : baseSide;
+
+            return (
             <motion.div
               key={index}
 
-              initial={{
-                opacity: 0,
-                y: 70,
-              }}
+              custom={side}
+              variants={cardVariants}
+              initial="hidden"
 
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
+              whileInView="visible"
 
-              viewport={{ once: true }}
-
-              transition={{
-                duration: 0.7,
-                delay: index * 0.1,
-              }}
+              viewport={{ once: false, amount: 0.35 }}
 
               whileHover={{
-                y: -12,
+                y: -10,
               }}
 
               className="
@@ -394,8 +318,9 @@ const FeaturesSection = () => {
                 relative
                 h-full
                 bg-white
-                p-9
-                shadow-[0_10px_40px_rgba(0,0,0,0.05)]
+                p-8
+                sm:p-9
+                shadow-[0_10px_40px_rgba(0,0,0,0.06)]
                 hover:shadow-[0_25px_80px_rgba(0,0,0,0.12)]
                 transition-all
                 duration-500
@@ -411,6 +336,8 @@ const FeaturesSection = () => {
                   whileInView={{
                     width: "100%",
                   }}
+
+                  viewport={{ once: true }}
 
                   transition={{
                     duration: 1,
@@ -516,7 +443,8 @@ const FeaturesSection = () => {
                 />
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
