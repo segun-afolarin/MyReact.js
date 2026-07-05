@@ -3,7 +3,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: "https://backend-production-89f5.up.railway.app/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -11,7 +11,6 @@ const api = axios.create({
 });
 
 // ── REQUEST INTERCEPTOR ──────────────────────────────────────────────────────
-// Injects Bearer token into every outgoing request automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -22,15 +21,12 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 // ── RESPONSE INTERCEPTOR ─────────────────────────────────────────────────────
-// Watches for 401 — clears storage and redirects to /Signup (not /auth)
 api.interceptors.response.use(
   (response) => response,
-
   (error) => {
     if (error.response?.status === 401) {
-      // Only redirect if we're NOT already on the login page
-      // (prevents redirect loop when login itself returns 401)
       const isAuthCall =
         error.config?.url?.includes("/login") ||
         error.config?.url?.includes("/register");
@@ -38,7 +34,7 @@ api.interceptors.response.use(
       if (!isAuthCall) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/Signup"; // ← matches your route
+        window.location.href = "/Signup";
       }
     }
     return Promise.reject(error);
