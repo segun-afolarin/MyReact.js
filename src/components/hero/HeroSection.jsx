@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiFileText, FiCpu, FiUsers, FiCheckCircle, FiSend } from "react-icons/fi";
 
@@ -68,6 +69,7 @@ const stats = [
 ];
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   const [slide, setSlide] = useState(0);
   const [step, setStep] = useState(0);
   const [chipIndex, setChipIndex] = useState(0);
@@ -244,6 +246,7 @@ const HeroSection = () => {
 
           <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start gap-4 pt-2">
             <motion.button
+              onClick={() => navigate("/signup")}
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               className="group relative overflow-hidden h-13 px-7 py-4 sm:py-0 font-semibold text-[#052E16] bg-white shadow-[0_15px_40px_rgba(0,0,0,0.25)]"
@@ -252,6 +255,7 @@ const HeroSection = () => {
               Report an Issue
             </motion.button>
             <motion.button
+              onClick={() => navigate("/signup")}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="h-13 px-7 py-4 sm:py-0 font-semibold border border-white/25 bg-white/5 text-white hover:bg-white/10 transition-colors duration-300"
