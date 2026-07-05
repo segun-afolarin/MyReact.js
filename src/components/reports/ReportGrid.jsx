@@ -8,6 +8,7 @@ import {
   FiImage,
   FiTrendingUp,
   FiThumbsUp,
+  FiCamera,
 } from "react-icons/fi";
 
 const REQUIRED_CONFIRMATIONS = 5;
@@ -134,6 +135,8 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
       submittedBy: { name: "Kehinde A.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" },
       fields: ["Flooding", "Road Block", "High Priority"],
       updates: ["Submitted", "Verified", "Authority notified"],
+      // The photo you personally uploaded when you confirmed this report
+      myEvidence: "https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=600&auto=format&fit=crop",
     },
     {
       id: "#NA-1021",
@@ -148,6 +151,8 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
       submittedBy: { name: "Sola B.", initials: "SB" },
       fields: ["Infrastructure", "Safety Hazard"],
       updates: ["Submitted", "Under review"],
+      // The photo you personally uploaded when you confirmed this report
+      myEvidence: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=600&auto=format&fit=crop",
     },
   ];
 
@@ -356,7 +361,7 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
               </div>
             )}
 
-            {/* YOU CONFIRMED ON DATE (confirmed-by-me cards) */}
+            {/* YOU CONFIRMED ON DATE + YOUR EVIDENCE PHOTO (confirmed-by-me cards) */}
             {isConfirmedByMe && (
               <div className="mt-8">
                 <div
@@ -373,6 +378,22 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
                     You confirmed this on {report.confirmedOn}
                   </span>
                 </div>
+
+                {report.myEvidence && (
+                  <div className="mt-5">
+                    <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-black"}`}>
+                      <FiCamera />
+                      Evidence You Uploaded
+                    </h4>
+                    <div className="w-full sm:w-56 h-36 overflow-hidden border border-green-500/40">
+                      <img
+                        src={report.myEvidence}
+                        alt={`Evidence you uploaded for ${report.title}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
