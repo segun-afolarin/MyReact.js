@@ -15,11 +15,21 @@ export const getConfirmedReports = () =>
 export const getNearbyReports = () =>
   api.get("/reports/nearby").then((res) => res.data);
 
-// Do NOT set Content-Type manually for FormData — axios/the browser
-// needs to generate it itself so it includes the multipart boundary.
-// Setting "multipart/form-data" by hand breaks Laravel's file parsing.
+// The axios instance sets a default Content-Type: application/json header.
+// That default persists even for FormData requests unless we explicitly
+// clear it here — so we force it to undefined, letting the browser set
+// the correct multipart/form-data boundary itself. Without this, Laravel
+// can never parse the uploaded files (every image field looks invalid).
 export const submitReport = (formData) =>
-  api.post("/reports", formData).then((res) => res.data);
+  api
+    .post("/reports", formData, {
+      headers: { "Content-Type": undefined },
+    })
+    .then((res) => res.data);
 
 export const confirmReport = (reportId, formData) =>
-  api.post(`/reports/${reportId}/confirm`, formData).then((res) => res.data);
+  api
+    .post(`/reports/${reportId}/confirm`, formData, {
+      headers: { "Content-Type": undefined },
+    })
+    .then((res) => res.data);
