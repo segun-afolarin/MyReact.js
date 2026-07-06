@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 import {
   FiMapPin,
@@ -10,13 +10,11 @@ import {
   FiTrendingUp,
   FiThumbsUp,
   FiCamera,
-  FiUploadCloud,
-  FiX,
   FiAlertCircle,
   FiLoader,
 } from "react-icons/fi";
 
-import { getMyReports, getConfirmedReports, getNearbyReports, confirmReport } from "../../utils/api";
+import { getMyReports, getConfirmedReports } from "../../utils/api";
 
 const REQUIRED_CONFIRMATIONS = 5;
 
@@ -66,81 +64,6 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
   );
 };
 
-// ─── Evidence upload panel shown when confirming a nearby report ─────────────
-const EvidenceUploadPanel = ({ darkMode, onSubmit, onCancel, submitting }) => {
-  const [preview, setPreview] = useState(null);
-  const [file, setFile] = useState(null);
-  const inputRef = useRef(null);
-
-  const handleFile = (f) => {
-    if (!f || !f.type.startsWith("image/")) return;
-    setFile(f);
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target.result);
-    reader.readAsDataURL(f);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.25 }}
-      className="overflow-hidden"
-    >
-      <div className={`mt-4 border p-5 ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}`}>
-        <h5 className={`text-xs font-black uppercase tracking-[0.15em] mb-3 flex items-center gap-2 ${darkMode ? "text-white" : "text-black"}`}>
-          <FiCamera />
-          Upload Photo Evidence
-        </h5>
-
-        {!preview ? (
-          <div
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0]); }}
-            className={`
-              flex flex-col items-center justify-center gap-3 border-2 border-dashed py-10 cursor-pointer
-              ${darkMode ? "border-white/15 text-gray-400" : "border-gray-300 text-gray-500"}
-            `}
-          >
-            <FiUploadCloud size={26} className="text-green-500" />
-            <p className="text-sm font-semibold">Click to upload or drag a photo here</p>
-            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
-          </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-            <div className="relative w-full sm:w-40 h-32 shrink-0 overflow-hidden border border-green-500/40">
-              <img src={preview} alt="Evidence preview" className="w-full h-full object-cover" />
-              <button onClick={() => { setPreview(null); setFile(null); }} className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-black/70 text-white">
-                <FiX size={13} />
-              </button>
-            </div>
-            <p className={`text-sm font-bold ${darkMode ? "text-white" : "text-black"}`}>{file?.name}</p>
-          </div>
-        )}
-
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            disabled={!file || submitting}
-            onClick={() => onSubmit(file)}
-            className={`
-              inline-flex items-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[0.15em]
-              ${file && !submitting ? "bg-green-500 text-white hover:bg-green-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"}
-            `}
-          >
-            {submitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle />}
-            {submitting ? "Submitting..." : "Submit Confirmation"}
-          </button>
-          <button onClick={onCancel} className={`px-5 py-3 text-xs font-black uppercase tracking-[0.15em] border ${darkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"}`}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 // ─── Loading / error / empty helpers ───────────────────────────────────────────
 const StateBlock = ({ darkMode, icon: Icon, title, subtitle }) => (
   <div className={`border p-10 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
@@ -151,37 +74,24 @@ const StateBlock = ({ darkMode, icon: Icon, title, subtitle }) => (
 );
 
 // ─── Main component ───────────────────────────────────────────────────────────
-// `sections` controls which groups render on this page.
-// "My Reports" page  -> sections={["mine", "confirmed"]}
-// "Community Reports" page -> sections={["nearby"]}
-const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine", "confirmed", "nearby"] }) => {
+// This grid shows only "My Reports" and "Reports I Confirmed" — no nearby feed.
+const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
   const [myReports, setMyReports] = useState([]);
   const [confirmedReports, setConfirmedReports] = useState([]);
-  const [nearbyReports, setNearbyReports] = useState([]);
-  const [nearbyState, setNearbyState] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [activeUploadId, setActiveUploadId] = useState(null);
-  const [confirmingSubmitting, setConfirmingSubmitting] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
     setError(null);
     try {
-      const requests = [];
-      // Only fetch the data this page actually needs
-      if (sections.includes("mine"))      requests.push(getMyReports());       else requests.push(Promise.resolve({ reports: [] }));
-      if (sections.includes("confirmed")) requests.push(getConfirmedReports()); else requests.push(Promise.resolve({ reports: [] }));
-      if (sections.includes("nearby"))    requests.push(getNearbyReports());   else requests.push(Promise.resolve({ reports: [], state: null }));
-
-      const [mineRes, confirmedRes, nearbyRes] = await Promise.all(requests);
-
+      const [mineRes, confirmedRes] = await Promise.all([
+        getMyReports(),
+        getConfirmedReports(),
+      ]);
       setMyReports(mineRes.reports || []);
       setConfirmedReports(confirmedRes.reports || []);
-      setNearbyReports(nearbyRes.reports || []);
-      setNearbyState(nearbyRes.state || null);
     } catch (e) {
       setError(e.message || "Failed to load reports.");
     } finally {
@@ -191,24 +101,7 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
 
   useEffect(() => {
     loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sections.join(",")]);
-
-  // ── Confirm-with-evidence for a nearby report ─────────────────────────────
-  const handleSubmitConfirmation = async (reportId, file) => {
-    setConfirmingSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append("evidence", file);
-      await confirmReport(reportId, formData);
-      setActiveUploadId(null);
-      await loadAll();
-    } catch (e) {
-      setError(e.message || "Failed to submit confirmation.");
-    } finally {
-      setConfirmingSubmitting(false);
-    }
-  };
+  }, []);
 
   // ── Search + filter ─────────────────────────────────────────────────────
   const matchesSearch = (r) => {
@@ -228,23 +121,15 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
 
   const filteredMine      = myReports.filter((r) => matchesSearch(r) && matchesFilter(r));
   const filteredConfirmed = confirmedReports.filter((r) => matchesSearch(r) && matchesFilter(r));
-  const filteredNearby    = nearbyReports.filter((r) => matchesSearch(r) && matchesFilter(r));
 
-  // Respect `sections` so a page that doesn't show "nearby" doesn't count
-  // an empty nearby feed against it when deciding whether to show "No reports found"
-  const noResults =
-    !loading &&
-    (!sections.includes("mine") || filteredMine.length === 0) &&
-    (!sections.includes("confirmed") || filteredConfirmed.length === 0) &&
-    (!sections.includes("nearby") || filteredNearby.length === 0);
+  const noResults = !loading && filteredMine.length === 0 && filteredConfirmed.length === 0;
 
   // ── Report card renderer ────────────────────────────────────────────────
-  // mode: "mine" | "confirmed" | "nearby"
+  // mode: "mine" | "confirmed"
   const renderCard = (report, index, mode) => {
     const required   = report.requiredConfirmations || REQUIRED_CONFIRMATIONS;
     const remaining  = required - (report.confirmations || 0);
     const progress   = mode === "confirmed" ? 100 : Math.round(((report.confirmations || 0) / required) * 100);
-    const isUploadOpen = activeUploadId === report.reportId;
 
     return (
       <motion.div
@@ -263,7 +148,7 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
             <img src={report.image} alt={report.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-            {(mode === "confirmed" || report.confirmedByMe) && (
+            {mode === "confirmed" && (
               <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-[0.15em]">
                 <FiThumbsUp size={11} />
                 You Confirmed
@@ -295,7 +180,7 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
                   </div>
                 </div>
 
-                {(mode === "confirmed" || mode === "nearby") && report.submittedBy && (
+                {mode === "confirmed" && report.submittedBy && (
                   <div className="mt-3 flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full border-2 border-green-500 overflow-hidden flex items-center justify-center text-white text-[9px] font-black shrink-0">
                       {report.submittedBy.avatar ? (
@@ -336,14 +221,14 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
               </div>
             </div>
 
-            {(mode === "mine" || mode === "nearby") && report.confirmedBy?.length > 0 && (
+            {mode === "mine" && report.confirmedBy?.length > 0 && (
               <div className="mt-7">
                 <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>Community Support</h4>
                 <ConfirmerAvatars confirmers={report.confirmedBy} darkMode={darkMode} />
               </div>
             )}
 
-            {(mode === "mine" || mode === "nearby") && (
+            {mode === "mine" && (
               <div className="mt-8">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
@@ -362,31 +247,6 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
                 <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
                   {remaining > 0 ? `${remaining} more confirmations needed before submission to government` : "Ready for government submission"}
                 </p>
-
-                {/* Confirm-with-evidence action, only on the nearby feed */}
-                {mode === "nearby" && !report.confirmedByMe && (
-                  <div className="mt-4">
-                    {!isUploadOpen && (
-                      <button
-                        onClick={() => setActiveUploadId(report.reportId)}
-                        className="inline-flex items-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[0.15em] bg-green-500 text-white hover:bg-green-600 transition-colors"
-                      >
-                        <FiCamera />
-                        Confirm This Report
-                      </button>
-                    )}
-                    <AnimatePresence>
-                      {isUploadOpen && (
-                        <EvidenceUploadPanel
-                          darkMode={darkMode}
-                          submitting={confirmingSubmitting}
-                          onCancel={() => setActiveUploadId(null)}
-                          onSubmit={(file) => handleSubmitConfirmation(report.reportId, file)}
-                        />
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
               </div>
             )}
 
@@ -457,31 +317,26 @@ const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine",
         <StateBlock darkMode={darkMode} icon={FiAlertCircle} title="No reports found" subtitle="Try a different search term or filter." />
       )}
 
-      {!loading && !error && sections.includes("mine") && filteredMine.length > 0 && (
+      {!loading && !error && filteredMine.length > 0 && (
         <div>
           {sectionHeader("My Reports", filteredMine.length)}
           <div className="space-y-5">{filteredMine.map((r, i) => renderCard(r, i, "mine"))}</div>
         </div>
       )}
 
-      {!loading && !error && sections.includes("confirmed") && filteredConfirmed.length > 0 && (
+      {/* "Reports I Confirmed" always renders — shows an empty-state message
+          instead of disappearing when the user hasn't confirmed anything yet */}
+      {!loading && !error && (
         <div>
           {sectionHeader("Reports I Confirmed", filteredConfirmed.length)}
-          <div className="space-y-5">{filteredConfirmed.map((r, i) => renderCard(r, i, "confirmed"))}</div>
-        </div>
-      )}
-
-      {!loading && !error && sections.includes("nearby") && (
-        <div>
-          {sectionHeader(nearbyState ? `Reports Near You — ${nearbyState}` : "Reports Near You", filteredNearby.length)}
-          {filteredNearby.length > 0 ? (
-            <div className="space-y-5">{filteredNearby.map((r, i) => renderCard(r, i, "nearby"))}</div>
+          {filteredConfirmed.length > 0 ? (
+            <div className="space-y-5">{filteredConfirmed.map((r, i) => renderCard(r, i, "confirmed"))}</div>
           ) : (
             <StateBlock
               darkMode={darkMode}
-              icon={FiMapPin}
-              title="No reports near you yet"
-              subtitle={nearbyState ? `No open reports in ${nearbyState} right now.` : "Add your state in your profile to see local reports."}
+              icon={FiThumbsUp}
+              title="No confirmed reports in your history yet"
+              subtitle="Reports you confirm for other citizens will appear here with your uploaded evidence."
             />
           )}
         </div>
