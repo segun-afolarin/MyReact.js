@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { submitReport } from "../../utils/api";
 
 import {
   FiAlertTriangle,
@@ -20,6 +21,7 @@ import {
   FiNavigation,
   FiCheckCircle,
   FiLock,
+  FiLoader,
 } from "react-icons/fi";
 
 // ─── Validation rules ─────────────────────────────────────────────────────────
@@ -66,6 +68,10 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
   const [files,       setFiles]       = useState([]);
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+
+  // Submission state
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // Which fields have been touched (attempted submit OR user interacted)
   const [touched, setTouched] = useState({
@@ -193,9 +199,10 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitAttempted(true);
+    setSubmitError(null);
 
     // Touch all fields so every error becomes visible
     setTouched({ category: true, title: true, description: true, address: true, images: true });
@@ -208,7 +215,27 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
       return;
     }
 
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("category", category);
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("address", address);
+      if (coordinates) {
+        formData.append("latitude", coordinates.lat);
+        formData.append("longitude", coordinates.lng);
+      }
+      // Backend expects images[] — matches the "images" => ["array", ...] validation rule
+      files.forEach((file) => formData.append("images[]", file));
+
+      await submitReport(formData);
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.message || "Failed to submit report. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ── Check indicator ───────────────────────────────────────────────────────
@@ -299,6 +326,21 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
                       </li>
                     ))}
                 </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Server-side submission error */}
+          <AnimatePresence>
+            {submitError && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mt-4 flex items-center gap-3 border border-red-500/30 bg-red-500/10 p-4"
+              >
+                <FiAlertCircle className="text-red-500 shrink-0" />
+                <p className="text-sm text-red-400 font-semibold">{submitError}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -683,15 +725,16 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
             </AnimatePresence>
 
             <motion.button
-              whileHover={allValid ? { scale: 1.01 } : {}}
-              whileTap={allValid ? { scale: 0.98 } : {}}
+              whileHover={allValid && !submitting ? { scale: 1.01 } : {}}
+              whileTap={allValid && !submitting ? { scale: 0.98 } : {}}
               type="submit"
+              disabled={submitting}
               className={`
                 relative overflow-hidden w-full h-16
                 font-black uppercase tracking-[0.18em]
                 flex items-center justify-center gap-4
                 transition-all duration-300
-                ${allValid
+                ${allValid && !submitting
                   ? "bg-green-500 hover:bg-green-400 text-white shadow-[0_20px_50px_rgba(34,197,94,0.25)] cursor-pointer"
                   : darkMode
                   ? "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed"
@@ -699,7 +742,12 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
                 }
               `}
             >
-              {allValid ? (
+              {submitting ? (
+                <>
+                  <FiLoader className="relative z-10 text-lg animate-spin" />
+                  <span className="relative z-10">Submitting Report...</span>
+                </>
+              ) : allValid ? (
                 <>
                   <span className="relative z-10">Submit Emergency Report</span>
                   <FiArrowRight className="relative z-10 text-lg" />

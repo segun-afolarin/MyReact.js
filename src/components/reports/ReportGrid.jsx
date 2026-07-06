@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   FiMapPin,
@@ -9,7 +10,13 @@ import {
   FiTrendingUp,
   FiThumbsUp,
   FiCamera,
+  FiUploadCloud,
+  FiX,
+  FiAlertCircle,
+  FiLoader,
 } from "react-icons/fi";
+
+import { getMyReports, getConfirmedReports, getNearbyReports, confirmReport } from "../../utils/api";
 
 const REQUIRED_CONFIRMATIONS = 5;
 
@@ -32,7 +39,7 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
               <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                {c.initials}
+                {(c.name || "?").slice(0, 2).toUpperCase()}
               </div>
             )}
           </div>
@@ -59,132 +66,174 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
   );
 };
 
+// ─── Evidence upload panel shown when confirming a nearby report ─────────────
+const EvidenceUploadPanel = ({ darkMode, onSubmit, onCancel, submitting }) => {
+  const [preview, setPreview] = useState(null);
+  const [file, setFile] = useState(null);
+  const inputRef = useRef(null);
+
+  const handleFile = (f) => {
+    if (!f || !f.type.startsWith("image/")) return;
+    setFile(f);
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(f);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.25 }}
+      className="overflow-hidden"
+    >
+      <div className={`mt-4 border p-5 ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}`}>
+        <h5 className={`text-xs font-black uppercase tracking-[0.15em] mb-3 flex items-center gap-2 ${darkMode ? "text-white" : "text-black"}`}>
+          <FiCamera />
+          Upload Photo Evidence
+        </h5>
+
+        {!preview ? (
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0]); }}
+            className={`
+              flex flex-col items-center justify-center gap-3 border-2 border-dashed py-10 cursor-pointer
+              ${darkMode ? "border-white/15 text-gray-400" : "border-gray-300 text-gray-500"}
+            `}
+          >
+            <FiUploadCloud size={26} className="text-green-500" />
+            <p className="text-sm font-semibold">Click to upload or drag a photo here</p>
+            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+            <div className="relative w-full sm:w-40 h-32 shrink-0 overflow-hidden border border-green-500/40">
+              <img src={preview} alt="Evidence preview" className="w-full h-full object-cover" />
+              <button onClick={() => { setPreview(null); setFile(null); }} className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-black/70 text-white">
+                <FiX size={13} />
+              </button>
+            </div>
+            <p className={`text-sm font-bold ${darkMode ? "text-white" : "text-black"}`}>{file?.name}</p>
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            disabled={!file || submitting}
+            onClick={() => onSubmit(file)}
+            className={`
+              inline-flex items-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[0.15em]
+              ${file && !submitting ? "bg-green-500 text-white hover:bg-green-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"}
+            `}
+          >
+            {submitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle />}
+            {submitting ? "Submitting..." : "Submit Confirmation"}
+          </button>
+          <button onClick={onCancel} className={`px-5 py-3 text-xs font-black uppercase tracking-[0.15em] border ${darkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── Loading / error / empty helpers ───────────────────────────────────────────
+const StateBlock = ({ darkMode, icon: Icon, title, subtitle }) => (
+  <div className={`border p-10 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+    <Icon className="mx-auto text-green-500" size={22} />
+    <p className={`mt-3 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>{title}</p>
+    {subtitle && <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</p>}
+  </div>
+);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
+  const [myReports, setMyReports] = useState([]);
+  const [confirmedReports, setConfirmedReports] = useState([]);
+  const [nearbyReports, setNearbyReports] = useState([]);
+  const [nearbyState, setNearbyState] = useState(null);
 
-  // ── Your submitted reports ──────────────────────────────────────────────
-  const myReports = [
-    {
-      id: "#NA-1024",
-      title: "Road Damage Report",
-      location: "Abuja Municipal Area",
-      status: "Resolved",
-      date: "18 June 2026",
-      score: "94%",
-      confirmations: 5,
-      image: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1200&auto=format&fit=crop",
-      description: "Large pothole affecting traffic flow and vehicle safety.",
-      fields: ["Road Damage", "High Priority", "Photo Evidence Uploaded"],
-      updates: ["Submitted", "Verified", "Sent to government", "Resolved"],
-      confirmedBy: [
-        { name: "Oluwaseun A.", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face" },
-        { name: "Peter B.",     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face" },
-        { name: "Fatima K.",    initials: "FK" },
-        { name: "James N.",     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" },
-        { name: "Chioma E.",    initials: "CE" },
-      ],
-    },
-    {
-      id: "#NA-1025",
-      title: "Street Light Failure",
-      location: "Wuse District",
-      status: "In Progress",
-      date: "16 June 2026",
-      score: "81%",
-      confirmations: 3,
-      image: "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
-      description: "Several street lights are not functioning at night.",
-      fields: ["Public Safety", "Night Visibility", "Community Alert"],
-      updates: ["Submitted", "Under review", "Authority assigned"],
-      confirmedBy: [
-        { name: "Amaka O.", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" },
-        { name: "Bello Y.", initials: "BY" },
-        { name: "Ngozi C.", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face" },
-      ],
-    },
-    {
-      id: "#NA-1026",
-      title: "Water Supply Issue",
-      location: "Garki Area",
-      status: "Pending",
-      date: "12 June 2026",
-      score: "72%",
-      confirmations: 1,
-      image: "https://images.unsplash.com/photo-1551966775-a4ddc8df052b?q=80&w=1200&auto=format&fit=crop",
-      description: "Intermittent water supply affecting households.",
-      fields: ["Water Supply", "Household Impact"],
-      updates: ["Submitted"],
-      confirmedBy: [
-        { name: "Tunde M.", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face" },
-      ],
-    },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ── Reports you confirmed for others ───────────────────────────────────
-  const confirmedReports = [
-    {
-      id: "#NA-1019",
-      title: "Flooding on Airport Road",
-      location: "Lugbe, Abuja",
-      status: "In Progress",
-      date: "14 June 2026",
-      score: "88%",
-      confirmedOn: "15 June 2026",
-      image: "https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=1200&auto=format&fit=crop",
-      description: "Heavy flooding blocking road access near the airport expressway.",
-      submittedBy: { name: "Kehinde A.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" },
-      fields: ["Flooding", "Road Block", "High Priority"],
-      updates: ["Submitted", "Verified", "Authority notified"],
-      // The photo you personally uploaded when you confirmed this report
-      myEvidence: "https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=600&auto=format&fit=crop",
-    },
-    {
-      id: "#NA-1021",
-      title: "Collapsed Bridge Railing",
-      location: "Maitama, Abuja",
-      status: "Pending",
-      date: "10 June 2026",
-      score: "76%",
-      confirmedOn: "11 June 2026",
-      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
-      description: "Bridge railing on the Maitama overhead collapsed, posing danger to pedestrians.",
-      submittedBy: { name: "Sola B.", initials: "SB" },
-      fields: ["Infrastructure", "Safety Hazard"],
-      updates: ["Submitted", "Under review"],
-      // The photo you personally uploaded when you confirmed this report
-      myEvidence: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=600&auto=format&fit=crop",
-    },
-  ];
+  const [activeUploadId, setActiveUploadId] = useState(null);
+  const [confirmingSubmitting, setConfirmingSubmitting] = useState(false);
+
+  const loadAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [mineRes, confirmedRes, nearbyRes] = await Promise.all([
+        getMyReports(),
+        getConfirmedReports(),
+        getNearbyReports(),
+      ]);
+      setMyReports(mineRes.reports || []);
+      setConfirmedReports(confirmedRes.reports || []);
+      setNearbyReports(nearbyRes.reports || []);
+      setNearbyState(nearbyRes.state || null);
+    } catch (e) {
+      setError(e.message || "Failed to load reports.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  // ── Confirm-with-evidence for a nearby report ─────────────────────────────
+  const handleSubmitConfirmation = async (reportId, file) => {
+    setConfirmingSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("evidence", file);
+      await confirmReport(reportId, formData);
+      setActiveUploadId(null);
+      // Refresh so counts, "confirmed by me" state, and the new
+      // "Reports I Confirmed" entry all reflect the server truth
+      await loadAll();
+    } catch (e) {
+      setError(e.message || "Failed to submit confirmation.");
+    } finally {
+      setConfirmingSubmitting(false);
+    }
+  };
 
   // ── Search + filter ─────────────────────────────────────────────────────
-  // Searches across: id, title, location, description, fields, status
   const matchesSearch = (r) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase().trim();
     return (
-      r.id.toLowerCase().includes(q)          ||
-      r.title.toLowerCase().includes(q)       ||
-      r.location.toLowerCase().includes(q)    ||
-      r.description.toLowerCase().includes(q) ||
-      r.status.toLowerCase().includes(q)      ||
+      (r.id || "").toLowerCase().includes(q)          ||
+      r.title.toLowerCase().includes(q)                ||
+      r.location.toLowerCase().includes(q)             ||
+      r.description.toLowerCase().includes(q)          ||
+      r.status.toLowerCase().includes(q)                ||
       (r.fields || []).some((f) => f.toLowerCase().includes(q))
     );
   };
 
-  const matchesFilter = (r) =>
-    filter === "All" ? true : r.status === filter;
+  const matchesFilter = (r) => (filter === "All" ? true : r.status === filter);
 
   const filteredMine      = myReports.filter((r) => matchesSearch(r) && matchesFilter(r));
   const filteredConfirmed = confirmedReports.filter((r) => matchesSearch(r) && matchesFilter(r));
+  const filteredNearby    = nearbyReports.filter((r) => matchesSearch(r) && matchesFilter(r));
 
-  const noResults = filteredMine.length === 0 && filteredConfirmed.length === 0;
+  const noResults = !loading && filteredMine.length === 0 && filteredConfirmed.length === 0 && filteredNearby.length === 0;
 
   // ── Report card renderer ────────────────────────────────────────────────
-  const renderCard = (report, index, isConfirmedByMe = false) => {
-    const remaining = REQUIRED_CONFIRMATIONS - report.confirmations;
-    const progress  = isConfirmedByMe
-      ? 100 // already confirmed, so show full bar visually
-      : Math.round((report.confirmations / REQUIRED_CONFIRMATIONS) * 100);
+  // mode: "mine" | "confirmed" | "nearby"
+  const renderCard = (report, index, mode) => {
+    const required   = report.requiredConfirmations || REQUIRED_CONFIRMATIONS;
+    const remaining  = required - (report.confirmations || 0);
+    const progress   = mode === "confirmed" ? 100 : Math.round(((report.confirmations || 0) / required) * 100);
+    const isUploadOpen = activeUploadId === report.reportId;
 
     return (
       <motion.div
@@ -194,24 +243,16 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
         viewport={{ once: true }}
         transition={{ delay: index * 0.1 }}
         whileHover={{ y: -4 }}
-        className={`
-          group border overflow-hidden transition-all duration-300
-          ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}
-        `}
+        className={`group border overflow-hidden transition-all duration-300 ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}`}
       >
         <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr]">
 
           {/* IMAGE */}
           <div className="relative h-[260px] xl:h-full overflow-hidden">
-            <img
-              src={report.image}
-              alt={report.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
+            <img src={report.image} alt={report.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-            {/* Confirmed-by-you badge overlaid on image */}
-            {isConfirmedByMe && (
+            {(mode === "confirmed" || report.confirmedByMe) && (
               <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-[0.15em]">
                 <FiThumbsUp size={11} />
                 You Confirmed
@@ -223,47 +264,34 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
                 <FiImage />
                 {report.id}
               </div>
-              <h3 className="text-white text-2xl font-black leading-tight">
-                {report.title}
-              </h3>
+              <h3 className="text-white text-2xl font-black leading-tight">{report.title}</h3>
             </div>
           </div>
 
           {/* CONTENT */}
           <div className="p-5 sm:p-7">
 
-            {/* TOP */}
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
               <div>
                 <div className="flex flex-wrap items-center gap-4">
-                  <div
-                    className={`
-                      inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.15em] border
-                      ${darkMode
-                        ? "bg-green-500/10 border-green-500/20 text-green-400"
-                        : "bg-green-50 border-green-200 text-green-700"
-                      }
-                    `}
-                  >
+                  <div className={`inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.15em] border ${darkMode ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-green-50 border-green-200 text-green-700"}`}>
                     <FiCheckCircle />
                     {report.status}
                   </div>
-
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                     <FiMapPin />
                     {report.location}
                   </div>
                 </div>
 
-                {/* Submitted by (only on confirmed-by-me cards) */}
-                {isConfirmedByMe && report.submittedBy && (
+                {(mode === "confirmed" || mode === "nearby") && report.submittedBy && (
                   <div className="mt-3 flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full border-2 border-green-500 overflow-hidden flex items-center justify-center text-white text-[9px] font-black shrink-0">
                       {report.submittedBy.avatar ? (
                         <img src={report.submittedBy.avatar} alt={report.submittedBy.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                          {report.submittedBy.initials}
+                          {(report.submittedBy.name || "?").slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
@@ -273,18 +301,10 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
                   </div>
                 )}
 
-                <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  {report.description}
-                </p>
+                <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{report.description}</p>
               </div>
 
-              {/* AI PRIORITY */}
-              <div
-                className={`
-                  border p-4 min-w-[180px]
-                  ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}
-                `}
-              >
+              <div className={`border p-4 min-w-[180px] ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}`}>
                 <p className={`text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                   <FiTrendingUp />
                   AI Priority
@@ -294,89 +314,76 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
               </div>
             </div>
 
-            {/* FORM DATA */}
             <div className="mt-7">
-              <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
-                Report Details
-              </h4>
+              <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>Report Details</h4>
               <div className="flex flex-wrap gap-3">
                 {report.fields.map((field, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      px-4 py-3 border text-sm font-medium
-                      ${darkMode ? "bg-white/[0.03] border-white/10 text-gray-300" : "bg-[#FAFAFA] border-gray-200 text-gray-700"}
-                    `}
-                  >
+                  <div key={i} className={`px-4 py-3 border text-sm font-medium ${darkMode ? "bg-white/[0.03] border-white/10 text-gray-300" : "bg-[#FAFAFA] border-gray-200 text-gray-700"}`}>
                     {field}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* COMMUNITY CONFIRMERS (only on MY reports) */}
-            {!isConfirmedByMe && report.confirmedBy?.length > 0 && (
+            {(mode === "mine" || mode === "nearby") && report.confirmedBy?.length > 0 && (
               <div className="mt-7">
-                <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
-                  Community Support
-                </h4>
+                <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>Community Support</h4>
                 <ConfirmerAvatars confirmers={report.confirmedBy} darkMode={darkMode} />
               </div>
             )}
 
-            {/* CITIZEN CONFIRMATIONS PROGRESS */}
-            {!isConfirmedByMe && (
+            {(mode === "mine" || mode === "nearby") && (
               <div className="mt-8">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                     <FiUsers />
                     Citizen Confirmations
                   </div>
-                  <span className="text-green-500 font-bold text-sm">
-                    {report.confirmations}/{REQUIRED_CONFIRMATIONS}
-                  </span>
+                  <span className="text-green-500 font-bold text-sm">{report.confirmations || 0}/{required}</span>
                 </div>
 
                 <div className={`relative h-3 overflow-hidden ${darkMode ? "bg-white/10" : "bg-gray-200"}`}>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${progress}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.2 }}
-                    className="h-full bg-green-500 relative overflow-hidden"
-                  >
-                    <motion.div
-                      animate={{ x: ["-100%", "250%"] }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                      className="absolute top-0 left-0 w-20 h-full bg-white/30 skew-x-12"
-                    />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.2 }} className="h-full bg-green-500 relative overflow-hidden">
+                    <motion.div animate={{ x: ["-100%", "250%"] }} transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }} className="absolute top-0 left-0 w-20 h-full bg-white/30 skew-x-12" />
                   </motion.div>
                 </div>
 
                 <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
-                  {remaining > 0
-                    ? `${remaining} more confirmations needed before submission to government`
-                    : "Ready for government submission"}
+                  {remaining > 0 ? `${remaining} more confirmations needed before submission to government` : "Ready for government submission"}
                 </p>
+
+                {/* Confirm-with-evidence action, only on the nearby feed */}
+                {mode === "nearby" && !report.confirmedByMe && (
+                  <div className="mt-4">
+                    {!isUploadOpen && (
+                      <button
+                        onClick={() => setActiveUploadId(report.reportId)}
+                        className="inline-flex items-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[0.15em] bg-green-500 text-white hover:bg-green-600 transition-colors"
+                      >
+                        <FiCamera />
+                        Confirm This Report
+                      </button>
+                    )}
+                    <AnimatePresence>
+                      {isUploadOpen && (
+                        <EvidenceUploadPanel
+                          darkMode={darkMode}
+                          submitting={confirmingSubmitting}
+                          onCancel={() => setActiveUploadId(null)}
+                          onSubmit={(file) => handleSubmitConfirmation(report.reportId, file)}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* YOU CONFIRMED ON DATE + YOUR EVIDENCE PHOTO (confirmed-by-me cards) */}
-            {isConfirmedByMe && (
+            {mode === "confirmed" && (
               <div className="mt-8">
-                <div
-                  className={`
-                    inline-flex items-center gap-3 px-4 py-3 border
-                    ${darkMode
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                      : "bg-emerald-50 border-emerald-200 text-emerald-700"
-                    }
-                  `}
-                >
+                <div className={`inline-flex items-center gap-3 px-4 py-3 border ${darkMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-700"}`}>
                   <FiThumbsUp size={14} />
-                  <span className="text-xs font-black uppercase tracking-[0.15em]">
-                    You confirmed this on {report.confirmedOn}
-                  </span>
+                  <span className="text-xs font-black uppercase tracking-[0.15em]">You confirmed this on {report.confirmedOn}</span>
                 </div>
 
                 {report.myEvidence && (
@@ -386,31 +393,18 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
                       Evidence You Uploaded
                     </h4>
                     <div className="w-full sm:w-56 h-36 overflow-hidden border border-green-500/40">
-                      <img
-                        src={report.myEvidence}
-                        alt={`Evidence you uploaded for ${report.title}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={report.myEvidence} alt={`Evidence you uploaded for ${report.title}`} className="w-full h-full object-cover" />
                     </div>
                   </div>
                 )}
               </div>
             )}
 
-            {/* TIMELINE */}
             <div className="mt-8">
-              <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
-                Progress Timeline
-              </h4>
+              <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>Progress Timeline</h4>
               <div className="flex flex-wrap gap-3">
                 {report.updates.map((u, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      flex items-center gap-2 px-4 py-3 border text-sm font-medium
-                      ${darkMode ? "bg-white/[0.03] border-white/10 text-gray-300" : "bg-[#FAFAFA] border-gray-200 text-gray-700"}
-                    `}
-                  >
+                  <div key={i} className={`flex items-center gap-2 px-4 py-3 border text-sm font-medium ${darkMode ? "bg-white/[0.03] border-white/10 text-gray-300" : "bg-[#FAFAFA] border-gray-200 text-gray-700"}`}>
                     <div className="w-2 h-2 bg-green-500" />
                     {u}
                   </div>
@@ -418,7 +412,6 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
               </div>
             </div>
 
-            {/* FOOTER */}
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
               <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
                 <FiClock />
@@ -432,61 +425,54 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
     );
   };
 
+  const sectionHeader = (label, count) => (
+    <div className="flex items-center gap-3 mb-5">
+      <h2 className={`text-sm font-black uppercase tracking-[0.18em] ${darkMode ? "text-white" : "text-black"}`}>{label}</h2>
+      <div className={`h-px flex-1 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
+      <span className={`text-xs font-bold px-3 py-1 border ${darkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"}`}>{count}</span>
+    </div>
+  );
+
   return (
     <div className="space-y-10 mt-6">
 
-      {/* ── NO RESULTS ────────────────────────────────────────────────────── */}
-      {noResults && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`
-            border p-10 text-center
-            ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}
-          `}
-        >
-          <p className={`text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
-            No reports found
-          </p>
-          <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            Try a different search term or filter.
-          </p>
-        </motion.div>
+      {loading && <StateBlock darkMode={darkMode} icon={FiLoader} title="Loading reports..." />}
+
+      {!loading && error && (
+        <StateBlock darkMode={darkMode} icon={FiAlertCircle} title="Couldn't load reports" subtitle={error} />
       )}
 
-      {/* ── MY REPORTS ────────────────────────────────────────────────────── */}
-      {filteredMine.length > 0 && (
+      {!loading && !error && noResults && (
+        <StateBlock darkMode={darkMode} icon={FiAlertCircle} title="No reports found" subtitle="Try a different search term or filter." />
+      )}
+
+      {!loading && !error && filteredMine.length > 0 && (
         <div>
-          <div className="flex items-center gap-3 mb-5">
-            <h2 className={`text-sm font-black uppercase tracking-[0.18em] ${darkMode ? "text-white" : "text-black"}`}>
-              My Reports
-            </h2>
-            <div className={`h-px flex-1 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
-            <span className={`text-xs font-bold px-3 py-1 border ${darkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"}`}>
-              {filteredMine.length}
-            </span>
-          </div>
-          <div className="space-y-5">
-            {filteredMine.map((r, i) => renderCard(r, i, false))}
-          </div>
+          {sectionHeader("My Reports", filteredMine.length)}
+          <div className="space-y-5">{filteredMine.map((r, i) => renderCard(r, i, "mine"))}</div>
         </div>
       )}
 
-      {/* ── REPORTS I CONFIRMED ───────────────────────────────────────────── */}
-      {filteredConfirmed.length > 0 && (
+      {!loading && !error && filteredConfirmed.length > 0 && (
         <div>
-          <div className="flex items-center gap-3 mb-5">
-            <h2 className={`text-sm font-black uppercase tracking-[0.18em] ${darkMode ? "text-white" : "text-black"}`}>
-              Reports I Confirmed
-            </h2>
-            <div className={`h-px flex-1 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
-            <span className={`text-xs font-bold px-3 py-1 border ${darkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"}`}>
-              {filteredConfirmed.length}
-            </span>
-          </div>
-          <div className="space-y-5">
-            {filteredConfirmed.map((r, i) => renderCard(r, i, true))}
-          </div>
+          {sectionHeader("Reports I Confirmed", filteredConfirmed.length)}
+          <div className="space-y-5">{filteredConfirmed.map((r, i) => renderCard(r, i, "confirmed"))}</div>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div>
+          {sectionHeader(nearbyState ? `Reports Near You — ${nearbyState}` : "Reports Near You", filteredNearby.length)}
+          {filteredNearby.length > 0 ? (
+            <div className="space-y-5">{filteredNearby.map((r, i) => renderCard(r, i, "nearby"))}</div>
+          ) : (
+            <StateBlock
+              darkMode={darkMode}
+              icon={FiMapPin}
+              title="No reports near you yet"
+              subtitle={nearbyState ? `No open reports in ${nearbyState} right now.` : "Add your state in your profile to see local reports."}
+            />
+          )}
         </div>
       )}
 
