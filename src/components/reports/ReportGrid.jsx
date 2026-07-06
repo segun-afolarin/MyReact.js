@@ -151,7 +151,10 @@ const StateBlock = ({ darkMode, icon: Icon, title, subtitle }) => (
 );
 
 // ─── Main component ───────────────────────────────────────────────────────────
-const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
+// `sections` controls which groups render on this page.
+// "My Reports" page  -> sections={["mine", "confirmed"]}
+// "Community Reports" page -> sections={["nearby"]}
+const ReportGrid = ({ darkMode, search = "", filter = "All", sections = ["mine", "confirmed", "nearby"] }) => {
   const [myReports, setMyReports] = useState([]);
   const [confirmedReports, setConfirmedReports] = useState([]);
   const [nearbyReports, setNearbyReports] = useState([]);
@@ -167,11 +170,14 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
     setLoading(true);
     setError(null);
     try {
-      const [mineRes, confirmedRes, nearbyRes] = await Promise.all([
-        getMyReports(),
-        getConfirmedReports(),
-        getNearbyReports(),
-      ]);
+      const requests = [];
+      // Only fetch the data this page actually needs
+      if (sections.includes("mine"))      requests.push(getMyReports());       else requests.push(Promise.resolve({ reports: [] }));
+      if (sections.includes("confirmed")) requests.push(getConfirmedReports()); else requests.push(Promise.resolve({ reports: [] }));
+      if (sections.includes("nearby"))    requests.push(getNearbyReports());   else requests.push(Promise.resolve({ reports: [], state: null }));
+
+      const [mineRes, confirmedRes, nearbyRes] = await Promise.all(requests);
+
       setMyReports(mineRes.reports || []);
       setConfirmedReports(confirmedRes.reports || []);
       setNearbyReports(nearbyRes.reports || []);
@@ -185,7 +191,8 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
 
   useEffect(() => {
     loadAll();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections.join(",")]);
 
   // ── Confirm-with-evidence for a nearby report ─────────────────────────────
   const handleSubmitConfirmation = async (reportId, file) => {
@@ -195,8 +202,6 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
       formData.append("evidence", file);
       await confirmReport(reportId, formData);
       setActiveUploadId(null);
-      // Refresh so counts, "confirmed by me" state, and the new
-      // "Reports I Confirmed" entry all reflect the server truth
       await loadAll();
     } catch (e) {
       setError(e.message || "Failed to submit confirmation.");
@@ -225,7 +230,13 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
   const filteredConfirmed = confirmedReports.filter((r) => matchesSearch(r) && matchesFilter(r));
   const filteredNearby    = nearbyReports.filter((r) => matchesSearch(r) && matchesFilter(r));
 
-  const noResults = !loading && filteredMine.length === 0 && filteredConfirmed.length === 0 && filteredNearby.length === 0;
+  // Respect `sections` so a page that doesn't show "nearby" doesn't count
+  // an empty nearby feed against it when deciding whether to show "No reports found"
+  const noResults =
+    !loading &&
+    (!sections.includes("mine") || filteredMine.length === 0) &&
+    (!sections.includes("confirmed") || filteredConfirmed.length === 0) &&
+    (!sections.includes("nearby") || filteredNearby.length === 0);
 
   // ── Report card renderer ────────────────────────────────────────────────
   // mode: "mine" | "confirmed" | "nearby"
@@ -446,21 +457,21 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
         <StateBlock darkMode={darkMode} icon={FiAlertCircle} title="No reports found" subtitle="Try a different search term or filter." />
       )}
 
-      {!loading && !error && filteredMine.length > 0 && (
+      {!loading && !error && sections.includes("mine") && filteredMine.length > 0 && (
         <div>
           {sectionHeader("My Reports", filteredMine.length)}
           <div className="space-y-5">{filteredMine.map((r, i) => renderCard(r, i, "mine"))}</div>
         </div>
       )}
 
-      {!loading && !error && filteredConfirmed.length > 0 && (
+      {!loading && !error && sections.includes("confirmed") && filteredConfirmed.length > 0 && (
         <div>
           {sectionHeader("Reports I Confirmed", filteredConfirmed.length)}
           <div className="space-y-5">{filteredConfirmed.map((r, i) => renderCard(r, i, "confirmed"))}</div>
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && sections.includes("nearby") && (
         <div>
           {sectionHeader(nearbyState ? `Reports Near You — ${nearbyState}` : "Reports Near You", filteredNearby.length)}
           {filteredNearby.length > 0 ? (
