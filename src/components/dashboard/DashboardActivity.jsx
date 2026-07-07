@@ -121,7 +121,14 @@ const cardVariants = {
     scale: 1,
     transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
   },
+  exit: {
+    opacity: 0,
+    scale: 0.92,
+    transition: { duration: 0.35, ease: "easeIn" },
+  },
 };
+
+const VISIBLE_SLOTS = 3;
 
 // ─────────────────────────────────────────────────────────────────────────
 // AVATAR STACK — shows who already confirmed
@@ -452,6 +459,32 @@ const RadarEmptyState = ({ darkMode, stateName }) => (
   </motion.div>
 );
 
+const CaughtUpState = ({ darkMode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6 }}
+    className="flex flex-col items-center justify-center text-center px-6 py-20"
+  >
+    <motion.div
+      animate={{ scale: [1, 1.08, 1] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+      className={`w-20 h-20 flex items-center justify-center rounded-full ${
+        darkMode ? "bg-green-500/10 border border-green-500/20" : "bg-green-50 border border-green-200"
+      }`}
+    >
+      <FiThumbsUp className="text-3xl text-green-500" />
+    </motion.div>
+    <h3 className={`mt-6 text-xl sm:text-2xl font-black ${darkMode ? "text-white" : "text-black"}`}>
+      You're All Caught Up
+    </h3>
+    <p className={`mt-3 max-w-md text-sm sm:text-base leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+      You've confirmed every report currently in the queue. New reports will rotate in here as
+      citizens near you submit them.
+    </p>
+  </motion.div>
+);
+
 const NoStateEmptyState = ({ darkMode, message }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -534,7 +567,12 @@ const DashboardActivity = ({ darkMode }) => {
   const [noStateMessage, setNoStateMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeModalIndex, setActiveModalIndex] = useState(null);
+  const [activeModalId, setActiveModalId] = useState(null);
+
+  // Rotating 3-slot queue: `visible` holds the reportIds currently on screen,
+  // `queue` holds the rest waiting in the wings. Confirming a report pops the
+  // next id off `queue` into its slot instead of showing all reports at once.
+  const [feed, setFeed] = useState({ visible: [], queue: [] });
 
   const fetchNearby = useCallback(async () => {
     setLoading(true);
@@ -543,7 +581,15 @@ const DashboardActivity = ({ darkMode }) => {
       const data = await getNearbyReports();
       setStateName(data.state);
       setNoStateMessage(data.message || "");
-      setReports((data.reports || []).map(mapReportFromApi));
+
+      const mapped = (data.reports || []).map(mapReportFromApi);
+      setReports(mapped);
+
+      const pendingIds = mapped.filter((r) => !r.confirmedByMe).map((r) => r.reportId);
+      setFeed({
+        visible: pendingIds.slice(0, VISIBLE_SLOTS),
+        queue: pendingIds.slice(VISIBLE_SLOTS),
+      });
     } catch (e) {
       setError(e.message || "Failed to load nearby reports.");
     } finally {
@@ -555,40 +601,67 @@ const DashboardActivity = ({ darkMode }) => {
     fetchNearby();
   }, [fetchNearby]);
 
-  const openConfirmModal = (index) => {
-    if (reports[index]?.confirmedByMe) return;
-    setActiveModalIndex(index);
+  const visibleReports = feed.visible
+    .map((id) => reports.find((r) => r.reportId === id))
+    .filter(Boolean);
+
+  const openConfirmModal = (reportId) => {
+    const target = reports.find((r) => r.reportId === reportId);
+    if (target?.confirmedByMe) return;
+    setActiveModalId(reportId);
   };
 
-  const closeModal = () => setActiveModalIndex(null);
+  const closeModal = () => setActiveModalId(null);
 
   // Real confirmation — uploads evidence to the AI-verified endpoint via
-  // utils/api, then reflects the actual server response in the card.
+  // utils/api, then reflects the server response and rotates the next
+  // pending report into this card's slot.
   const handleConfirm = useCallback(
-    async (index, file) => {
-      const target = reports[index];
+    async (reportId, file) => {
+      const target = reports.find((r) => r.reportId === reportId);
+      if (!target) return;
+
       const formData = new FormData();
       formData.append("evidence", file);
 
-      const data = await confirmReport(target.reportId, formData);
+      const data = await confirmReport(reportId, formData);
 
-      setReports((prev) => {
-        const updated = [...prev];
-        updated[index] = {
-          ...updated[index],
-          confirmations: data.confirmations,
-          confirmedByMe: true,
-          confirmers: [
-            ...updated[index].confirmers,
-            {
-              initials: initialsOf(user?.name || "You"),
-              name: user?.name || "You",
-              avatar: user?.avatar || null,
-              bg: "from-green-400 to-emerald-600",
-            },
-          ],
-        };
-        return updated;
+      setReports((prev) =>
+        prev.map((r) =>
+          r.reportId === reportId
+            ? {
+                ...r,
+                confirmations: data.confirmations,
+                confirmedByMe: true,
+                confirmers: [
+                  ...r.confirmers,
+                  {
+                    initials: initialsOf(user?.name || "You"),
+                    name: user?.name || "You",
+                    avatar: user?.avatar || null,
+                    bg: "from-green-400 to-emerald-600",
+                  },
+                ],
+              }
+            : r
+        )
+      );
+
+      setFeed((prev) => {
+        const idx = prev.visible.indexOf(reportId);
+        if (idx === -1) return prev;
+
+        const visible = [...prev.visible];
+        let queue = prev.queue;
+
+        if (queue.length > 0) {
+          visible[idx] = queue[0];
+          queue = queue.slice(1);
+        } else {
+          visible.splice(idx, 1);
+        }
+
+        return { visible, queue };
       });
     },
     [reports, user]
@@ -722,15 +795,18 @@ const DashboardActivity = ({ darkMode }) => {
           <NoStateEmptyState darkMode={darkMode} message={noStateMessage} />
         ) : reports.length === 0 ? (
           <RadarEmptyState darkMode={darkMode} stateName={stateName} />
+        ) : visibleReports.length === 0 ? (
+          <CaughtUpState darkMode={darkMode} />
         ) : (
           <motion.div
+            layout
             variants={containerVariants}
             initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.15 }}
+            animate="show"
             className="p-5 sm:p-7 lg:p-9 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
           >
-            {reports.map((report, index) => {
+            <AnimatePresence mode="popLayout">
+              {visibleReports.map((report, index) => {
               const progress = Math.min(
                 Math.round((report.confirmations / report.requiredConfirmations) * 100),
                 100
@@ -741,7 +817,11 @@ const DashboardActivity = ({ darkMode }) => {
               return (
                 <motion.div
                   key={report.reportId}
+                  layout
                   variants={cardVariants}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
                   whileHover={{ y: -8, transition: { duration: 0.25 } }}
                   className={`group relative overflow-hidden border transition-all duration-500 will-change-transform ${
                     darkMode
@@ -883,7 +963,7 @@ const DashboardActivity = ({ darkMode }) => {
                         whileHover={confirmed ? {} : { scale: 1.03 }}
                         whileTap={{ scale: 0.96 }}
                         transition={{ type: "spring", stiffness: 300 }}
-                        onClick={() => openConfirmModal(index)}
+                        onClick={() => openConfirmModal(report.reportId)}
                         disabled={confirmed}
                         className={`h-12 px-5 text-sm font-bold transition-all duration-300 ${
                           confirmed
@@ -911,19 +991,20 @@ const DashboardActivity = ({ darkMode }) => {
                   </div>
                 </motion.div>
               );
-            })}
+              })}
+            </AnimatePresence>
           </motion.div>
         )}
       </div>
 
       {/* MODAL */}
       <AnimatePresence>
-        {activeModalIndex !== null && (
+        {activeModalId !== null && (
           <ConfirmationModal
-            report={reports[activeModalIndex]}
+            report={reports.find((r) => r.reportId === activeModalId)}
             darkMode={darkMode}
             onClose={closeModal}
-            onConfirm={(file) => handleConfirm(activeModalIndex, file)}
+            onConfirm={(file) => handleConfirm(activeModalId, file)}
           />
         )}
       </AnimatePresence>
