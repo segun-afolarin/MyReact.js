@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import {
   FiClock,
   FiMapPin,
@@ -24,15 +23,8 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 
-// If you already have an axios instance / api client elsewhere in the project
-// (e.g. src/api/axios.js), swap this out for that import instead.
+import { getNearbyReports, confirmReport } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
-  withCredentials: true,
-  headers: { Accept: "application/json" },
-});
 
 // ─────────────────────────────────────────────────────────────────────────
 // HELPERS — mapping raw API data into presentation-ready shapes
@@ -189,7 +181,7 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// CONFIRMATION MODAL — now hits the real /reports/{id}/confirm endpoint
+// CONFIRMATION MODAL — hits the real /reports/{id}/confirm endpoint via utils/api
 // ─────────────────────────────────────────────────────────────────────────
 const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
   const [stage, setStage] = useState("upload"); // upload | verifying | submitted | error
@@ -210,10 +202,7 @@ const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
     onConfirm(file)
       .then(() => setStage("submitted"))
       .catch((err) => {
-        const message =
-          err?.response?.data?.message ||
-          "Something went wrong verifying that photo. Please try again.";
-        setErrorMsg(message);
+        setErrorMsg(err?.message || "Something went wrong verifying that photo. Please try again.");
         setStage("error");
       });
   };
@@ -491,7 +480,7 @@ const NoStateEmptyState = ({ darkMode, message }) => (
   </motion.div>
 );
 
-const ErrorState = ({ darkMode, onRetry }) => (
+const ErrorState = ({ darkMode, message, onRetry }) => (
   <div className="flex flex-col items-center justify-center text-center px-6 py-20">
     <div className="w-16 h-16 flex items-center justify-center bg-red-500/15 text-red-400 text-2xl rounded-full">
       <FiAlertCircle />
@@ -500,7 +489,7 @@ const ErrorState = ({ darkMode, onRetry }) => (
       Couldn't load nearby reports
     </h3>
     <p className={`mt-2 text-sm max-w-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-      Check your connection and try again.
+      {message || "Check your connection and try again."}
     </p>
     <button
       onClick={onRetry}
@@ -544,19 +533,19 @@ const DashboardActivity = ({ darkMode }) => {
   const [stateName, setStateName] = useState(null);
   const [noStateMessage, setNoStateMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [error, setError] = useState(null);
   const [activeModalIndex, setActiveModalIndex] = useState(null);
 
   const fetchNearby = useCallback(async () => {
     setLoading(true);
-    setLoadError(false);
+    setError(null);
     try {
-      const { data } = await api.get("/reports/nearby");
+      const data = await getNearbyReports();
       setStateName(data.state);
       setNoStateMessage(data.message || "");
       setReports((data.reports || []).map(mapReportFromApi));
-    } catch (err) {
-      setLoadError(true);
+    } catch (e) {
+      setError(e.message || "Failed to load nearby reports.");
     } finally {
       setLoading(false);
     }
@@ -573,17 +562,15 @@ const DashboardActivity = ({ darkMode }) => {
 
   const closeModal = () => setActiveModalIndex(null);
 
-  // Real confirmation — uploads evidence to the AI-verified endpoint,
-  // then reflects the actual server response in the card.
+  // Real confirmation — uploads evidence to the AI-verified endpoint via
+  // utils/api, then reflects the actual server response in the card.
   const handleConfirm = useCallback(
     async (index, file) => {
       const target = reports[index];
       const formData = new FormData();
       formData.append("evidence", file);
 
-      const { data } = await api.post(`/reports/${target.reportId}/confirm`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const data = await confirmReport(target.reportId, formData);
 
       setReports((prev) => {
         const updated = [...prev];
@@ -729,8 +716,8 @@ const DashboardActivity = ({ darkMode }) => {
         {/* BODY: loading / error / no-state / empty / grid */}
         {loading ? (
           <SkeletonGrid darkMode={darkMode} />
-        ) : loadError ? (
-          <ErrorState darkMode={darkMode} onRetry={fetchNearby} />
+        ) : error ? (
+          <ErrorState darkMode={darkMode} message={error} onRetry={fetchNearby} />
         ) : !stateName ? (
           <NoStateEmptyState darkMode={darkMode} message={noStateMessage} />
         ) : reports.length === 0 ? (
