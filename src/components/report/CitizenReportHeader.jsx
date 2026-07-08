@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -10,6 +10,13 @@ import {
   FiZap,
   FiArrowUpRight,
 } from "react-icons/fi";
+
+import { getReportStats } from "../../utils/api";
+
+const formatCompact = (n) => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+};
 
 const motivationTexts = [
   {
@@ -38,6 +45,53 @@ const CitizenReportHeader = ({
 }) => {
   const [activeText, setActiveText] =
     useState(0);
+
+  // ── Live stats from /api/reports/stats — state-scoped, same source
+  // as the rest of the dashboard. Only "Live Reports" and "Emergency
+  // Reports Today" are backed by real data; see the note below on the
+  // other two figures. ────────────────────────────────────────────────
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const totalReports = stats?.totalReports ?? 0;
+  const todayTotal    = stats?.todayTotal ?? 0;
+
+  const displayCompact = (n) => (loading ? "—" : formatCompact(n));
+
+  // NOTE: "AI Verified Incidents" and "Active Response Teams" stay static.
+  // There's no logged AI pass/fail history to compute a real verification
+  // rate, and no "response team" concept anywhere in the schema — faking
+  // numbers for either would just be a different kind of placeholder.
+  const liveStats = [
+    {
+      label: "Emergency Reports Today",
+      value: displayCompact(todayTotal),
+    },
+    {
+      label: "AI Verified Incidents",
+      value: "96%",
+    },
+    {
+      label: "Active Response Teams",
+      value: "42",
+    },
+  ];
 
   useEffect(() => {
     const interval =
@@ -487,7 +541,7 @@ const CitizenReportHeader = ({
                   }
                   `}
                 >
-                  2,481
+                  {displayCompact(totalReports)}
                 </h3>
               </div>
 
@@ -535,23 +589,7 @@ const CitizenReportHeader = ({
               space-y-4
               "
             >
-              {[
-                {
-                  label:
-                    "Emergency Reports Today",
-                  value: "184",
-                },
-                {
-                  label:
-                    "AI Verified Incidents",
-                  value: "96%",
-                },
-                {
-                  label:
-                    "Active Response Teams",
-                  value: "42",
-                },
-              ].map(
+              {liveStats.map(
                 (
                   item,
                   index

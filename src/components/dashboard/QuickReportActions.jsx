@@ -1,6 +1,8 @@
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 import {
   FiCloudRain,
@@ -13,52 +15,93 @@ import {
   FiActivity,
 } from "react-icons/fi";
 
+import { getReportStats } from "../../utils/api";
+
+// Category definitions kept separate from live counts: title, icon, status
+// badge, and the phrasing suffix are all stable design choices — only the
+// number in front of each suffix is real data from the backend.
+const REPORT_TYPE_DEFS = [
+  {
+    title: "Flooding",
+    category: "Flooding",
+    description:
+      "Report flooded roads, rising water levels, and dangerous drainage overflow instantly.",
+    icon: FiCloudRain,
+    reportsSuffix: "Reports Today",
+    status: "HIGH PRIORITY",
+  },
+  {
+    title: "Bad Roads",
+    category: "Bad Roads",
+    description:
+      "Help authorities detect potholes, damaged roads, and unsafe transport routes faster.",
+    icon: FiAlertTriangle,
+    reportsSuffix: "Active Reports",
+    status: "URGENT",
+  },
+  {
+    title: "Drain Blockage",
+    category: "Drain Blockage",
+    description:
+      "Prevent environmental damage by reporting blocked drainage systems in your area.",
+    icon: FiDroplet,
+    reportsSuffix: "Monitoring Alerts",
+    status: "LIVE TRACKING",
+  },
+  {
+    title: "Power Failure",
+    category: "Power Failure",
+    description:
+      "Track blackout zones, damaged poles, and unstable electricity infrastructure.",
+    icon: FiZap,
+    reportsSuffix: "Grid Issues",
+    status: "CRITICAL",
+  },
+];
+
 const QuickReportActions = ({
   darkMode,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const reportTypes = [
-    {
-      title: "Flooding",
-      category: "Flooding",
-      description:
-        "Report flooded roads, rising water levels, and dangerous drainage overflow instantly.",
-      icon: FiCloudRain,
-      reports: "184 Reports Today",
-      status: "HIGH PRIORITY",
-    },
+  const userState = user?.state?.trim();
+  const locationLabel = userState || "Nigeria";
 
-    {
-      title: "Bad Roads",
-      category: "Bad Roads",
-      description:
-        "Help authorities detect potholes, damaged roads, and unsafe transport routes faster.",
-      icon: FiAlertTriangle,
-      reports: "312 Active Reports",
-      status: "URGENT",
-    },
+  // ── Live today's counts from /api/reports/stats — scoped to the
+  // user's own state, same as every other stats-driven component. ──────
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    {
-      title: "Drain Blockage",
-      category: "Drain Blockage",
-      description:
-        "Prevent environmental damage by reporting blocked drainage systems in your area.",
-      icon: FiDroplet,
-      reports: "98 Monitoring Alerts",
-      status: "LIVE TRACKING",
-    },
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    {
-      title: "Power Failure",
-      category: "Power Failure",
-      description:
-        "Track blackout zones, damaged poles, and unstable electricity infrastructure.",
-      icon: FiZap,
-      reports: "74 Grid Issues",
-      status: "CRITICAL",
-    },
-  ];
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const todayTotal      = stats?.todayTotal ?? 0;
+  const todayByCategory = stats?.todayByCategory ?? {};
+
+  const reportTypes = REPORT_TYPE_DEFS.map((def) => ({
+    ...def,
+    count: todayByCategory[def.category] ?? 0,
+  }));
+
+  const displayCompact = (n) => {
+    if (loading) return "—";
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return `${n}`;
+  };
 
   return (
     <section className="relative mt-8 sm:mt-10">
@@ -332,7 +375,7 @@ const QuickReportActions = ({
                 }
                 `}
               >
-                2,481
+                {displayCompact(todayTotal)}
               </h3>
 
               <div
@@ -638,7 +681,7 @@ const QuickReportActions = ({
                   >
                     <FiRadio />
 
-                    {item.reports}
+                    {displayCompact(item.count)} {item.reportsSuffix}
                   </div>
 
                   <div
@@ -656,7 +699,7 @@ const QuickReportActions = ({
                   >
                     <FiMapPin />
 
-                    Nigeria
+                    {locationLabel}
                   </div>
                 </div>
 

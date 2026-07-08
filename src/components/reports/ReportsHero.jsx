@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
   FiFileText,
   FiActivity,
   FiTrendingUp,
+  FiTrendingDown,
   FiArrowUpRight,
 } from "react-icons/fi";
+
+import { getMyReports } from "../../utils/api";
 
 
 const ReportsHero = ({
@@ -46,21 +49,72 @@ const heroContent = [
 ];
 
 
+  // ── Live personal stats from /api/reports/mine — this hero is about
+  // THIS user's own reports, not community/state-wide numbers, so it
+  // pulls from getMyReports() rather than getReportStats(). ────────────
+  const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMyReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyReports();
+      setMyReports(data.reports || []);
+    } catch (e) {
+      setMyReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMyReports();
+  }, [fetchMyReports]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const resolutionRate = totalReports > 0 ? Math.round((resolvedCount / totalReports) * 100) : 0;
+
+  // Week-over-week growth in the user's own submission activity, computed
+  // from each report's raw createdAt timestamp.
+  const now = Date.now();
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
+
+  const thisWeekCount = myReports.filter(
+    (r) => r.createdAt && new Date(r.createdAt).getTime() >= weekAgo
+  ).length;
+  const lastWeekCount = myReports.filter((r) => {
+    if (!r.createdAt) return false;
+    const t = new Date(r.createdAt).getTime();
+    return t >= twoWeeksAgo && t < weekAgo;
+  }).length;
+
+  const reportGrowth =
+    lastWeekCount > 0
+      ? Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
+      : thisWeekCount > 0
+      ? 100
+      : 0;
+
+  const displayValue = (n) => (loading ? "—" : `${n}`);
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
+
 const stats=[
 
 {
 title:"Reports",
-value:"24"
+value: displayValue(totalReports)
 },
 
 {
 title:"Resolved",
-value:"18"
+value: displayValue(resolvedCount)
 },
 
 {
 title:"Impact",
-value:"94%"
+value: displayPercent(resolutionRate)
 }
 
 ];
@@ -599,7 +653,7 @@ font-black
 
 >
 
-94%
+{displayPercent(resolutionRate)}
 
 </h2>
 
@@ -640,7 +694,7 @@ width:0
 }}
 
 animate={{
-width:"94%"
+width: `${loading ? 0 : resolutionRate}%`
 }}
 
 transition={{
@@ -666,20 +720,22 @@ bg-green-600
 
 <div
 
-className="
+className={`
 mt-8
 flex
 items-center
 gap-3
-text-green-600
 font-semibold
-"
+${reportGrowth >= 0 ? "text-green-600" : "text-red-500"}
+`}
 
 >
 
-<FiTrendingUp/>
+{reportGrowth >= 0 ? <FiTrendingUp/> : <FiTrendingDown/>}
 
-+12% improvement
+{loading
+  ? "—"
+  : `${reportGrowth >= 0 ? "+" : ""}${reportGrowth}% reports this week`}
 
 
 </div>

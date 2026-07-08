@@ -1,7 +1,9 @@
 // src/components/dashboard/DashboardStats.jsx
 
 import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { getReportStats } from "../../utils/api";
 
 import {
   FiAlertTriangle,
@@ -9,42 +11,12 @@ import {
   FiCheckCircle,
   FiClock,
   FiTrendingUp,
+  FiTrendingDown,
   FiArrowUpRight,
   FiActivity,
   FiRadio,
   FiZap,
 } from "react-icons/fi";
-
-const stats = [
-  {
-    title:       "Reports In Your Area",
-    value:       "1,284",
-    growth:      "+18%",
-    description: "Infrastructure issues reported around your nearby communities.",
-    icon:        <FiAlertTriangle />,
-  },
-  {
-    title:       "Active Locations",
-    value:       "48",
-    growth:      "+12%",
-    description: "Districts and communities monitored in real-time.",
-    icon:        <FiMapPin />,
-  },
-  {
-    title:       "Resolved Near You",
-    value:       "892",
-    growth:      "+24%",
-    description: "Successfully resolved infrastructure problems verified by citizens.",
-    icon:        <FiCheckCircle />,
-  },
-  {
-    title:       "Pending Reviews",
-    value:       "73",
-    growth:      "-8%",
-    description: "Reports currently under investigation and verification.",
-    icon:        <FiClock />,
-  },
-];
 
 const DashboardStats = ({ darkMode }) => {
   const { user } = useAuth();
@@ -56,10 +28,6 @@ const DashboardStats = ({ darkMode }) => {
   const userCountry = user?.country?.trim() || "Nigeria";
   const userAddress = user?.address?.trim();
 
-  // What to show in the location card:
-  // - If we have state → "Lagos State, Nigeria"
-  // - If only address → show address
-  // - Otherwise → "Setting up..."
   const regionLabel = userState
     ? `${userState}, ${userCountry}`
     : userAddress
@@ -67,6 +35,78 @@ const DashboardStats = ({ darkMode }) => {
     : "Setting up...";
 
   const locationReady = !!(userState || userAddress);
+
+  // ── Live stats from /api/reports/stats ─────────────────────────────────
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      // Stats are a nice-to-have for this hero section — fail quietly to
+      // zeros rather than breaking the whole dashboard header.
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const totalReports    = stats?.totalReports ?? 0;
+  const totalGrowth     = stats?.totalGrowth ?? 0;
+  const activeLocations = stats?.activeLocations ?? 0;
+  const resolved        = stats?.resolved ?? 0;
+  const resolvedGrowth  = stats?.resolvedGrowth ?? 0;
+  const pending         = stats?.pending ?? 0;
+  const pendingGrowth   = stats?.pendingGrowth ?? 0;
+  const topCategory     = stats?.topCategory;
+
+  const weeklyTrend = stats?.weeklyTrend?.length ? stats.weeklyTrend : [0, 0, 0, 0, 0, 0, 0];
+  const maxTrend = Math.max(...weeklyTrend, 1);
+  const barHeights = weeklyTrend.map((v) =>
+    v > 0 ? Math.max(Math.round((v / maxTrend) * 100), 15) : 4
+  );
+
+  const statsData = [
+    {
+      title: "Reports In Your Area",
+      value: totalReports,
+      growth: totalGrowth,
+      description: userState
+        ? `Infrastructure issues reported around ${userState}.`
+        : "Infrastructure issues reported around your nearby communities.",
+      icon: <FiAlertTriangle />,
+    },
+    {
+      title: "Active Locations",
+      value: activeLocations,
+      growth: null,
+      description: "Distinct communities with active reports in your state.",
+      icon: <FiMapPin />,
+    },
+    {
+      title: "Resolved Near You",
+      value: resolved,
+      growth: resolvedGrowth,
+      description: "Successfully resolved infrastructure problems verified by citizens.",
+      icon: <FiCheckCircle />,
+    },
+    {
+      title: "Pending Reviews",
+      value: pending,
+      growth: pendingGrowth,
+      description: "Reports currently under investigation and verification.",
+      icon: <FiClock />,
+    },
+  ];
+
+  const displayValue = (n) => (loading ? "—" : n.toLocaleString());
 
   return (
     <section className="relative mt-10 sm:mt-14 overflow-hidden bg-transparent">
@@ -211,17 +251,18 @@ const DashboardStats = ({ darkMode }) => {
                     darkMode ? "text-white" : "text-black"
                   }`}
                 >
-                  1,284
+                  {displayValue(totalReports)}
                 </motion.h2>
                 <div className="mt-5 inline-flex items-center gap-2 bg-green-500 px-5 py-3 text-white text-[10px] uppercase tracking-[0.2em] font-black shadow-[0_15px_40px_rgba(34,197,94,0.35)]">
-                  <FiTrendingUp />
-                  +18% THIS WEEK
+                  {totalGrowth >= 0 ? <FiTrendingUp /> : <FiTrendingDown />}
+                  {loading ? "—" : `${totalGrowth >= 0 ? "+" : ""}${totalGrowth}% THIS WEEK`}
                 </div>
               </div>
 
               <p className={`mt-7 max-w-xl text-sm sm:text-base leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                Citizens across nearby communities are actively reporting road damage, flooding,
-                power outages, and unsafe infrastructure conditions in real-time.
+                {userState
+                  ? `Citizens across ${userState} are actively reporting road damage, flooding, power outages, and unsafe infrastructure conditions in real-time.`
+                  : "Citizens across nearby communities are actively reporting road damage, flooding, power outages, and unsafe infrastructure conditions in real-time."}
               </p>
 
               <motion.a
@@ -267,15 +308,16 @@ const DashboardStats = ({ darkMode }) => {
                 </div>
               </div>
               <p className={`mt-7 text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                AI predicts a rising increase in road damage and drainage blockage reports
-                around your location based on real-time citizen activity.
+                {topCategory
+                  ? `AI predicts a rising increase in ${topCategory.toLowerCase()} reports around your location based on real-time citizen activity.`
+                  : "AI is monitoring real-time citizen activity to detect emerging infrastructure issues around your location."}
               </p>
               <div className="mt-10 flex items-end gap-2 h-28">
-                {[35, 50, 45, 70, 60, 90, 100].map((height, index) => (
+                {barHeights.map((height, index) => (
                   <motion.div
                     key={index}
                     initial={{ height: 0 }}
-                    whileInView={{ height }}
+                    whileInView={{ height: `${height}%` }}
                     whileHover={{ scaleY: 1.08 }}
                     transition={{ delay: index * 0.08 }}
                     className="flex-1 bg-gradient-to-t from-green-700 to-green-400"
@@ -336,7 +378,7 @@ const DashboardStats = ({ darkMode }) => {
 
       {/* STATS */}
       <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-5">
-        {stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 30 }}
@@ -368,13 +410,15 @@ const DashboardStats = ({ darkMode }) => {
               <h2 className={`mt-8 text-[3.5rem] sm:text-[4.3rem] leading-none tracking-[-0.1em] font-black ${
                 darkMode ? "text-white" : "text-black"
               }`}>
-                {stat.value}
+                {displayValue(stat.value)}
               </h2>
 
-              <div className="mt-4 inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-3 text-green-500 text-[10px] uppercase tracking-[0.16em] font-black">
-                <FiTrendingUp />
-                {stat.growth} THIS WEEK
-              </div>
+              {stat.growth !== null && (
+                <div className="mt-4 inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-3 text-green-500 text-[10px] uppercase tracking-[0.16em] font-black">
+                  {stat.growth >= 0 ? <FiTrendingUp /> : <FiTrendingDown />}
+                  {loading ? "—" : `${stat.growth >= 0 ? "+" : ""}${stat.growth}% THIS WEEK`}
+                </div>
+              )}
 
               <h3 className={`mt-6 text-xl font-black uppercase tracking-[-0.05em] ${darkMode ? "text-white" : "text-black"}`}>
                 {stat.title}

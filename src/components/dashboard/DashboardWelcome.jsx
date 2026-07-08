@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiArrowUpRight, FiActivity, FiTrendingUp, FiZap } from "react-icons/fi";
+import { FiArrowUpRight, FiActivity, FiTrendingUp, FiTrendingDown, FiZap } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
+import { getReportStats } from "../../utils/api";
+
+// Compact number formatting for the small stat tiles (1284 → "1.3K").
+const formatCompact = (n) => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+};
 
 const DashboardWelcome = ({ darkMode }) => {
   const { user } = useAuth();
@@ -36,11 +43,52 @@ const DashboardWelcome = ({ darkMode }) => {
   const userState = user?.state?.trim();
   const regionName = userState || "your community";
 
-  const stats = [
-    { title: "Reports",  value: "1.2K" },
-    { title: "Resolved", value: "892"  },
-    { title: "Response", value: "91%"  },
+  // ── Live stats from /api/reports/stats — same endpoint DashboardStats uses ──
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      // Nice-to-have for this hero section — fail quietly rather than
+      // breaking the welcome banner over a stats hiccup.
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const totalReports   = stats?.totalReports ?? 0;
+  const resolved        = stats?.resolved ?? 0;
+  const resolvedGrowth  = stats?.resolvedGrowth ?? 0;
+  const topCategory     = stats?.topCategory;
+  const totalGrowth     = stats?.totalGrowth ?? 0;
+
+  // "Response Efficiency" = share of area reports that have been resolved.
+  const responseRate = totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0;
+
+  const displayCompact = (n) => (loading ? "—" : formatCompact(n));
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
+
+  const statsTiles = [
+    { title: "Reports",  value: displayCompact(totalReports) },
+    { title: "Resolved", value: displayCompact(resolved) },
+    { title: "Response", value: displayPercent(responseRate) },
   ];
+
+  const aiInsightText =
+    topCategory && totalGrowth !== 0
+      ? `${topCategory} reports ${totalGrowth >= 0 ? "increased" : "decreased"} by ${Math.abs(totalGrowth)}% in ${regionName} this week.`
+      : topCategory
+      ? `${topCategory} is the most reported issue in ${regionName} this week.`
+      : `AI is monitoring citizen reports across ${regionName} for emerging issues.`;
 
   const heroContent = [
     {
@@ -210,7 +258,7 @@ const DashboardWelcome = ({ darkMode }) => {
               transition={{ delay: 0.5 }}
               className="mt-2 grid grid-cols-3 gap-3"
             >
-              {stats.map((item, index) => (
+              {statsTiles.map((item, index) => (
                 <motion.div
                   key={index}
                   whileHover={{ y: -4, scale: 1.02 }}
@@ -316,15 +364,15 @@ const DashboardWelcome = ({ darkMode }) => {
               <div className="flex items-end justify-between">
                 <div>
                   <h2 className={`text-5xl font-black ${darkMode ? "text-white" : "text-black"}`}>
-                    91%
+                    {loading ? "—" : `${responseRate}%`}
                   </h2>
                   <p className={`mt-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                     Response Efficiency
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-green-500 font-semibold">
-                  <FiTrendingUp />
-                  +12%
+                <div className={`flex items-center gap-2 font-semibold ${resolvedGrowth >= 0 ? "text-green-500" : "text-red-400"}`}>
+                  {resolvedGrowth >= 0 ? <FiTrendingUp /> : <FiTrendingDown />}
+                  {loading ? "—" : `${resolvedGrowth >= 0 ? "+" : ""}${resolvedGrowth}%`}
                 </div>
               </div>
 
@@ -332,7 +380,7 @@ const DashboardWelcome = ({ darkMode }) => {
               <div className={`mt-5 h-3 overflow-hidden ${darkMode ? "bg-white/10" : "bg-gray-200"}`}>
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: "91%" }}
+                  animate={{ width: `${loading ? 0 : responseRate}%` }}
                   transition={{ duration: 1.3, delay: 0.8 }}
                   className="h-full bg-gradient-to-r from-green-500 to-emerald-600"
                 />
@@ -360,7 +408,7 @@ const DashboardWelcome = ({ darkMode }) => {
                     AI Insight
                   </h4>
                   <p className={`mt-2 text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    Bad road reports increased by 24% in {regionName} this week.
+                    {loading ? "Analyzing recent activity..." : aiInsightText}
                   </p>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -7,47 +8,100 @@ import {
   FiTrendingUp,
 } from "react-icons/fi";
 
+import { getMyReports } from "../../utils/api";
+
+// Community reports require 5 confirmations before escalation — same
+// constant used elsewhere (UserReportsQueue, ReportController). getMyReports()
+// doesn't expose the per-report threshold, so it's hardcoded here to match.
+const REQUIRED_CONFIRMATIONS = 5;
 
 const ReportStats = ({
   darkMode
 }) => {
 
+  // ── Live personal stats from /api/reports/mine — same source as
+  // ReportsHero, since this grid is about the user's own reports. ──────
+  const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMyReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyReports();
+      setMyReports(data.reports || []);
+    } catch (e) {
+      setMyReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMyReports();
+  }, [fetchMyReports]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const inProgressCount = myReports.filter((r) => r.status === "In Progress").length;
+
+  const resolutionRate = totalReports > 0 ? Math.round((resolvedCount / totalReports) * 100) : 0;
+  const inProgressRate = totalReports > 0 ? Math.round((inProgressCount / totalReports) * 100) : 0;
+
+  // "Impact Score" isn't a stored field — it's a composite of two things
+  // we do have real data for: how many of your reports got resolved, and
+  // how close each report gets to the community-confirmation threshold.
+  // This is one reasonable definition, not an extracted ground-truth value —
+  // adjust the weighting/formula here if you want it to mean something else.
+  const avgConfirmationRate =
+    totalReports > 0
+      ? Math.round(
+          myReports.reduce(
+            (sum, r) => sum + Math.min((r.confirmations ?? 0) / REQUIRED_CONFIRMATIONS, 1) * 100,
+            0
+          ) / totalReports
+        )
+      : 0;
+  const impactScore = totalReports > 0 ? Math.round((resolutionRate + avgConfirmationRate) / 2) : 0;
+
+  const displayValue = (n, pad = false) =>
+    loading ? "—" : pad ? String(n).padStart(2, "0") : `${n}`;
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
 
 const stats = [
 
 {
  title:"Total Reports",
- value:"24",
+ value: displayValue(totalReports),
  label:"Citizen submissions",
  icon:<FiFileText/>,
- percent:"100%"
+ percent: loading ? "0%" : "100%"
 },
 
 
 {
  title:"Resolved",
- value:"18",
+ value: displayValue(resolvedCount, true),
  label:"Issues completed",
  icon:<FiCheckCircle/>,
- percent:"78%"
+ percent: loading ? "0%" : `${resolutionRate}%`
 },
 
 
 {
  title:"In Progress",
- value:"04",
+ value: displayValue(inProgressCount, true),
  label:"Active investigations",
  icon:<FiClock/>,
- percent:"45%"
+ percent: loading ? "0%" : `${inProgressRate}%`
 },
 
 
 {
  title:"Impact Score",
- value:"94%",
+ value: displayPercent(impactScore),
  label:"Community contribution",
  icon:<FiTrendingUp/>,
- percent:"94%"
+ percent: loading ? "0%" : `${impactScore}%`
 }
 
 ];

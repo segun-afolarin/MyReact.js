@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
   FiActivity,
   FiShield,
   FiTrendingUp,
+  FiTrendingDown,
   FiCheckCircle,
   FiMapPin,
   FiAlertTriangle,
@@ -12,25 +13,90 @@ import {
   FiLayers,
 } from "react-icons/fi";
 
+import { getReportStats } from "../../utils/api";
+
+const formatCompact = (n) => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+};
+
 const DashboardPageHeader = ({
   darkMode,
 }) => {
-  const stats = [
-    {
-      title: "Reports",
-      value: "2.4K",
-    },
+  // ── Live stats from /api/reports/stats — same endpoint DashboardStats
+  // and DashboardWelcome use, so all three panels stay in sync ──────────
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    {
-      title: "Verified",
-      value: "1.8K",
-    },
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    {
-      title: "Resolved",
-      value: "91%",
-    },
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const stateName        = stats?.state;
+  const totalReports     = stats?.totalReports ?? 0;
+  const activeLocations  = stats?.activeLocations ?? 0;
+  const resolved         = stats?.resolved ?? 0;
+  const pending          = stats?.pending ?? 0;
+  const verified         = stats?.verified ?? 0;
+  const verifiedGrowth   = stats?.verifiedGrowth ?? 0;
+  const avgResponseHours = stats?.avgResponseHours;
+  const topCategory      = stats?.topCategory;
+
+  // "Verification Accuracy" = share of this state's reports that have
+  // passed the community-confirmation threshold (in_progress or resolved).
+  const verificationRate = totalReports > 0 ? Math.round((verified / totalReports) * 100) : 0;
+
+  const avgResponseLabel =
+    avgResponseHours === null || avgResponseHours === undefined
+      ? "—"
+      : avgResponseHours < 1
+      ? "<1h"
+      : `${avgResponseHours}h`;
+
+  const displayCompact = (n) => (loading ? "—" : formatCompact(n));
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
+
+  const stats3 = [
+    { title: "Reports",  value: displayCompact(totalReports) },
+    { title: "Verified", value: displayCompact(verified) },
+    { title: "Resolved", value: displayPercent(totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0) },
   ];
+
+  const metrics = [
+    { icon: <FiMapPin />,     label: "Active Zones",  value: loading ? "—" : `${activeLocations}` },
+    { icon: <FiClock />,      label: "Avg Response",  value: loading ? "—" : avgResponseLabel },
+    { icon: <FiCheckCircle />,label: "Resolved",      value: displayCompact(resolved) },
+    { icon: <FiLayers />,     label: "Monitoring",    value: "Live" },
+  ];
+
+  // Priority alert reflects real pending load + the state's top category
+  // this week, instead of a permanently-scary static message.
+  const priorityAlert =
+    !loading && pending > 0
+      ? {
+          text: topCategory
+            ? `${pending} report${pending === 1 ? "" : "s"} — mostly ${topCategory.toLowerCase()} — ${pending === 1 ? "is" : "are"} still awaiting community verification before escalation to emergency response authorities.`
+            : `${pending} report${pending === 1 ? "" : "s"} ${pending === 1 ? "is" : "are"} still awaiting community verification before escalation to emergency response authorities.`,
+          calm: false,
+        }
+      : {
+          text: stateName
+            ? `No reports in ${stateName} are currently waiting on urgent verification.`
+            : "No reports are currently waiting on urgent verification.",
+          calm: true,
+        };
 
   const heroContent = [
   {
@@ -401,7 +467,7 @@ const DashboardPageHeader = ({
               gap-3
               "
             >
-              {stats.map((item, index) => (
+              {stats3.map((item, index) => (
                 <motion.div
                   key={index}
                   whileHover={{
@@ -612,7 +678,7 @@ const DashboardPageHeader = ({
                     }
                     `}
                   >
-                    94%
+                    {loading ? "—" : `${verificationRate}%`}
                   </h2>
 
                   <p
@@ -631,17 +697,17 @@ const DashboardPageHeader = ({
                 </div>
 
                 <div
-                  className="
+                  className={`
                   flex
                   items-center
                   gap-2
-                  text-green-500
                   font-semibold
-                  "
+                  ${verifiedGrowth >= 0 ? "text-green-500" : "text-red-400"}
+                  `}
                 >
-                  <FiTrendingUp />
+                  {verifiedGrowth >= 0 ? <FiTrendingUp /> : <FiTrendingDown />}
 
-                  +18%
+                  {loading ? "—" : `${verifiedGrowth >= 0 ? "+" : ""}${verifiedGrowth}%`}
                 </div>
               </div>
 
@@ -663,7 +729,7 @@ const DashboardPageHeader = ({
                     width: 0,
                   }}
                   animate={{
-                    width: "94%",
+                    width: `${loading ? 0 : verificationRate}%`,
                   }}
                   transition={{
                     duration: 1.3,
@@ -690,31 +756,7 @@ const DashboardPageHeader = ({
               gap-3
               "
             >
-              {[
-                {
-                  icon: <FiMapPin />,
-                  label: "Active Zones",
-                  value: "148",
-                },
-
-                {
-                  icon: <FiClock />,
-                  label: "Avg Response",
-                  value: "2.4h",
-                },
-
-                {
-                  icon: <FiCheckCircle />,
-                  label: "Resolved",
-                  value: "892",
-                },
-
-                {
-                  icon: <FiLayers />,
-                  label: "Monitoring",
-                  value: "Live",
-                },
-              ].map((item, index) => (
+              {metrics.map((item, index) => (
                 <motion.div
                   key={index}
                   whileHover={{
@@ -788,15 +830,13 @@ const DashboardPageHeader = ({
               border
               p-4
               ${
-                darkMode
-                  ? `
-                    bg-amber-500/10
-                    border-amber-500/20
-                  `
-                  : `
-                    bg-amber-50
-                    border-amber-200
-                  `
+                priorityAlert.calm
+                  ? darkMode
+                    ? `bg-green-500/10 border-green-500/20`
+                    : `bg-green-50 border-green-200`
+                  : darkMode
+                  ? `bg-amber-500/10 border-amber-500/20`
+                  : `bg-amber-50 border-amber-200`
               }
               `}
             >
@@ -808,18 +848,18 @@ const DashboardPageHeader = ({
                 "
               >
                 <div
-                  className="
+                  className={`
                   w-11
                   h-11
                   shrink-0
-                  bg-amber-500
                   text-white
                   flex
                   items-center
                   justify-center
-                  "
+                  ${priorityAlert.calm ? "bg-green-500" : "bg-amber-500"}
+                  `}
                 >
-                  <FiAlertTriangle />
+                  {priorityAlert.calm ? <FiShield /> : <FiAlertTriangle />}
                 </div>
 
                 <div>
@@ -833,7 +873,7 @@ const DashboardPageHeader = ({
                     }
                     `}
                   >
-                    High Priority Activity
+                    {priorityAlert.calm ? "All Clear" : "High Priority Activity"}
                   </h4>
 
                   <p
@@ -848,11 +888,7 @@ const DashboardPageHeader = ({
                     }
                     `}
                   >
-                    Multiple critical road and
-                    flooding reports require
-                    urgent verification before
-                    escalation to emergency
-                    response authorities.
+                    {loading ? "Checking current activity..." : priorityAlert.text}
                   </p>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
@@ -7,6 +7,13 @@ import FloatingBottomNav from "../components/dashboard/FloatingBottomNav";
 import DashboardPageHeader from "../components/dashboard/DashboardPageHeader";
 import QuickReportActions from "../components/dashboard/QuickReportActions";
 import UserReportsQueue from "../components/dashboard/UserReportsQueue";
+
+import { getReportStats } from "../utils/api";
+
+const formatCompact = (n) => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+};
 
 const SubmitReport = () => {
   /* DARK MODE */
@@ -24,6 +31,71 @@ const SubmitReport = () => {
   /* MOBILE SIDEBAR */
   const [mobileSidebar, setMobileSidebar] =
     useState(false);
+
+  /* LIVE STATS — same /api/reports/stats endpoint DashboardPageHeader,
+     DashboardStats and DashboardWelcome use, for the two inline stat
+     grids on this page (Community Stats + Community Footer). */
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      setStats(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const awaitingVerification = stats?.awaitingVerification ?? 0;
+  const escalated            = stats?.verified ?? 0; // in_progress + resolved
+  const totalConfirmations   = stats?.totalConfirmations ?? 0;
+  const resolved              = stats?.resolved ?? 0;
+  const inProgress            = stats?.inProgress ?? 0;
+  const activeVerifiers       = stats?.activeVerifiers ?? 0;
+
+  const displayCompact = (n) => (statsLoading ? "—" : formatCompact(n));
+
+  // NOTE: "AI Detection Accuracy" and "Trust Score" stay static below —
+  // there's no logged AI-verification pass/fail history or user-trust
+  // scoring in the schema yet to compute them honestly. Everything else
+  // on this page is now live.
+  const communityStats = [
+    {
+      title: "Reports Awaiting Verification",
+      value: displayCompact(awaitingVerification),
+      desc: "Live community reports",
+    },
+    {
+      title: "Reports Escalated",
+      value: displayCompact(escalated),
+      desc: "Forwarded to agencies",
+    },
+    {
+      title: "Citizen Confirmations",
+      value: displayCompact(totalConfirmations),
+      desc: "Community verifications",
+    },
+    {
+      title: "AI Detection Accuracy",
+      value: "98%",
+      desc: "Fraud prevention active",
+    },
+  ];
+
+  const footerStats = [
+    { title: "Active Verifiers",    value: displayCompact(activeVerifiers) },
+    { title: "Reports Resolved",    value: displayCompact(resolved) },
+    { title: "Pending Escalation",  value: displayCompact(inProgress) },
+    { title: "Trust Score",         value: "96%" },
+  ];
 
   /* DARK MODE EFFECT */
   useEffect(() => {
@@ -220,39 +292,7 @@ const SubmitReport = () => {
                 gap-4
               "
             >
-              {[
-                {
-                  title:
-                    "Reports Awaiting Verification",
-                  value: "214",
-                  desc:
-                    "Live community reports",
-                },
-
-                {
-                  title:
-                    "Reports Escalated",
-                  value: "1,482",
-                  desc:
-                    "Forwarded to agencies",
-                },
-
-                {
-                  title:
-                    "Citizen Confirmations",
-                  value: "9.4K",
-                  desc:
-                    "Community verifications",
-                },
-
-                {
-                  title:
-                    "AI Detection Accuracy",
-                  value: "98%",
-                  desc:
-                    "Fraud prevention active",
-                },
-              ].map((item, index) => (
+              {communityStats.map((item, index) => (
                 <div
                   key={index}
                   className={`
@@ -530,31 +570,7 @@ const SubmitReport = () => {
                     xl:w-auto
                   "
                 >
-                  {[
-                    {
-                      title:
-                        "Active Verifiers",
-                      value: "5,284",
-                    },
-
-                    {
-                      title:
-                        "Reports Resolved",
-                      value: "842",
-                    },
-
-                    {
-                      title:
-                        "Pending Escalation",
-                      value: "129",
-                    },
-
-                    {
-                      title:
-                        "Trust Score",
-                      value: "96%",
-                    },
-                  ].map((item, index) => (
+                  {footerStats.map((item, index) => (
                     <div
                       key={index}
                       className={`
