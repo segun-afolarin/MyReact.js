@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FiClock,
   FiMapPin,
@@ -10,167 +10,61 @@ import {
   FiX,
   FiUploadCloud,
   FiLoader,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiRadio,
+  FiCompass,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
+import { getNearbyReports, confirmReport } from "../../utils/api";
 
-const initialReports = [
-  {
-    id: "NR-2041",
-    title: "Collapsed Road Section",
-    location: "Sabon Gari, Kano",
-    status: "Awaiting Community Verification",
-    confirmations: 3,
-    required: 5,
-    progress: 60,
-    date: "Submitted 2 hours ago",
-    image:
-      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "Large potholes and damaged road surface causing traffic delays and accidents during rainfall.",
-    submittedBy: { name: "Oluwaseun A.", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face" },
-    fields: [
-      "Road Damage",
-      "High Priority",
-      "Photo Evidence Uploaded",
-      "AI Location Detected",
-    ],
-    confirmedBy: [
-      { name: "Oluwaseun A.", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face" },
-      { name: "Peter B.",     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face" },
-      { name: "Fatima K.",    initials: "FK" },
-    ],
-  },
-  {
-    id: "NR-1982",
-    title: "Blocked Drainage System",
-    location: "Nassarawa, Kano",
-    status: "Community Review Active",
-    confirmations: 4,
-    required: 5,
-    progress: 80,
-    date: "Submitted Yesterday",
-    image:
-      "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "Drainage filled with waste materials causing water overflow and environmental hazards.",
-    submittedBy: { name: "Ngozi C.", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face" },
-    fields: [
-      "Flood Risk",
-      "Drain Blockage",
-      "Voice Note Attached",
-      "Emergency Flag Enabled",
-    ],
-    confirmedBy: [
-      { name: "Ngozi C.",  avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face" },
-      { name: "Tunde M.", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face" },
-      { name: "Sola B.",  initials: "SB" },
-      { name: "James N.", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" },
-    ],
-  },
-  {
-    id: "NR-3901",
-    title: "Broken Street Lights",
-    location: "Jos, Plateau",
-    status: "Verification In Progress",
-    confirmations: 2,
-    required: 5,
-    progress: 40,
-    date: "30 minutes ago",
-    image:
-      "https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "Multiple street lights no longer functioning causing security concerns at night.",
-    submittedBy: { name: "Amaka O.", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" },
-    fields: [
-      "Public Safety",
-      "Night Visibility",
-      "Community Alert",
-      "Photo Evidence Uploaded",
-    ],
-    confirmedBy: [
-      { name: "Amaka O.", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" },
-      { name: "Bello Y.", initials: "BY" },
-    ],
-  },
-  {
-    id: "NR-5510",
-    title: "Overflowing Waste Dump",
-    location: "Kaduna Central",
-    status: "Nearby Citizens Reviewing",
-    confirmations: 1,
-    required: 5,
-    progress: 20,
-    date: "1 hour ago",
-    image:
-      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "Waste disposal area overflowing into nearby roads and drainage systems.",
-    submittedBy: { name: "Chioma E.", initials: "CE" },
-    fields: [
-      "Environmental Hazard",
-      "Waste Overflow",
-      "Health Risk",
-      "Urgent Cleanup Needed",
-    ],
-    confirmedBy: [
-      { name: "Chioma E.", initials: "CE" },
-    ],
-  },
-  {
-    id: "NR-6612",
-    title: "Bridge Surface Damage",
-    location: "Maiduguri",
-    status: "Awaiting More Confirmations",
-    confirmations: 5,
-    required: 5,
-    progress: 100,
-    date: "Today",
-    image:
-      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "Deep cracks forming across bridge surface used daily by commercial vehicles.",
-    submittedBy: { name: "Kehinde A.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" },
-    fields: [
-      "Bridge Damage",
-      "Structural Concern",
-      "Heavy Traffic Zone",
-      "AI Risk Analysis Complete",
-    ],
-    confirmedBy: [
-      { name: "Kehinde A.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" },
-      { name: "Amaka O.",   avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" },
-      { name: "Bello Y.",   initials: "BY" },
-      { name: "Ngozi C.",   avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face" },
-      { name: "Fatima K.",  initials: "FK" },
-    ],
-  },
-  {
-    id: "NR-7102",
-    title: "Flooded School Entrance",
-    location: "Ibadan",
-    status: "Community Validation Active",
-    confirmations: 3,
-    required: 5,
-    progress: 60,
-    date: "3 hours ago",
-    image:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop",
-    description:
-      "School entrance flooded after rainfall making access difficult for students.",
-    submittedBy: { name: "Tunde M.", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face" },
-    fields: [
-      "Flood Risk",
-      "School Access Blocked",
-      "Citizen Reported",
-      "Photo Evidence Uploaded",
-    ],
-    confirmedBy: [
-      { name: "Tunde M.", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face" },
-      { name: "Sola B.",  initials: "SB" },
-      { name: "James N.", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" },
-    ],
-  },
-];
+// ─── Helpers ───────────────────────────────────────────────────────────────
+const initialsOf = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("") || "?";
+
+const timeAgo = (iso) => {
+  if (!iso) return "";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+};
+
+const mapReportFromApi = (r) => ({
+  reportId: r.reportId,
+  id: r.id,
+  title: r.title,
+  location: r.location,
+  status: r.status,
+  confirmations: r.confirmations,
+  required: r.requiredConfirmations || 5,
+  progress: Math.min(
+    Math.round((r.confirmations / (r.requiredConfirmations || 5)) * 100),
+    100
+  ),
+  date: `Submitted ${timeAgo(r.createdAt)}`,
+  image:
+    r.image ||
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200&auto=format&fit=crop",
+  description: r.description,
+  submittedBy: r.submittedBy,
+  fields: r.fields || [],
+  confirmedByMe: r.confirmedByMe,
+  confirmedBy: (r.confirmedBy || []).map((c) => ({
+    name: c.name,
+    avatar: c.avatar,
+    initials: initialsOf(c.name),
+  })),
+});
 
 // ─── Avatar stack for community confirmers ────────────────────────────────────
 const ConfirmerAvatars = ({ confirmers, darkMode }) => {
@@ -229,7 +123,7 @@ const SubmittedBy = ({ submitter, darkMode }) => {
           <img src={submitter.avatar} alt={submitter.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-            {submitter.initials}
+            {initialsOf(submitter.name)}
           </div>
         )}
       </div>
@@ -241,27 +135,30 @@ const SubmittedBy = ({ submitter, darkMode }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONFIRMATION MODAL
+// CONFIRMATION MODAL — hits the real /reports/{id}/confirm endpoint
 // ─────────────────────────────────────────────────────────────────────────────
-const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
-  const [stage, setStage] = useState("upload");
+const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
+  const [stage, setStage] = useState("upload"); // upload | verifying | submitted | error
   const [preview, setPreview] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
-      setPreview(reader.result);
-      setStage("verifying");
-
-      setTimeout(() => {
-        setStage("submitted");
-        onSubmitted();
-      }, 2600);
-    };
+    reader.onload = () => setPreview(reader.result);
     reader.readAsDataURL(file);
+
+    setStage("verifying");
+    setErrorMsg("");
+
+    onConfirm(file)
+      .then(() => setStage("submitted"))
+      .catch((err) => {
+        setErrorMsg(err?.message || "Something went wrong verifying that photo. Please try again.");
+        setStage("error");
+      });
   };
 
   return (
@@ -271,7 +168,7 @@ const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => {
-        if (e.target === e.currentTarget && stage === "submitted") onClose();
+        if (e.target === e.currentTarget && (stage === "submitted" || stage === "error")) onClose();
       }}
     >
       <motion.div
@@ -284,7 +181,7 @@ const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
           ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}
         `}
       >
-        {stage === "submitted" && (
+        {(stage === "submitted" || stage === "error") && (
           <button
             onClick={onClose}
             className={`
@@ -417,11 +314,110 @@ const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
               </button>
             </motion.div>
           )}
+
+          {/* STAGE 4: ERROR / AI MISMATCH */}
+          {stage === "error" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              className="mt-6 flex flex-col items-center text-center py-4"
+            >
+              <div className="w-16 h-16 flex items-center justify-center bg-red-500/15 text-red-400 text-3xl">
+                <FiAlertCircle />
+              </div>
+
+              <h4 className={`mt-5 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+                Couldn't verify that photo
+              </h4>
+              <p className={`mt-2 text-sm max-w-xs leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                {errorMsg}
+              </p>
+
+              <button
+                onClick={() => {
+                  setStage("upload");
+                  setPreview("");
+                }}
+                className="mt-6 w-full h-12 bg-green-500 text-white font-bold hover:bg-green-400 transition-colors"
+              >
+                Try Another Photo
+              </button>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </motion.div>
   );
 };
+
+// ─── Loading / error / empty helpers ───────────────────────────────────────────
+const ListSkeleton = ({ darkMode }) => (
+  <div className="space-y-5">
+    {[0, 1, 2].map((i) => (
+      <div
+        key={i}
+        className={`grid grid-cols-1 xl:grid-cols-[340px_1fr] border overflow-hidden animate-pulse ${
+          darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"
+        }`}
+      >
+        <div className={`h-[260px] xl:h-full ${darkMode ? "bg-white/[0.04]" : "bg-gray-100"}`} />
+        <div className="p-5 sm:p-7 space-y-4">
+          <div className={`h-4 w-1/3 ${darkMode ? "bg-white/[0.06]" : "bg-gray-100"}`} />
+          <div className={`h-4 w-2/3 ${darkMode ? "bg-white/[0.06]" : "bg-gray-100"}`} />
+          <div className={`h-20 w-full ${darkMode ? "bg-white/[0.04]" : "bg-gray-50"}`} />
+          <div className={`h-3 w-full ${darkMode ? "bg-white/[0.06]" : "bg-gray-100"}`} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const ErrorState = ({ darkMode, message, onRetry }) => (
+  <div className={`border p-10 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+    <FiAlertCircle className="mx-auto text-red-400" size={22} />
+    <p className={`mt-3 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>Couldn't load nearby reports</p>
+    <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+      {message || "Check your connection and try again."}
+    </p>
+    <button
+      onClick={onRetry}
+      className={`mt-6 h-11 px-5 inline-flex items-center gap-2 text-sm font-semibold border ${
+        darkMode ? "border-white/10 text-white hover:bg-white/[0.04]" : "border-gray-200 text-black hover:bg-gray-50"
+      }`}
+    >
+      <FiRefreshCw /> Try Again
+    </button>
+  </div>
+);
+
+const NoStateBlock = ({ darkMode, message }) => (
+  <div className={`border p-10 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+    <FiCompass className="mx-auto text-green-500" size={22} />
+    <p className={`mt-3 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>We don't know where to look yet</p>
+    <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+      {message || "Add your state to your profile so NationAura can surface reports near you."}
+    </p>
+  </div>
+);
+
+const EmptyState = ({ darkMode, stateName }) => (
+  <div className={`relative overflow-hidden border p-10 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+      className="mx-auto w-14 h-14 flex items-center justify-center bg-green-500/10 border border-green-500/20 rounded-full"
+    >
+      <FiRadio className="text-green-500 text-xl" />
+    </motion.div>
+    <p className={`mt-4 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+      All Clear in {stateName}
+    </p>
+    <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+      No reports are currently awaiting confirmation near you.
+    </p>
+  </div>
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
@@ -429,49 +425,72 @@ const ConfirmationModal = ({ report, darkMode, onClose, onSubmitted }) => {
 const UserReportsQueue = ({ darkMode }) => {
   const { user } = useAuth();
 
-  const [reports, setReports] = useState(initialReports);
-  const [confirmedReports, setConfirmedReports] = useState([]);
-  const [activeModalIndex, setActiveModalIndex] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [stateName, setStateName] = useState(null);
+  const [noStateMessage, setNoStateMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeModalId, setActiveModalId] = useState(null);
 
-  // ── Build the current user's confirmer entry ──────────────────────────────
-  const getCurrentUserConfirmer = () => {
-    const name = user?.name?.trim() || "You";
-    const initials = name
-      .split(" ")
-      .map((p) => p[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
+  const fetchNearby = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getNearbyReports();
+      setStateName(data.state);
+      setNoStateMessage(data.message || "");
+      setReports((data.reports || []).map(mapReportFromApi));
+    } catch (e) {
+      setError(e.message || "Failed to load nearby reports.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    return user?.avatar
-      ? { name, avatar: user.avatar }
-      : { name, initials };
+  useEffect(() => {
+    fetchNearby();
+  }, [fetchNearby]);
+
+  const openConfirmModal = (reportId) => {
+    const target = reports.find((r) => r.reportId === reportId);
+    if (target?.confirmedByMe) return;
+    setActiveModalId(reportId);
   };
 
-  const openConfirmModal = (index) => {
-    if (confirmedReports.includes(index)) return;
-    setActiveModalIndex(index);
-  };
+  const closeModal = () => setActiveModalId(null);
 
-  const closeModal = () => setActiveModalIndex(null);
+  const handleConfirm = useCallback(
+    async (reportId, file) => {
+      const formData = new FormData();
+      formData.append("evidence", file);
 
-  const handleVerifiedSubmit = (index) => {
-    setReports((prev) => {
-      const updated = [...prev];
-      const next = updated[index];
-      const newConfirmations = Math.min(next.confirmations + 1, next.required);
+      const data = await confirmReport(reportId, formData);
 
-      updated[index] = {
-        ...next,
-        confirmations: newConfirmations,
-        progress: Math.round((newConfirmations / next.required) * 100),
-        confirmedBy: [...(next.confirmedBy || []), getCurrentUserConfirmer()],
-      };
-      return updated;
-    });
+      setReports((prev) =>
+        prev.map((r) => {
+          if (r.reportId !== reportId) return r;
+          const newConfirmations = data.confirmations;
+          return {
+            ...r,
+            confirmations: newConfirmations,
+            progress: Math.min(Math.round((newConfirmations / r.required) * 100), 100),
+            confirmedByMe: true,
+            confirmedBy: [
+              ...r.confirmedBy,
+              {
+                name: user?.name || "You",
+                avatar: user?.avatar || null,
+                initials: initialsOf(user?.name || "You"),
+              },
+            ],
+          };
+        })
+      );
+    },
+    [user]
+  );
 
-    setConfirmedReports((prev) => [...prev, index]);
-  };
+  const activeReport = reports.find((r) => r.reportId === activeModalId);
 
   return (
     <section className="mt-10">
@@ -506,9 +525,8 @@ const UserReportsQueue = ({ darkMode }) => {
             transition={{ delay: 0.1 }}
             className={`mt-5 text-sm sm:text-base leading-relaxed max-w-xl ${darkMode ? "text-gray-400" : "text-gray-600"}`}
           >
-            Reports submitted by citizens near your area require at least
-            5 community confirmations before they are forwarded to
-            government agencies for action.
+            Reports submitted by citizens near your area{stateName ? ` in ${stateName}` : ""} require
+            community confirmations before they are forwarded to government agencies for action.
           </motion.p>
         </div>
 
@@ -524,9 +542,15 @@ const UserReportsQueue = ({ darkMode }) => {
               <p className={`text-[10px] uppercase tracking-[0.25em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                 Nearby Verification Queue
               </p>
-              <h3 className={`mt-2 text-3xl font-black ${darkMode ? "text-white" : "text-black"}`}>
-                126
-              </h3>
+              <motion.h3
+                key={reports.length}
+                initial={{ scale: 1.2, opacity: 0.6 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 250 }}
+                className={`mt-2 text-3xl font-black ${darkMode ? "text-white" : "text-black"}`}
+              >
+                {loading ? "—" : reports.length}
+              </motion.h3>
               <p className="mt-2 text-green-500 text-sm font-semibold">
                 Reports waiting for citizens
               </p>
@@ -538,203 +562,218 @@ const UserReportsQueue = ({ darkMode }) => {
         </motion.div>
       </div>
 
-      {/* REPORT LIST */}
-      <div className="space-y-5">
-        {reports.map((report, index) => {
-          const confirmed = confirmedReports.includes(index);
+      {/* BODY: loading / error / no-state / empty / full list */}
+      {loading ? (
+        <ListSkeleton darkMode={darkMode} />
+      ) : error ? (
+        <ErrorState darkMode={darkMode} message={error} onRetry={fetchNearby} />
+      ) : !stateName ? (
+        <NoStateBlock darkMode={darkMode} message={noStateMessage} />
+      ) : reports.length === 0 ? (
+        <EmptyState darkMode={darkMode} stateName={stateName} />
+      ) : (
+        <div className="space-y-5">
+          <AnimatePresence>
+            {reports.map((report, index) => {
+              const confirmed = report.confirmedByMe;
 
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              className={`
-                group border overflow-hidden transition-all duration-300
-                ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}
-              `}
-            >
-              <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr]">
+              return (
+                <motion.div
+                  key={report.reportId}
+                  layout
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -4 }}
+                  className={`
+                    group border overflow-hidden transition-all duration-300
+                    ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}
+                  `}
+                >
+                  <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr]">
 
-                {/* IMAGE */}
-                <div className="relative h-[260px] xl:h-full overflow-hidden">
-                  <img
-                    src={report.image}
-                    alt={report.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-5 w-full">
-                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-green-500 text-white text-[10px] font-black uppercase tracking-[0.18em] mb-4">
-                      <FiImage />
-                      Evidence Uploaded
+                    {/* IMAGE */}
+                    <div className="relative h-[260px] xl:h-full overflow-hidden">
+                      <img
+                        src={report.image}
+                        alt={report.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 p-5 w-full">
+                        <div className="inline-flex items-center gap-2 px-3 py-2 bg-green-500 text-white text-[10px] font-black uppercase tracking-[0.18em] mb-4">
+                          <FiImage />
+                          {report.id || "Evidence Uploaded"}
+                        </div>
+                        <h3 className="text-white text-2xl font-black leading-tight">
+                          {report.title}
+                        </h3>
+                      </div>
                     </div>
-                    <h3 className="text-white text-2xl font-black leading-tight">
-                      {report.title}
-                    </h3>
-                  </div>
-                </div>
 
-                {/* CONTENT */}
-                <div className="p-5 sm:p-7">
+                    {/* CONTENT */}
+                    <div className="p-5 sm:p-7">
 
-                  {/* TOP */}
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-4">
+                      {/* TOP */}
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div
+                              className={`
+                                inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.15em] border
+                                ${darkMode
+                                  ? "bg-green-500/10 border-green-500/20 text-green-400"
+                                  : "bg-green-50 border-green-200 text-green-700"}
+                              `}
+                            >
+                              <FiCheckCircle />
+                              {report.status}
+                            </div>
+
+                            <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                              <FiMapPin />
+                              {report.location}
+                            </div>
+                          </div>
+
+                          {/* SUBMITTED BY */}
+                          <SubmittedBy submitter={report.submittedBy} darkMode={darkMode} />
+
+                          <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                            {report.description}
+                          </p>
+                        </div>
+
+                        {/* COMMUNITY SUPPORT COUNT */}
                         <div
                           className={`
-                            inline-flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.15em] border
-                            ${darkMode
-                              ? "bg-green-500/10 border-green-500/20 text-green-400"
-                              : "bg-green-50 border-green-200 text-green-700"}
+                            border p-4 min-w-[180px]
+                            ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}
                           `}
                         >
+                          <p className={`text-[10px] uppercase tracking-[0.2em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                            Community Support
+                          </p>
+                          <motion.h4
+                            key={report.confirmations}
+                            initial={{ scale: 1.2, opacity: 0.6 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 250 }}
+                            className={`mt-3 text-4xl font-black ${darkMode ? "text-white" : "text-black"}`}
+                          >
+                            {report.confirmations}
+                          </motion.h4>
+                          <p className="mt-2 text-green-500 text-sm font-semibold">
+                            / {report.required} Needed Before Escalation
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* FORM DATA */}
+                      {report.fields?.length > 0 && (
+                        <div className="mt-7">
+                          <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
+                            Submitted Form Details
+                          </h4>
+                          <div className="flex flex-wrap gap-3">
+                            {report.fields.map((field, i) => (
+                              <div
+                                key={i}
+                                className={`
+                                  px-4 py-3 border text-sm font-medium
+                                  ${darkMode
+                                    ? "bg-white/[0.03] border-white/10 text-gray-300"
+                                    : "bg-[#FAFAFA] border-gray-200 text-gray-700"}
+                                `}
+                              >
+                                {field}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* COMMUNITY CONFIRMERS — avatar stack */}
+                      {report.confirmedBy?.length > 0 && (
+                        <div className="mt-7">
+                          <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
+                            Community Support
+                          </h4>
+                          <ConfirmerAvatars confirmers={report.confirmedBy} darkMode={darkMode} />
+                        </div>
+                      )}
+
+                      {/* PROGRESS */}
+                      <div className="mt-8">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                            <FiUsers />
+                            Verification Progress
+                          </div>
+                          <span className="text-green-500 font-bold text-sm">
+                            {report.confirmations}/{report.required}
+                          </span>
+                        </div>
+
+                        <div className={`relative h-3 overflow-hidden ${darkMode ? "bg-white/10" : "bg-gray-200"}`}>
+                          <motion.div
+                            initial={false}
+                            animate={{ width: `${report.progress}%` }}
+                            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                            className="h-full bg-green-500 relative overflow-hidden"
+                          >
+                            <motion.div
+                              animate={{ x: ["-100%", "250%"] }}
+                              transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                              className="absolute top-0 left-0 w-20 h-full bg-white/30 skew-x-12"
+                            />
+                          </motion.div>
+                        </div>
+                      </div>
+
+                      {/* FOOTER */}
+                      <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                        <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
+                          <FiClock />
+                          {report.date}
+                        </div>
+
+                        <motion.button
+                          whileHover={confirmed ? {} : { scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => openConfirmModal(report.reportId)}
+                          disabled={confirmed}
+                          className={`
+                            h-14 px-6 transition-all duration-300 font-bold uppercase tracking-[0.15em]
+                            flex items-center justify-center gap-3 w-full sm:w-auto
+                            ${confirmed
+                              ? "bg-emerald-600 text-white cursor-default"
+                              : "bg-green-500 hover:bg-green-400 text-white"}
+                          `}
+                        >
+                          {confirmed ? "Confirmed" : "Confirm Report"}
                           <FiCheckCircle />
-                          {report.status}
-                        </div>
-
-                        <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                          <FiMapPin />
-                          {report.location}
-                        </div>
+                        </motion.button>
                       </div>
 
-                      {/* SUBMITTED BY */}
-                      <SubmittedBy submitter={report.submittedBy} darkMode={darkMode} />
-
-                      <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                        {report.description}
-                      </p>
-                    </div>
-
-                    {/* COMMUNITY SUPPORT COUNT */}
-                    <div
-                      className={`
-                        border p-4 min-w-[180px]
-                        ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#FAFAFA] border-gray-200"}
-                      `}
-                    >
-                      <p className={`text-[10px] uppercase tracking-[0.2em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-                        Community Support
-                      </p>
-                      <motion.h4
-                        key={report.confirmations}
-                        initial={{ scale: 1.2, opacity: 0.6 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 250 }}
-                        className={`mt-3 text-4xl font-black ${darkMode ? "text-white" : "text-black"}`}
-                      >
-                        {report.confirmations}
-                      </motion.h4>
-                      <p className="mt-2 text-green-500 text-sm font-semibold">
-                        / {report.required} Needed Before Escalation
-                      </p>
                     </div>
                   </div>
-
-                  {/* FORM DATA */}
-                  <div className="mt-7">
-                    <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
-                      Submitted Form Details
-                    </h4>
-                    <div className="flex flex-wrap gap-3">
-                      {report.fields.map((field, i) => (
-                        <div
-                          key={i}
-                          className={`
-                            px-4 py-3 border text-sm font-medium
-                            ${darkMode
-                              ? "bg-white/[0.03] border-white/10 text-gray-300"
-                              : "bg-[#FAFAFA] border-gray-200 text-gray-700"}
-                          `}
-                        >
-                          {field}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* COMMUNITY CONFIRMERS — avatar stack */}
-                  {report.confirmedBy?.length > 0 && (
-                    <div className="mt-7">
-                      <h4 className={`text-sm font-bold uppercase tracking-[0.15em] mb-4 ${darkMode ? "text-white" : "text-black"}`}>
-                        Community Support
-                      </h4>
-                      <ConfirmerAvatars confirmers={report.confirmedBy} darkMode={darkMode} />
-                    </div>
-                  )}
-
-                  {/* PROGRESS */}
-                  <div className="mt-8">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                        <FiUsers />
-                        Verification Progress
-                      </div>
-                      <span className="text-green-500 font-bold text-sm">
-                        {report.confirmations}/{report.required}
-                      </span>
-                    </div>
-
-                    <div className={`relative h-3 overflow-hidden ${darkMode ? "bg-white/10" : "bg-gray-200"}`}>
-                      <motion.div
-                        initial={false}
-                        animate={{ width: `${report.progress}%` }}
-                        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                        className="h-full bg-green-500 relative overflow-hidden"
-                      >
-                        <motion.div
-                          animate={{ x: ["-100%", "250%"] }}
-                          transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                          className="absolute top-0 left-0 w-20 h-full bg-white/30 skew-x-12"
-                        />
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* FOOTER */}
-                  <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-                    <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
-                      <FiClock />
-                      {report.date}
-                    </div>
-
-                    <motion.button
-                      whileHover={confirmed ? {} : { scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => openConfirmModal(index)}
-                      disabled={confirmed}
-                      className={`
-                        h-14 px-6 transition-all duration-300 font-bold uppercase tracking-[0.15em]
-                        flex items-center justify-center gap-3 w-full sm:w-auto
-                        ${confirmed
-                          ? "bg-emerald-600 text-white cursor-default"
-                          : "bg-green-500 hover:bg-green-400 text-white"}
-                      `}
-                    >
-                      {confirmed ? "Confirmed" : "Confirm Report"}
-                      <FiCheckCircle />
-                    </motion.button>
-                  </div>
-
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* CONFIRMATION MODAL */}
       <AnimatePresence>
-        {activeModalIndex !== null && (
+        {activeModalId !== null && activeReport && (
           <ConfirmationModal
-            report={reports[activeModalIndex]}
+            report={activeReport}
             darkMode={darkMode}
             onClose={closeModal}
-            onSubmitted={() => handleVerifiedSubmit(activeModalIndex)}
+            onConfirm={(file) => handleConfirm(activeModalId, file)}
           />
         )}
       </AnimatePresence>
