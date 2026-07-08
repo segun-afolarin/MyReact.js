@@ -126,15 +126,35 @@ const AuthPage = () => {
     <div className="min-h-screen bg-[#F7F8F7] overflow-hidden">
       <Navbar />
 
-      <section className="relative pt-40 pb-28 px-4 sm:px-6 lg:px-10 overflow-hidden">
+      <section className="relative pt-28 sm:pt-32 lg:pt-40 pb-16 sm:pb-20 lg:pb-28 px-4 sm:px-6 lg:px-10 overflow-hidden">
 
         {/* GRID BACKGROUND */}
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] [background-size:70px_70px]" />
+        <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] [background-size:50px_50px] sm:[background-size:70px_70px]" />
 
         {/* GLOW */}
-        <div className="absolute top-[-200px] left-[-150px] w-[500px] h-[500px] bg-green-100 rounded-full blur-3xl opacity-50" />
+        <div className="absolute top-[-200px] left-[-150px] w-[500px] h-[500px] bg-green-100 blur-3xl opacity-50" />
 
-        <div className="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-14 items-center">
+        {/* MOBILE / TABLET INTRO — condensed version of the left column so
+            small screens still get brand context above the form */}
+        <div className="relative z-10 max-w-xl mx-auto mb-10 lg:hidden">
+          <div className="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#0E7A53] mb-5">
+            <Sparkles size={14} />
+            AI-Powered Civic Platform
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black leading-[1.02] tracking-tight text-black">
+            Create Impact. Build A <span className="text-[#0E7A53]">Smarter Nigeria.</span>
+          </h1>
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+            {stats.map((item, index) => (
+              <div key={index} className="bg-white border border-black/10 px-3 py-4 text-center">
+                <h3 className="text-lg sm:text-xl font-black text-black">{item.number}</h3>
+                <p className="mt-1 text-[10px] sm:text-xs text-gray-500 leading-tight">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-10 xl:gap-14 items-center">
 
           {/* ── LEFT SIDE ──────────────────────────────────────────────────── */}
           <motion.div
@@ -143,7 +163,7 @@ const AuthPage = () => {
             transition={{ duration: 0.8 }}
             className="hidden lg:block"
           >
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-5 py-3 rounded-full text-sm font-semibold text-[#0E7A53] mb-8">
+            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-[#0E7A53] mb-8">
               <Sparkles size={16} />
               AI-Powered Civic Platform
             </div>
@@ -160,12 +180,12 @@ const AuthPage = () => {
               issues, improve transparency, and transform communities through civic technology.
             </p>
 
-            <div className="mt-12 grid grid-cols-3 gap-5">
+            <div className="mt-12 grid grid-cols-3 gap-4 xl:gap-5">
               {stats.map((item, index) => (
                 <motion.div
                   key={index}
                   whileHover={{ y: -6 }}
-                  className="bg-white border border-black/5 rounded-[28px] p-6 shadow-[0_15px_40px_rgba(0,0,0,0.04)]"
+                  className="bg-white border border-black/10 p-6 shadow-[6px_6px_0_rgba(0,0,0,0.05)] transition-shadow duration-300 hover:shadow-[10px_10px_0_rgba(14,122,83,0.12)]"
                 >
                   <h3 className="text-3xl font-black text-black">{item.number}</h3>
                   <p className="mt-2 text-sm text-gray-500 leading-relaxed">{item.label}</p>
@@ -176,14 +196,14 @@ const AuthPage = () => {
             <motion.div
               whileHover={{ y: -8 }}
               transition={{ duration: 0.4 }}
-              className="relative mt-12 overflow-hidden rounded-[40px] border border-black/5 shadow-[0_30px_90px_rgba(0,0,0,0.08)]"
+              className="relative mt-12 overflow-hidden border border-black/10 shadow-[16px_16px_0_rgba(0,0,0,0.06)]"
             >
               <img src={authImage} alt="NationAura" className="w-full h-[320px] object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute bottom-8 left-8 max-w-sm rounded-[28px] bg-white/10 backdrop-blur-2xl border border-white/10 p-6 text-white"
+                className="absolute bottom-8 left-8 right-8 max-w-sm border border-white/10 bg-white/10 backdrop-blur-2xl p-6 text-white"
               >
                 <h3 className="text-2xl font-black leading-tight">Technology For Civic Transparency</h3>
                 <p className="mt-4 text-white/75 leading-relaxed">
@@ -200,29 +220,32 @@ const AuthPage = () => {
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            <div className="relative overflow-hidden rounded-[40px] bg-white/90 backdrop-blur-2xl border border-black/5 shadow-[0_30px_100px_rgba(0,0,0,0.08)] p-7 sm:p-10 md:p-12">
+            <div className="relative overflow-hidden bg-white/95 backdrop-blur-2xl border border-black/10 shadow-[0_2px_0_rgba(0,0,0,0.02),20px_20px_0_rgba(0,0,0,0.05)] p-6 xs:p-7 sm:p-10 md:p-12">
 
               {/* TOP GLOW */}
-              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-green-100 rounded-full blur-3xl opacity-50" />
+              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-green-100 blur-3xl opacity-50 pointer-events-none" />
+              {/* SHARP ACCENT CORNERS */}
+              <div className="absolute top-0 left-0 w-14 h-14 border-t-2 border-l-2 border-[#0E7A53]/40 pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-14 h-14 border-b-2 border-r-2 border-[#0E7A53]/40 pointer-events-none" />
 
               {/* TOGGLE */}
-              <div className="relative flex bg-[#F3F4F6] rounded-full p-1 mb-10">
+              <div className="relative flex bg-[#F3F4F6] border border-black/5 p-1 mb-8 sm:mb-10">
                 <motion.div
                   layout
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-[#0E7A53] ${isLogin ? "left-1" : "left-1/2"}`}
+                  className={`absolute top-1 bottom-1 w-1/2 bg-[#0E7A53] ${isLogin ? "left-1" : "left-1/2"}`}
                 />
                 <button
                   type="button"
                   onClick={() => switchTab(true)}
-                  className={`relative z-10 flex-1 py-3 rounded-full font-semibold transition-all ${isLogin ? "text-white" : "text-gray-600"}`}
+                  className={`relative z-10 flex-1 py-3 font-bold text-sm uppercase tracking-[0.08em] transition-all ${isLogin ? "text-white" : "text-gray-600"}`}
                 >
                   Login
                 </button>
                 <button
                   type="button"
                   onClick={() => switchTab(false)}
-                  className={`relative z-10 flex-1 py-3 rounded-full font-semibold transition-all ${!isLogin ? "text-white" : "text-gray-600"}`}
+                  className={`relative z-10 flex-1 py-3 font-bold text-sm uppercase tracking-[0.08em] transition-all ${!isLogin ? "text-white" : "text-gray-600"}`}
                 >
                   Sign Up
                 </button>
@@ -238,15 +261,15 @@ const AuthPage = () => {
                   transition={{ duration: 0.4 }}
                 >
                   {/* HEADER */}
-                  <div className="mb-10">
-                    <div className="inline-flex items-center gap-2 bg-green-50 text-[#0E7A53] px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                  <div className="mb-8 sm:mb-10">
+                    <div className="inline-flex items-center gap-2 bg-green-50 text-[#0E7A53] px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] mb-5 sm:mb-6">
                       <Sparkles size={15} />
                       {isLogin ? "Welcome Back" : "Create Account"}
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-black text-black leading-tight tracking-tight">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-black leading-tight tracking-tight">
                       {isLogin ? "Continue Your Civic Impact." : "Join The Movement For Transparency."}
                     </h2>
-                    <p className="mt-5 text-gray-600 text-lg leading-relaxed">
+                    <p className="mt-4 sm:mt-5 text-gray-600 text-base sm:text-lg leading-relaxed">
                       {isLogin
                         ? "Access your dashboard and continue reporting infrastructure issues."
                         : "Create your account and start improving communities through civic technology."}
@@ -258,19 +281,19 @@ const AuthPage = () => {
                     type="button"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full flex items-center justify-center gap-4 bg-white border border-gray-200 hover:border-gray-300 py-4 rounded-2xl font-semibold text-gray-700 transition-all duration-300 shadow-sm"
+                    className="w-full flex items-center justify-center gap-4 bg-white border border-gray-200 hover:border-[#0E7A53]/40 py-4 font-semibold text-gray-700 transition-all duration-300"
                   >
-                    <FcGoogle size={24} />
+                    <FcGoogle size={22} />
                     Continue with Google
                   </motion.button>
 
                   {/* DIVIDER */}
-                  <div className="relative my-8">
+                  <div className="relative my-7 sm:my-8">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-200" />
                     </div>
                     <div className="relative flex justify-center">
-                      <span className="bg-white px-4 text-sm text-gray-400">OR CONTINUE WITH EMAIL</span>
+                      <span className="bg-white px-4 text-xs font-semibold tracking-[0.1em] text-gray-400">OR CONTINUE WITH EMAIL</span>
                     </div>
                   </div>
 
@@ -282,7 +305,7 @@ const AuthPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2 }}
-                        className="mb-5 px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium"
+                        className="mb-5 px-5 py-4 bg-red-50 border-l-2 border-red-500 text-red-600 text-sm font-medium"
                       >
                         {displayError}
                       </motion.div>
@@ -290,7 +313,7 @@ const AuthPage = () => {
                   </AnimatePresence>
 
                   {/* FORM */}
-                  <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5" noValidate>
 
                     {!isLogin && (
                       <InputField
@@ -327,7 +350,7 @@ const AuthPage = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword((s) => !s)}
-                        className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0E7A53] transition-colors"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -348,7 +371,7 @@ const AuthPage = () => {
 
                     {/* REMEMBER ME */}
                     {isLogin && (
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex flex-wrap gap-3 justify-between items-center text-sm">
                         <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
                           <input type="checkbox" className="accent-[#0E7A53]" />
                           Remember me
@@ -363,9 +386,9 @@ const AuthPage = () => {
                     <motion.button
                       type="submit"
                       disabled={loading}
-                      whileHover={{ scale: loading ? 1 : 1.02 }}
+                      whileHover={{ scale: loading ? 1 : 1.01 }}
                       whileTap={{ scale: loading ? 1 : 0.98 }}
-                      className="w-full bg-[#0E7A53] hover:bg-[#095c3e] disabled:opacity-70 disabled:cursor-not-allowed text-white py-5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_20px_50px_rgba(14,122,83,0.22)]"
+                      className="w-full bg-[#0E7A53] hover:bg-[#095c3e] disabled:opacity-70 disabled:cursor-not-allowed text-white py-4 sm:py-5 font-bold text-base sm:text-lg tracking-tight flex items-center justify-center gap-3 transition-all duration-300 shadow-[8px_8px_0_rgba(14,122,83,0.2)] hover:shadow-[4px_4px_0_rgba(14,122,83,0.25)] hover:translate-x-[3px] hover:translate-y-[3px]"
                     >
                       {loading ? (
                         <>
@@ -382,7 +405,7 @@ const AuthPage = () => {
                   </form>
 
                   {/* SWITCH */}
-                  <p className="mt-8 text-center text-gray-500">
+                  <p className="mt-7 sm:mt-8 text-center text-gray-500 text-sm sm:text-base">
                     {isLogin ? "Don't have an account?" : "Already have an account?"}
                     <button
                       type="button"
@@ -422,7 +445,7 @@ const InputField = ({ icon, placeholder, type, name, value, onChange, required }
       placeholder={placeholder}
       required={required}
       autoComplete={name === "email" ? "email" : name === "password" ? "current-password" : "off"}
-      className="w-full bg-[#FAFAFA] border border-gray-200 rounded-2xl py-5 pl-14 pr-5 outline-none text-black transition-all duration-300 focus:border-[#0E7A53] focus:ring-4 focus:ring-green-100"
+      className="w-full bg-[#FAFAFA] border border-gray-200 py-4 sm:py-5 pl-14 pr-5 outline-none text-black text-sm sm:text-base transition-all duration-300 focus:border-[#0E7A53] focus:ring-2 focus:ring-[#0E7A53]/15"
     />
   </div>
 );
