@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -11,31 +12,115 @@ import {
   FiCheckCircle,
   FiMapPin,
   FiZap,
+  FiUsers,
+  FiTrendingDown,
 } from "react-icons/fi";
 
-const liveAlerts = [
-  {
-    title: "Flood Risk Escalation",
-    value: "HIGH",
-    icon: <FiAlertTriangle />,
-  },
+import { getReportStats } from "../../utils/api";
 
-  {
-    title: "Resolved Reports",
-    value: "2,438",
-    icon: <FiCheckCircle />,
-  },
+// NOTE: There's no logged history of AI verification pass/fail results
+// anywhere in the schema, so "AI Accuracy" / "AI Detection Accuracy" stay
+// static — a single constant so the two display spots never drift apart.
+const AI_ACCURACY_STATIC = "97%";
 
-  {
-    title: "Connected Districts",
-    value: "48",
-    icon: <FiMapPin />,
-  },
-];
+const formatCompact = (n) => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+};
 
 const DashboardInsights = ({
   darkMode,
 }) => {
+  // ── Live, state-scoped stats from /api/reports/stats ────────────────
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getReportStats();
+      setStats(data);
+    } catch (e) {
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const stateName        = stats?.state;
+  const totalReports     = stats?.totalReports ?? 0;
+  const resolved          = stats?.resolved ?? 0;
+  const activeLocations   = stats?.activeLocations ?? 0;
+  const awaitingVerification = stats?.awaitingVerification ?? 0;
+  const topCategory       = stats?.topCategory;
+  const activeVerifiers   = stats?.activeVerifiers ?? 0;
+  const verified          = stats?.verified ?? 0;
+  const verifiedGrowth    = stats?.verifiedGrowth ?? 0;
+  const todayByCategory   = stats?.todayByCategory ?? {};
+
+  const verificationRate = totalReports > 0 ? Math.round((verified / totalReports) * 100) : 0;
+
+  const displayCompact = (n) => (loading ? "—" : formatCompact(n));
+
+  // Flood risk badge derived from today's actual Flooding report count in
+  // this state, rather than a permanently-alarming static "HIGH".
+  const floodCountToday = todayByCategory["Flooding"] ?? 0;
+  const floodRiskLabel = loading
+    ? "—"
+    : floodCountToday >= 5
+    ? "HIGH"
+    : floodCountToday >= 1
+    ? "MODERATE"
+    : "LOW";
+
+  const liveAlerts = [
+    {
+      title: "Flood Risk Escalation",
+      value: floodRiskLabel,
+      icon: <FiAlertTriangle />,
+    },
+    {
+      title: "Resolved Reports",
+      value: displayCompact(resolved),
+      icon: <FiCheckCircle />,
+    },
+    {
+      title: "Connected Districts",
+      value: displayCompact(activeLocations),
+      icon: <FiMapPin />,
+    },
+  ];
+
+  // Real, derived insight bullets replacing what was a fabricated
+  // timestamped "AI activity log" — there's no activity-log table behind
+  // this app, so these are framed as current standing insights instead of
+  // discrete logged events (no "Just now" timestamp, since none is real).
+  const insightFeed = [];
+  if (!loading) {
+    if (awaitingVerification > 0) {
+      insightFeed.push(
+        `${awaitingVerification} report${awaitingVerification === 1 ? "" : "s"} ${
+          awaitingVerification === 1 ? "is" : "are"
+        } currently awaiting community verification${stateName ? ` in ${stateName}` : ""}.`
+      );
+    }
+    if (topCategory) {
+      insightFeed.push(`${topCategory} is the most reported issue this week.`);
+    }
+    insightFeed.push(
+      `${resolved} report${resolved === 1 ? "" : "s"} resolved${stateName ? ` in ${stateName}` : ""} to date.`
+    );
+    insightFeed.push(
+      `${activeVerifiers} citizen${activeVerifiers === 1 ? "" : "s"} ${
+        activeVerifiers === 1 ? "has" : "have"
+      } contributed report confirmations${stateName ? ` in ${stateName}` : ""}.`
+    );
+  }
+
   return (
     <section className="relative mt-10 sm:mt-14 overflow-hidden">
       {/* HUGE BACKGROUND */}
@@ -480,7 +565,7 @@ const DashboardInsights = ({
                     },
                     {
                       label: "AI Accuracy",
-                      value: "97%",
+                      value: AI_ACCURACY_STATIC,
                     },
                   ].map((item, index) => (
                     <motion.div
@@ -675,7 +760,7 @@ const DashboardInsights = ({
                           }
                         `}
                       >
-                        National Risk Pulse
+                        {stateName ? `${stateName} Risk Pulse` : "Regional Risk Pulse"}
                       </h3>
                     </div>
                   </div>
@@ -726,7 +811,7 @@ const DashboardInsights = ({
                       }
                     `}
                   >
-                    97%
+                    {AI_ACCURACY_STATIC}
                   </motion.h1>
 
                   <motion.div
@@ -940,7 +1025,7 @@ const DashboardInsights = ({
                         }
                       `}
                     >
-                      AI Activity Stream
+                      Community Insights
                     </h3>
                   </div>
 
@@ -967,12 +1052,7 @@ const DashboardInsights = ({
 
                 {/* FEED */}
                 <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
-                  {[
-                    "AI classified 18 urgent infrastructure failures.",
-                    "Flood escalation detected across connected districts.",
-                    "Emergency response routing optimized successfully.",
-                    "Citizen verification confidence increased to 97%.",
-                  ].map((item, index) => (
+                  {(loading ? [null, null, null, null] : insightFeed).map((item, index) => (
                     <motion.div
                       key={index}
                       initial={{
@@ -1043,23 +1123,8 @@ const DashboardInsights = ({
                                 }
                               `}
                             >
-                              {item}
+                              {item || "Loading current insight..."}
                             </p>
-
-                            <span
-                              className={`
-                                mt-3
-                                inline-block
-                                text-xs
-                                ${
-                                  darkMode
-                                    ? "text-gray-500"
-                                    : "text-gray-400"
-                                }
-                              `}
-                            >
-                              Just now
-                            </span>
                           </div>
                         </div>
 
@@ -1109,13 +1174,13 @@ const DashboardInsights = ({
                       </p>
 
                       <h4 className="mt-3 text-[3rem] sm:text-6xl leading-none font-black tracking-[-0.1em] text-white">
-                        94%
+                        {loading ? "—" : `${verificationRate}%`}
                       </h4>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase text-white">
-                      <FiZap />
-                      +12.4%
+                      {verifiedGrowth >= 0 ? <FiZap /> : <FiTrendingDown />}
+                      {loading ? "—" : `${verifiedGrowth >= 0 ? "+" : ""}${verifiedGrowth}%`}
                     </div>
                   </div>
                 </motion.div>

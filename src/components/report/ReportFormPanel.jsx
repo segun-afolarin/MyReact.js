@@ -70,6 +70,9 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
+  // Emergency flag — emergency reports require only 3 confirmations instead of 5
+  const [isEmergency, setIsEmergency] = useState(false);
+
   // Submission state
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -227,6 +230,7 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("address", address);
+      formData.append("is_emergency", isEmergency ? "1" : "0");
       if (coordinates) {
         formData.append("latitude", coordinates.lat);
         formData.append("longitude", coordinates.lng);
@@ -450,6 +454,60 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
             )}
 
             <FieldError message={showError("category") ? RULES.category.message : ""} darkMode={darkMode} />
+          </div>
+
+          {/* ── EMERGENCY TOGGLE ─────────────────────────────────────────── */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={() => setIsEmergency((prev) => !prev)}
+              className={`
+                w-full flex items-center justify-between gap-4 border p-5 text-left transition-all duration-300
+                ${isEmergency
+                  ? "border-red-500 bg-red-500/10"
+                  : darkMode
+                  ? "border-white/10 bg-white/[0.03]"
+                  : "border-gray-200 bg-gray-50"
+                }
+              `}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`
+                    w-11 h-11 flex items-center justify-center text-lg
+                    ${isEmergency
+                      ? "bg-red-500 text-white"
+                      : darkMode
+                      ? "bg-white/[0.05] text-gray-400"
+                      : "bg-gray-200 text-gray-500"
+                    }
+                  `}
+                >
+                  <FiAlertTriangle />
+                </div>
+                <div>
+                  <h4 className={`text-sm font-black ${darkMode ? "text-white" : "text-black"}`}>
+                    Mark As Emergency
+                  </h4>
+                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    Emergency reports need only 3 citizen confirmations instead of 5
+                  </p>
+                </div>
+              </div>
+              <div
+                className={`
+                  w-12 h-7 rounded-full flex items-center px-1 transition-all duration-300
+                  ${isEmergency
+                    ? "bg-red-500 justify-end"
+                    : darkMode
+                    ? "bg-white/10 justify-start"
+                    : "bg-gray-300 justify-start"
+                  }
+                `}
+              >
+                <div className="w-5 h-5 rounded-full bg-white" />
+              </div>
+            </button>
           </div>
 
           {/* ── FORM FIELDS ───────────────────────────────────────────────── */}
@@ -819,4 +877,4 @@ const ReportFormPanel = ({ darkMode, submitted, setSubmitted }) => {
   );
 };
 
-export default ReportFormPanel;
+export default ReportFormPanel; 
