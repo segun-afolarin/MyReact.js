@@ -13,6 +13,7 @@ import {
   FiAlertCircle,
   FiLoader,
   FiTrash2,
+  FiX,
 } from "react-icons/fi";
 
 import { getMyReports, getConfirmedReports, deleteReport } from "../../utils/api";
@@ -74,6 +75,80 @@ const StateBlock = ({ darkMode, icon: Icon, title, subtitle }) => (
   </div>
 );
 
+// ─── Delete confirmation card (replaces window.confirm) ──────────────────────
+const DeleteConfirmCard = ({ report, darkMode, onCancel, onConfirm, isDeleting }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    onClick={(e) => e.target === e.currentTarget && !isDeleting && onCancel()}
+  >
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.96 }}
+      transition={{ duration: 0.2 }}
+      className={`w-full max-w-sm border p-6 sm:p-7 ${darkMode ? "bg-[#09131B] border-white/10" : "bg-white border-gray-200"}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${darkMode ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"}`}>
+          <FiTrash2 className="text-red-500" size={18} />
+        </div>
+        <button
+          onClick={onCancel}
+          disabled={isDeleting}
+          className={`p-1.5 ${darkMode ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-black"} transition-colors disabled:opacity-40`}
+        >
+          <FiX size={18} />
+        </button>
+      </div>
+
+      <h3 className={`mt-4 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+        Delete report?
+      </h3>
+      <p className={`mt-2 text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+        Are you sure you want to delete{" "}
+        <span className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>"{report?.title}"</span>?
+        This cannot be undone.
+      </p>
+
+      <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+        <button
+          onClick={onCancel}
+          disabled={isDeleting}
+          className={`
+            flex-1 py-3 text-xs font-black uppercase tracking-[0.15em] border transition-colors
+            ${darkMode ? "border-white/10 text-gray-300 hover:bg-white/[0.05]" : "border-gray-200 text-gray-700 hover:bg-gray-50"}
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+        >
+          No, keep it
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={isDeleting}
+          className={`
+            flex-1 py-3 text-xs font-black uppercase tracking-[0.15em] text-white transition-colors
+            bg-red-500 hover:bg-red-600
+            disabled:opacity-50 disabled:cursor-not-allowed
+            flex items-center justify-center gap-2
+          `}
+        >
+          {isDeleting ? (
+            <>
+              <FiLoader className="animate-spin" size={13} />
+              Deleting...
+            </>
+          ) : (
+            "Yes, delete"
+          )}
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 // This grid shows only "My Reports" and "Reports I Confirmed" — no nearby feed.
 const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
@@ -85,6 +160,9 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
 
   // Tracks which report is currently being deleted, to show a per-card loading state
   const [deletingId, setDeletingId] = useState(null);
+
+  // Report pending the "are you sure?" confirmation card
+  const [confirmTarget, setConfirmTarget] = useState(null); // { reportId, title } | null
 
   const loadAll = async () => {
     setLoading(true);
@@ -107,16 +185,28 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
     loadAll();
   }, []);
 
-  // ── Delete a pending report ──────────────────────────────────────────────
-  const handleDeleteReport = async (reportId, reportTitle) => {
-    if (!window.confirm(`Delete "${reportTitle}"? This cannot be undone.`)) return;
+  // ── Open the confirmation card for a pending report ─────────────────────
+  const handleDeleteReport = (reportId, reportTitle) => {
+    setConfirmTarget({ reportId, title: reportTitle });
+  };
+
+  const cancelDelete = () => {
+    if (deletingId) return; // ignore while a delete is in flight
+    setConfirmTarget(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmTarget) return;
+    const { reportId } = confirmTarget;
 
     setDeletingId(reportId);
     try {
       await deleteReport(reportId);
       await loadAll();
+      setConfirmTarget(null);
     } catch (e) {
       setError(e.response?.data?.message || e.message || "Failed to delete report.");
+      setConfirmTarget(null);
     } finally {
       setDeletingId(null);
     }
@@ -387,6 +477,19 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
           )}
         </div>
       )}
+
+      {/* Delete confirmation card — replaces window.confirm */}
+      <AnimatePresence>
+        {confirmTarget && (
+          <DeleteConfirmCard
+            report={confirmTarget}
+            darkMode={darkMode}
+            onCancel={cancelDelete}
+            onConfirm={confirmDelete}
+            isDeleting={!!deletingId}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );

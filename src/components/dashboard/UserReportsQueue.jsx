@@ -66,6 +66,31 @@ const mapReportFromApi = (r) => ({
   })),
 });
 
+// ─── Avatar with graceful fallback ─────────────────────────────────────────
+// Falls back to initials both when `avatar` is missing AND when the image
+// URL fails to load (broken/expired path, deleted storage file, etc.)
+const Avatar = ({ name, avatar, className = "", style }) => {
+  const [broken, setBroken] = useState(false);
+  const showImage = !!avatar && !broken;
+
+  return (
+    <div className={`flex items-center justify-center overflow-hidden shrink-0 ${className}`} style={style}>
+      {showImage ? (
+        <img
+          src={avatar}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-[10px] font-black">
+          {initialsOf(name)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Avatar stack for community confirmers ────────────────────────────────────
 const ConfirmerAvatars = ({ confirmers, darkMode }) => {
   const visible = confirmers.slice(0, 4);
@@ -75,20 +100,13 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
     <div className="flex items-center gap-3">
       <div className="flex -space-x-2">
         {visible.map((c, i) => (
-          <div
+          <Avatar
             key={i}
-            title={c.name}
-            className="relative w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-[10px] font-black text-white shrink-0 overflow-hidden"
+            name={c.name}
+            avatar={c.avatar}
+            className="relative w-8 h-8 rounded-full border-2 border-green-500 text-[10px] font-black text-white"
             style={{ zIndex: visible.length - i }}
-          >
-            {c.avatar ? (
-              <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                {c.initials}
-              </div>
-            )}
-          </div>
+          />
         ))}
 
         {extra > 0 && (
@@ -118,15 +136,11 @@ const SubmittedBy = ({ submitter, darkMode }) => {
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      <div className="w-7 h-7 rounded-full border-2 border-green-500 overflow-hidden flex items-center justify-center text-white text-[9px] font-black shrink-0">
-        {submitter.avatar ? (
-          <img src={submitter.avatar} alt={submitter.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-            {initialsOf(submitter.name)}
-          </div>
-        )}
-      </div>
+      <Avatar
+        name={submitter.name}
+        avatar={submitter.avatar}
+        className="w-7 h-7 rounded-full border-2 border-green-500"
+      />
       <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
         Reported by <span className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>{submitter.name}</span>
       </span>
@@ -156,7 +170,20 @@ const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
     onConfirm(file)
       .then(() => setStage("submitted"))
       .catch((err) => {
-        setErrorMsg(err?.message || "Something went wrong verifying that photo. Please try again.");
+        // Prefer the backend's actual message — e.g. the AI's specific mismatch
+        // reason from ReportController::verifyImagesMatchCategory(), or a Laravel
+        // validation message — over Axios's generic "Request failed with status
+        // code 422", which tells the user nothing useful.
+        const apiMessage = err?.response?.data?.message;
+        const apiErrors  = err?.response?.data?.errors;
+        const firstFieldError = apiErrors ? Object.values(apiErrors)[0]?.[0] : null;
+
+        setErrorMsg(
+          apiMessage ||
+          firstFieldError ||
+          err?.message ||
+          "Something went wrong verifying that photo. Please try again."
+        );
         setStage("error");
       });
   };
@@ -441,7 +468,7 @@ const UserReportsQueue = ({ darkMode }) => {
       setNoStateMessage(data.message || "");
       setReports((data.reports || []).map(mapReportFromApi));
     } catch (e) {
-      setError(e.message || "Failed to load nearby reports.");
+      setError(e?.response?.data?.message || e.message || "Failed to load nearby reports.");
     } finally {
       setLoading(false);
     }
