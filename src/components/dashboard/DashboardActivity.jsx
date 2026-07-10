@@ -99,6 +99,10 @@ const mapReportFromApi = (r) => {
     color: meta.color,
     badge: severity.badge,
     confirmedByMe: r.confirmedByMe,
+    // ── who submitted this report ──
+    submittedBy: r.submittedBy
+      ? { name: r.submittedBy.name, avatar: r.submittedBy.avatar }
+      : null,
     confirmers: (r.confirmedBy || []).map((c, i) => ({
       initials: initialsOf(c.name),
       name: c.name,
@@ -131,6 +135,52 @@ const cardVariants = {
 const VISIBLE_SLOTS = 3;
 
 // ─────────────────────────────────────────────────────────────────────────
+// AVATAR — falls back to initials both when `avatar` is missing AND when the
+// image URL fails to load (broken path, deleted storage file, etc.)
+// ─────────────────────────────────────────────────────────────────────────
+const Avatar = ({ name, avatar, bg = "from-green-500 to-emerald-700", className = "", style }) => {
+  const [broken, setBroken] = useState(false);
+  const showImage = !!avatar && !broken;
+
+  return (
+    <div className={`flex items-center justify-center overflow-hidden shrink-0 ${className}`} style={style}>
+      {showImage ? (
+        <img
+          src={avatar}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <div className={`w-full h-full bg-gradient-to-br ${bg} flex items-center justify-center text-white text-[10px] font-black`}>
+          {initialsOf(name)}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// SUBMITTED-BY BADGE — shows who reported the issue
+// ─────────────────────────────────────────────────────────────────────────
+const SubmittedBy = ({ submitter, darkMode }) => {
+  if (!submitter) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Avatar
+        name={submitter.name}
+        avatar={submitter.avatar}
+        className="w-7 h-7 rounded-full border-2 border-green-500"
+      />
+      <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+        Reported by <span className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>{submitter.name}</span>
+      </span>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────
 // AVATAR STACK — shows who already confirmed
 // ─────────────────────────────────────────────────────────────────────────
 const ConfirmerAvatars = ({ confirmers, darkMode }) => {
@@ -149,20 +199,14 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
     <div className="flex items-center gap-3">
       <div className="flex -space-x-2">
         {visible.map((c, i) => (
-          <div
+          <Avatar
             key={i}
-            title={c.name}
-            className="relative w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-[10px] font-black text-white shrink-0 overflow-hidden"
+            name={c.name}
+            avatar={c.avatar}
+            bg={c.bg}
+            className="relative w-8 h-8 rounded-full border-2 border-green-500"
             style={{ zIndex: visible.length - i }}
-          >
-            {c.avatar ? (
-              <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${c.bg} flex items-center justify-center`}>
-                {c.initials}
-              </div>
-            )}
-          </div>
+          />
         ))}
 
         {extra > 0 && (
@@ -189,6 +233,8 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
 
 // ─────────────────────────────────────────────────────────────────────────
 // CONFIRMATION MODAL — hits the real /reports/{id}/confirm endpoint via utils/api
+// (backend runs Gemini AI verification against the report's category before
+// counting the confirmation — see ReportController::verifyImagesMatchCategory)
 // ─────────────────────────────────────────────────────────────────────────
 const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
   const [stage, setStage] = useState("upload"); // upload | verifying | submitted | error
@@ -209,7 +255,20 @@ const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
     onConfirm(file)
       .then(() => setStage("submitted"))
       .catch((err) => {
-        setErrorMsg(err?.message || "Something went wrong verifying that photo. Please try again.");
+        // Prefer the backend's actual message — the AI's specific mismatch
+        // reason from ReportController::verifyImagesMatchCategory(), or a
+        // Laravel validation message — over Axios's generic "Request failed
+        // with status code 422", which tells the user nothing useful.
+        const apiMessage = err?.response?.data?.message;
+        const apiErrors = err?.response?.data?.errors;
+        const firstFieldError = apiErrors ? Object.values(apiErrors)[0]?.[0] : null;
+
+        setErrorMsg(
+          apiMessage ||
+          firstFieldError ||
+          err?.message ||
+          "Something went wrong verifying that photo. Please try again."
+        );
         setStage("error");
       });
   };
@@ -591,7 +650,7 @@ const DashboardActivity = ({ darkMode }) => {
         queue: pendingIds.slice(VISIBLE_SLOTS),
       });
     } catch (e) {
-      setError(e.message || "Failed to load nearby reports.");
+      setError(e?.response?.data?.message || e.message || "Failed to load nearby reports.");
     } finally {
       setLoading(false);
     }
@@ -886,6 +945,13 @@ const DashboardActivity = ({ darkMode }) => {
                         {report.time}
                       </div>
                     </div>
+
+                    {/* REPORTED BY */}
+                    {report.submittedBy && (
+                      <div className="mt-3">
+                        <SubmittedBy submitter={report.submittedBy} darkMode={darkMode} />
+                      </div>
+                    )}
 
                     <motion.div
                       whileHover={{ y: -2 }}

@@ -20,6 +20,40 @@ import { getMyReports, getConfirmedReports, deleteReport } from "../../utils/api
 
 const REQUIRED_CONFIRMATIONS = 5;
 
+// ─── Helpers ───────────────────────────────────────────────────────────────
+const initialsOf = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("") || "?";
+
+// ─── Avatar with graceful fallback ─────────────────────────────────────────
+// Falls back to initials both when `avatar` is missing AND when the image
+// URL fails to load (broken/expired path, deleted storage file, etc.)
+const Avatar = ({ name, avatar, className = "", style }) => {
+  const [broken, setBroken] = useState(false);
+  const showImage = !!avatar && !broken;
+
+  return (
+    <div className={`flex items-center justify-center overflow-hidden shrink-0 ${className}`} style={style}>
+      {showImage ? (
+        <img
+          src={avatar}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-[10px] font-black">
+          {initialsOf(name)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Avatar stack for community confirmers ────────────────────────────────────
 const ConfirmerAvatars = ({ confirmers, darkMode }) => {
   const visible = confirmers.slice(0, 4);
@@ -29,20 +63,13 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
     <div className="flex items-center gap-3">
       <div className="flex -space-x-2">
         {visible.map((c, i) => (
-          <div
+          <Avatar
             key={i}
-            title={c.name}
-            className="relative w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-[10px] font-black text-white shrink-0 overflow-hidden"
+            name={c.name}
+            avatar={c.avatar}
+            className="relative w-8 h-8 rounded-full border-2 border-green-500"
             style={{ zIndex: visible.length - i }}
-          >
-            {c.avatar ? (
-              <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                {(c.name || "?").slice(0, 2).toUpperCase()}
-              </div>
-            )}
-          </div>
+          />
         ))}
 
         {extra > 0 && (
@@ -61,6 +88,24 @@ const ConfirmerAvatars = ({ confirmers, darkMode }) => {
 
       <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
         confirmed this
+      </span>
+    </div>
+  );
+};
+
+// ─── Submitted-by badge ("Reports I Confirmed" section) ───────────────────────
+const SubmittedBy = ({ submitter, darkMode }) => {
+  if (!submitter) return null;
+
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <Avatar
+        name={submitter.name}
+        avatar={submitter.avatar}
+        className="w-7 h-7 rounded-full border-2 border-green-500"
+      />
+      <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+        Reported by <span className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>{submitter.name}</span>
       </span>
     </div>
   );
@@ -175,7 +220,7 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
       setMyReports(mineRes.reports || []);
       setConfirmedReports(confirmedRes.reports || []);
     } catch (e) {
-      setError(e.message || "Failed to load reports.");
+      setError(e?.response?.data?.message || e.message || "Failed to load reports.");
     } finally {
       setLoading(false);
     }
@@ -291,21 +336,8 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
                   </div>
                 </div>
 
-                {mode === "confirmed" && report.submittedBy && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full border-2 border-green-500 overflow-hidden flex items-center justify-center text-white text-[9px] font-black shrink-0">
-                      {report.submittedBy.avatar ? (
-                        <img src={report.submittedBy.avatar} alt={report.submittedBy.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                          {(report.submittedBy.name || "?").slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                      Reported by <span className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>{report.submittedBy.name}</span>
-                    </span>
-                  </div>
+                {mode === "confirmed" && (
+                  <SubmittedBy submitter={report.submittedBy} darkMode={darkMode} />
                 )}
 
                 <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{report.description}</p>
