@@ -78,9 +78,45 @@ const AVATAR_COLORS = [
   "from-pink-500 to-rose-700",
 ];
 
+// Extracts a usable message from any error shape — Axios errors, plain
+// Error objects, or a raw string/object the backend might return directly.
+// This is defensive against axios interceptors in utils/api.js that may
+// wrap or unwrap the original error differently than expected.
+const extractErrorMessage = (err, fallback) => {
+  if (!err) return fallback;
+
+  // Standard Axios error shape
+  const responseMessage = err?.response?.data?.message;
+  if (responseMessage) return responseMessage;
+
+  // Laravel validation errors: { errors: { field: ["msg"] } }
+  const errorsObj = err?.response?.data?.errors;
+  if (errorsObj) {
+    const first = Object.values(errorsObj)[0];
+    if (Array.isArray(first) && first[0]) return first[0];
+  }
+
+  // Some axios wrappers flatten the payload onto err.data instead of err.response.data
+  if (err?.data?.message) return err.data.message;
+
+  // If the interceptor already unwrapped to a plain Error with a useful message
+  // (not the generic Axios "Request failed with status code 422")
+  if (err?.message && !/request failed with status code/i.test(err.message)) {
+    return err.message;
+  }
+
+  return fallback;
+};
+
 const mapReportFromApi = (r) => {
   const meta = CATEGORY_META[r.category] || CATEGORY_META.default;
   const severity = severityFromScore(r.score);
+
+  // Dev-time visibility into reports missing submittedBy from the API,
+  // so backend eager-loading issues are easy to spot.
+  if (import.meta.env?.DEV && !r.submittedBy) {
+    console.warn(`[DashboardActivity] Report "${r.reportId}" has no submittedBy in API response`, r);
+  }
 
   return {
     reportId: r.reportId,
@@ -164,7 +200,7 @@ const Avatar = ({ name, avatar, bg = "from-green-500 to-emerald-700", className 
 // SUBMITTED-BY BADGE — shows who reported the issue
 // ─────────────────────────────────────────────────────────────────────────
 const SubmittedBy = ({ submitter, darkMode }) => {
-  if (!submitter) return null;
+  if (!submitter?.name) return null;
 
   return (
     <div className="flex items-center gap-2">
@@ -255,19 +291,13 @@ const ConfirmationModal = ({ report, darkMode, onClose, onConfirm }) => {
     onConfirm(file)
       .then(() => setStage("submitted"))
       .catch((err) => {
-        // Prefer the backend's actual message — the AI's specific mismatch
-        // reason from ReportController::verifyImagesMatchCategory(), or a
-        // Laravel validation message — over Axios's generic "Request failed
-        // with status code 422", which tells the user nothing useful.
-        const apiMessage = err?.response?.data?.message;
-        const apiErrors = err?.response?.data?.errors;
-        const firstFieldError = apiErrors ? Object.values(apiErrors)[0]?.[0] : null;
+        // Log the raw error so it's easy to inspect in devtools what shape
+        // your axios instance is actually throwing — helpful if the message
+        // still looks generic despite this fallback chain.
+        console.error("[ConfirmationModal] confirm failed:", err, err?.response?.data);
 
         setErrorMsg(
-          apiMessage ||
-          firstFieldError ||
-          err?.message ||
-          "Something went wrong verifying that photo. Please try again."
+          extractErrorMessage(err, "Something went wrong verifying that photo. Please try again.")
         );
         setStage("error");
       });
@@ -650,7 +680,8 @@ const DashboardActivity = ({ darkMode }) => {
         queue: pendingIds.slice(VISIBLE_SLOTS),
       });
     } catch (e) {
-      setError(e?.response?.data?.message || e.message || "Failed to load nearby reports.");
+      console.error("[DashboardActivity] fetchNearby failed:", e);
+      setError(extractErrorMessage(e, "Failed to load nearby reports."));
     } finally {
       setLoading(false);
     }
