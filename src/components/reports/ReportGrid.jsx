@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   FiMapPin,
@@ -12,9 +12,10 @@ import {
   FiCamera,
   FiAlertCircle,
   FiLoader,
+  FiTrash2,
 } from "react-icons/fi";
 
-import { getMyReports, getConfirmedReports } from "../../utils/api";
+import { getMyReports, getConfirmedReports, deleteReport } from "../../utils/api";
 
 const REQUIRED_CONFIRMATIONS = 5;
 
@@ -82,6 +83,9 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Tracks which report is currently being deleted, to show a per-card loading state
+  const [deletingId, setDeletingId] = useState(null);
+
   const loadAll = async () => {
     setLoading(true);
     setError(null);
@@ -102,6 +106,21 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
   useEffect(() => {
     loadAll();
   }, []);
+
+  // ── Delete a pending report ──────────────────────────────────────────────
+  const handleDeleteReport = async (reportId, reportTitle) => {
+    if (!window.confirm(`Delete "${reportTitle}"? This cannot be undone.`)) return;
+
+    setDeletingId(reportId);
+    try {
+      await deleteReport(reportId);
+      await loadAll();
+    } catch (e) {
+      setError(e.response?.data?.message || e.message || "Failed to delete report.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // ── Search + filter ─────────────────────────────────────────────────────
   const matchesSearch = (r) => {
@@ -130,6 +149,8 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
     const required   = report.requiredConfirmations || REQUIRED_CONFIRMATIONS;
     const remaining  = required - (report.confirmations || 0);
     const progress   = mode === "confirmed" ? 100 : Math.round(((report.confirmations || 0) / required) * 100);
+    const canDelete  = mode === "mine" && report.status === "Pending";
+    const isDeleting = deletingId === report.reportId;
 
     return (
       <motion.div
@@ -283,11 +304,36 @@ const ReportGrid = ({ darkMode, search = "", filter = "All" }) => {
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
                 <FiClock />
                 {report.date}
               </div>
+
+              {/* Delete button — only for pending reports the user owns */}
+              {canDelete && (
+                <button
+                  onClick={() => handleDeleteReport(report.reportId, report.title)}
+                  disabled={isDeleting}
+                  className={`
+                    inline-flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-[0.15em]
+                    border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors
+                    ${isDeleting ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                >
+                  {isDeleting ? (
+                    <>
+                      <FiLoader className="animate-spin" size={13} />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 size={13} />
+                      Delete Report
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
           </div>

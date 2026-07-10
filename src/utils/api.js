@@ -36,3 +36,8 @@ export const confirmReport = (reportId, formData) =>
       headers: { "Content-Type": undefined },
     })
     .then((res) => res.data);
+
+// Only pending reports (no confirmations yet) can be deleted — enforced
+// server-side in ReportController@destroy. This just calls the endpoint.
+export const deleteReport = (reportId) =>
+  api.delete(`/reports/${reportId}`).then((res) => res.data);
