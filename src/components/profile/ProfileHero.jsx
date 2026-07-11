@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiShield, FiAward, FiTrendingUp, FiCheckCircle,
   FiMapPin, FiActivity, FiArrowUpRight,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
+import { getMyReports, getContributorRank } from "../../utils/api";
 
 const ProfileHero = ({ darkMode }) => {
   const { user } = useAuth();
@@ -30,11 +31,86 @@ const ProfileHero = ({ darkMode }) => {
     setImgError(false);
   }, [avatarUrl]);
 
+  // ── Live personal stats from /api/reports/mine ─────────────────────
+  const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMyReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyReports();
+      setMyReports(data.reports || []);
+    } catch (e) {
+      setMyReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMyReports();
+  }, [fetchMyReports]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const resolutionRate = totalReports > 0 ? Math.round((resolvedCount / totalReports) * 100) : 0;
+
+  // "Lives Impacted" — there's no literal lives-affected metric anywhere in
+  // the schema. Closest real proxy: total citizen confirmations received
+  // across this user's own reports, i.e. how many other people engaged with
+  // and verified something this user flagged.
+  const livesImpacted = myReports.reduce((sum, r) => sum + (r.confirmations ?? 0), 0);
+
+  // "Trust Score" — composite of resolution rate and how close each report
+  // gets to its own confirmation threshold (using the REAL per-report
+  // requiredConfirmations field, which differs for emergency vs normal
+  // reports). One reasonable definition, not a stored ground-truth value.
+  const avgConfirmationRate =
+    totalReports > 0
+      ? Math.round(
+          myReports.reduce(
+            (sum, r) => sum + Math.min((r.confirmations ?? 0) / (r.requiredConfirmations || 5), 1) * 100,
+            0
+          ) / totalReports
+        )
+      : 0;
+  const trustScore = totalReports > 0 ? Math.round((resolutionRate + avgConfirmationRate) / 2) : 0;
+
+  // ── Real nationwide rank from /api/reports/rank — score, rank, and
+  // percentile all come from the backend now, computed against every other
+  // contributing user, instead of guessed/static values. ──────────────────
+  const [rankData, setRankData] = useState(null);
+  const [rankLoading, setRankLoading] = useState(true);
+
+  const fetchRank = useCallback(async () => {
+    setRankLoading(true);
+    try {
+      const data = await getContributorRank();
+      setRankData(data);
+    } catch (e) {
+      setRankData(null);
+    } finally {
+      setRankLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRank();
+  }, [fetchRank]);
+
+  const nationAuraScore = rankData?.score ?? 0;
+  const rank = rankData?.rank; // null if user hasn't submitted any reports yet
+  const totalContributors = rankData?.totalContributors ?? 0;
+  const topPercent = rankData?.topPercent; // null if unranked
+
+  const displayValue = (n) => (loading ? "—" : `${n}`);
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
+
   const stats = [
-    { label: "Reports Submitted", value: "128"   },
-    { label: "Reports Resolved",  value: "87"    },
-    { label: "Lives Impacted",    value: "1,247" },
-    { label: "Trust Score",       value: "96%"   },
+    { label: "Reports Submitted", value: displayValue(totalReports) },
+    { label: "Reports Resolved",  value: displayValue(resolvedCount) },
+    { label: "Lives Impacted",    value: displayValue(livesImpacted) },
+    { label: "Trust Score",       value: displayPercent(trustScore) },
   ];
 
   const heroContent = [
@@ -77,15 +153,15 @@ const ProfileHero = ({ darkMode }) => {
       {/* GLOW */}
       <div className="absolute top-[-120px] right-[-120px] w-[300px] h-[300px] bg-green-500/10 blur-[120px]" />
 
-      <div className="relative z-10 p-5 sm:p-7 lg:p-10">
-        <div className="flex flex-col xl:flex-row gap-8 xl:items-center xl:justify-between">
+      <div className="relative z-10 p-4 sm:p-7 lg:p-10">
+        <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 xl:items-center xl:justify-between">
 
           {/* LEFT */}
-          <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
+          <div className="flex flex-col lg:flex-row gap-5 sm:gap-6 lg:items-center min-w-0">
 
             {/* AVATAR — real photo or initials fallback */}
-            <div className="relative">
-              <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-full overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.35)]">
+            <div className="relative shrink-0 self-center lg:self-auto">
+              <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-full overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.35)]">
                 {avatarUrl && !imgError ? (
                   <img
                     src={avatarUrl}
@@ -94,19 +170,19 @@ const ProfileHero = ({ darkMode }) => {
                     onError={() => setImgError(true)}
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-400 to-green-700 flex items-center justify-center text-4xl font-black text-white">
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-400 to-green-700 flex items-center justify-center text-3xl sm:text-4xl font-black text-white">
                     {initials}
                   </div>
                 )}
               </div>
-              <div className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-green-500 border-4 border-white dark:border-[#081019] flex items-center justify-center">
-                <FiCheckCircle className="text-white" />
+              <div className="absolute bottom-1 right-1 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 border-4 border-white dark:border-[#081019] flex items-center justify-center">
+                <FiCheckCircle className="text-white text-sm sm:text-base" />
               </div>
             </div>
 
             {/* INFO */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-xs font-bold uppercase tracking-[0.2em]">
+            <div className="min-w-0 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em]">
                 <FiShield />
                 Verified Citizen
               </div>
@@ -114,7 +190,7 @@ const ProfileHero = ({ darkMode }) => {
               {/* REAL NAME from signup */}
               <h1
                 className={`
-                  mt-4 text-4xl sm:text-5xl lg:text-6xl font-black tracking-[-0.06em]
+                  mt-4 text-3xl sm:text-5xl lg:text-6xl font-black tracking-[-0.06em] break-words
                   ${darkMode ? "text-white" : "text-black"}
                 `}
               >
@@ -123,7 +199,7 @@ const ProfileHero = ({ darkMode }) => {
 
               {/* EMAIL — shown as subtitle */}
               {user?.email && (
-                <p className={`mt-1 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`mt-1 text-sm break-all ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                   {user.email}
                 </p>
               )}
@@ -137,63 +213,84 @@ const ProfileHero = ({ darkMode }) => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.7 }}
-                    className={`text-base sm:text-lg leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}
+                    className={`text-sm sm:text-base lg:text-lg leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}
                   >
                     {heroContent[currentHero].paragraph}
                   </motion.p>
                 </AnimatePresence>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5">
+              <div className="mt-5 flex flex-wrap justify-center lg:justify-start gap-3">
+                <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5 text-sm">
                   <FiMapPin />
                   {user?.state ? `${user.state}, Nigeria` : "Nigeria"}
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5">
-                  <FiAward />
-                  Top 2% Contributor
-                </div>
+                {/* Real, computed from /api/reports/rank — compares this
+                    user's score against every other contributing user
+                    nationwide. Shows a neutral state if they haven't
+                    submitted a report yet (nothing to rank). */}
+                {!rankLoading && topPercent !== null ? (
+                  <div className="flex items-center gap-2 px-3 py-2 border border-green-500/20 bg-green-500/5 text-sm">
+                    <FiAward />
+                    Top {topPercent}% Contributor
+                  </div>
+                ) : !rankLoading ? (
+                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-500/20 bg-gray-500/5 text-sm opacity-70">
+                    <FiAward />
+                    Submit a report to get ranked
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
 
           {/* SCORE PANEL */}
-          <div className="xl:w-[420px] border border-green-500/20 bg-green-500/[0.04] p-6">
+          <div className="xl:w-[420px] border border-green-500/20 bg-green-500/[0.04] p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.3em] text-green-500 font-black">
               Nation Aura Score
             </p>
             <div className="mt-4 flex items-center gap-3">
-              <FiTrendingUp className="text-green-500 text-3xl" />
-              <h2 className="text-6xl font-black tracking-tight">8,750</h2>
+              <FiTrendingUp className="text-green-500 text-2xl sm:text-3xl shrink-0" />
+              <h2 className="text-4xl sm:text-6xl font-black tracking-tight">
+                {rankLoading ? "—" : nationAuraScore.toLocaleString()}
+              </h2>
             </div>
             <p className={`mt-3 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-              Built from evidence quality, community trust, successful resolutions and verified impact.
+              Built from your reports submitted, resolutions achieved, and citizen confirmations received.
             </p>
             <div className="mt-6 flex items-center justify-between">
               <div>
+                {/* Real rank among all contributing users nationwide, from
+                    /api/reports/rank. Shows "Unranked" rather than a fake
+                    number if this user hasn't submitted a report yet. */}
                 <p className="text-xs text-gray-500 uppercase">National Rank</p>
-                <h4 className="text-2xl font-black">#324</h4>
+                <h4 className="text-xl sm:text-2xl font-black">
+                  {rankLoading ? "—" : rank !== null ? `#${rank}` : "Unranked"}
+                </h4>
+                {!rankLoading && rank !== null && totalContributors > 0 && (
+                  <p className="text-[11px] text-gray-500 mt-0.5">of {totalContributors.toLocaleString()} contributors</p>
+                )}
               </div>
-              <FiArrowUpRight className="text-green-500 text-2xl" />
+              <FiArrowUpRight className="text-green-500 text-2xl shrink-0" />
             </div>
           </div>
         </div>
 
         {/* STATS */}
-        <div className="mt-10 grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((item, index) => (
             <motion.div
               key={index}
               whileHover={{ y: -4 }}
               className={`
-                border p-5
+                border p-4 sm:p-5 min-w-0
                 ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#F8FAF9] border-gray-200"}
               `}
             >
-              <p className={`text-xs uppercase tracking-[0.2em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              <p className={`text-[10px] sm:text-xs uppercase tracking-[0.2em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                 {item.label}
               </p>
-              <h3 className="mt-3 text-4xl font-black tracking-tight">
+              <h3 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight truncate">
                 {item.value}
               </h3>
             </motion.div>
@@ -201,12 +298,12 @@ const ProfileHero = ({ darkMode }) => {
         </div>
 
         {/* LEGACY MESSAGE */}
-        <div className="mt-8 border-l-4 border-green-500 pl-5">
-          <div className="flex items-center gap-2 text-green-500 font-bold">
+        <div className="mt-8 border-l-4 border-green-500 pl-4 sm:pl-5">
+          <div className="flex items-center gap-2 text-green-500 font-bold text-sm sm:text-base">
             <FiActivity />
             Your Civic Legacy
           </div>
-          <p className={`mt-3 text-base sm:text-lg leading-relaxed max-w-4xl ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+          <p className={`mt-3 text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
             Every report submitted, every photo uploaded and every issue verified helps
             communities become safer, more transparent and more accountable. Your actions are
             creating measurable impact across Nigeria.

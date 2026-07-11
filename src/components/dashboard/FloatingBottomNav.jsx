@@ -7,10 +7,11 @@ import {
 
 import {
   FiHome,
-  FiMap,
-  FiBell,
-  FiUser,
+  FiSend,
   FiBarChart2,
+  FiBell,
+  FiCpu,
+  FiUser,
   FiPlus,
   FiX,
 } from "react-icons/fi";
@@ -20,29 +21,34 @@ const FloatingBottomNav = ({ darkMode }) => {
   const [open, setOpen] = useState(false);
 
   const [active, setActive] =
-    useState("Home");
+    useState("Dashboard");
 
 
   const navItems = [
 
     {
       icon: <FiHome />,
-      label: "Home",
+      label: "Dashboard",
     },
 
     {
-      icon: <FiMap />,
-      label: "Map",
+      icon: <FiSend />,
+      label: "Submit Report",
     },
 
     {
       icon: <FiBarChart2 />,
-      label: "Insights",
+      label: "My Reports",
     },
 
     {
       icon: <FiBell />,
       label: "Alerts",
+    },
+
+    {
+      icon: <FiCpu />,
+      label: "AI Analytics",
     },
 
     {

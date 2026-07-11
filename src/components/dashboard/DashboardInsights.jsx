@@ -1,5 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import {
+  motion,
+  useInView,
+  animate,
+  useMotionValue,
+  useSpring,
+} from "framer-motion";
 
 import {
   FiTrendingUp,
@@ -22,11 +33,147 @@ import { getReportStats } from "../../utils/api";
 // anywhere in the schema, so "AI Accuracy" / "AI Detection Accuracy" stay
 // static — a single constant so the two display spots never drift apart.
 const AI_ACCURACY_STATIC = "97%";
+const AI_ACCURACY_NUM = parseInt(
+  AI_ACCURACY_STATIC,
+  10
+);
 
 const formatCompact = (n) => {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return `${n}`;
+  return `${Math.round(n)}`;
 };
+
+// ── Animated count-up, plays once when scrolled into view ─────────────
+const CountUp = ({
+  value = 0,
+  format = (n) => `${Math.round(n)}`,
+  duration = 1.4,
+}) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, {
+    once: true,
+  });
+  const [display, setDisplay] = useState(
+    format(0)
+  );
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, value, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (latest) =>
+        setDisplay(format(latest)),
+    });
+    return () => controls.stop();
+  }, [inView, value]);
+
+  return <span ref={ref}>{display}</span>;
+};
+
+// ── Animated circular progress ring for the Civic Performance card ────
+const ProgressRing = ({
+  value = 0,
+  size = 96,
+  stroke = 9,
+}) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, {
+    once: true,
+  });
+  const [display, setDisplay] = useState(0);
+
+  const radius = (size - stroke) / 2;
+  const circumference =
+    2 * Math.PI * radius;
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, value, {
+      duration: 1.5,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (latest) =>
+        setDisplay(latest),
+    });
+    return () => controls.stop();
+  }, [inView, value]);
+
+  const offset =
+    circumference -
+    (Math.min(display, 100) / 100) *
+      circumference;
+
+  return (
+    <div
+      ref={ref}
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90"
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="rgba(255,255,255,0.28)"
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="white"
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-lg sm:text-xl font-black text-white">
+          {Math.round(display)}%
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// ── Rotating radar-sweep ring decoration behind an icon tile ──────────
+const RadarRing = () => (
+  <motion.div
+    aria-hidden="true"
+    animate={{ rotate: 360 }}
+    transition={{
+      duration: 6,
+      repeat: Infinity,
+      ease: "linear",
+    }}
+    className="absolute -inset-2.5 pointer-events-none"
+    style={{
+      background:
+        "conic-gradient(from 0deg, transparent 0%, rgba(34,197,94,0.9) 12%, transparent 26%)",
+      WebkitMaskImage:
+        "radial-gradient(circle, transparent 60%, black 61%, black 100%)",
+      maskImage:
+        "radial-gradient(circle, transparent 60%, black 61%, black 100%)",
+    }}
+  />
+);
+
+const AMBIENT_PARTICLES = [
+  { top: "14%", left: "9%", size: 6, delay: 0, dur: 6 },
+  { top: "26%", left: "88%", size: 4, delay: 1.1, dur: 7 },
+  { top: "62%", left: "6%", size: 5, delay: 0.5, dur: 5.5 },
+  { top: "82%", left: "72%", size: 3, delay: 1.8, dur: 6.5 },
+  { top: "46%", left: "50%", size: 4, delay: 0.9, dur: 7.5 },
+  { top: "8%", left: "60%", size: 3, delay: 2.2, dur: 5 },
+];
 
 const DashboardInsights = ({
   darkMode,
@@ -64,8 +211,6 @@ const DashboardInsights = ({
 
   const verificationRate = totalReports > 0 ? Math.round((verified / totalReports) * 100) : 0;
 
-  const displayCompact = (n) => (loading ? "—" : formatCompact(n));
-
   // Flood risk badge derived from today's actual Flooding report count in
   // this state, rather than a permanently-alarming static "HIGH".
   const floodCountToday = todayByCategory["Flooding"] ?? 0;
@@ -80,18 +225,23 @@ const DashboardInsights = ({
   const liveAlerts = [
     {
       title: "Flood Risk Escalation",
-      value: floodRiskLabel,
       icon: <FiAlertTriangle />,
+      kind: "text",
+      value: floodRiskLabel,
     },
     {
       title: "Resolved Reports",
-      value: displayCompact(resolved),
       icon: <FiCheckCircle />,
+      kind: "number",
+      raw: resolved,
+      format: formatCompact,
     },
     {
       title: "Connected Districts",
-      value: displayCompact(activeLocations),
       icon: <FiMapPin />,
+      kind: "number",
+      raw: activeLocations,
+      format: formatCompact,
     },
   ];
 
@@ -120,6 +270,34 @@ const DashboardInsights = ({
       } contributed report confirmations${stateName ? ` in ${stateName}` : ""}.`
     );
   }
+
+  // ── 3D tilt for the status panel ─────────────────────────────────────
+  const statusRef = useRef(null);
+  const rotateXRaw = useMotionValue(0);
+  const rotateYRaw = useMotionValue(0);
+  const rotateX = useSpring(rotateXRaw, {
+    stiffness: 160,
+    damping: 16,
+  });
+  const rotateY = useSpring(rotateYRaw, {
+    stiffness: 160,
+    damping: 16,
+  });
+
+  const handleStatusMove = (e) => {
+    const el = statusRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    rotateYRaw.set(px * 10);
+    rotateXRaw.set(py * -10);
+  };
+
+  const handleStatusLeave = () => {
+    rotateXRaw.set(0);
+    rotateYRaw.set(0);
+  };
 
   return (
     <section className="relative mt-10 sm:mt-14 overflow-hidden">
@@ -150,6 +328,31 @@ const DashboardInsights = ({
           `}
         />
 
+        {/* AMBIENT PARTICLES */}
+        {AMBIENT_PARTICLES.map((p, i) => (
+          <motion.span
+            key={i}
+            aria-hidden="true"
+            className="absolute bg-green-400/50"
+            style={{
+              top: p.top,
+              left: p.left,
+              width: p.size,
+              height: p.size,
+            }}
+            animate={{
+              y: [0, -16, 0],
+              opacity: [0.15, 0.75, 0.15],
+            }}
+            transition={{
+              duration: p.dur,
+              repeat: Infinity,
+              delay: p.delay,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+
         {/* TOP GLOW */}
         <motion.div
           animate={{
@@ -164,13 +367,16 @@ const DashboardInsights = ({
           absolute
           -top-40
           left-[-10%]
-          w-[320px]
-          h-[320px]
-          sm:w-[500px]
-          sm:h-[500px]
+          w-[260px]
+          h-[260px]
+          sm:w-[400px]
+          sm:h-[400px]
+          lg:w-[500px]
+          lg:h-[500px]
           bg-green-500/20
-          blur-[100px]
-          sm:blur-[130px]
+          blur-[80px]
+          sm:blur-[110px]
+          lg:blur-[130px]
           "
         />
 
@@ -188,13 +394,16 @@ const DashboardInsights = ({
           absolute
           bottom-[-200px]
           right-[-10%]
-          w-[320px]
-          h-[320px]
-          sm:w-[550px]
-          sm:h-[550px]
+          w-[260px]
+          h-[260px]
+          sm:w-[420px]
+          sm:h-[420px]
+          lg:w-[550px]
+          lg:h-[550px]
           bg-emerald-400/20
-          blur-[100px]
-          sm:blur-[150px]
+          blur-[80px]
+          sm:blur-[120px]
+          lg:blur-[150px]
           "
         />
       </div>
@@ -235,21 +444,22 @@ const DashboardInsights = ({
         />
 
         {/* INNER CONTAINER */}
-        <div className="relative p-4 sm:p-6 lg:p-12">
+        <div className="relative p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
           {/* HEADER */}
           <div
             className="
-            flex
-            flex-col
-            xl:flex-row
-            xl:items-end
-            xl:justify-between
+            grid
+            grid-cols-1
+            lg:grid-cols-[minmax(0,1fr)_300px]
+            xl:grid-cols-[minmax(0,1fr)_370px]
+            lg:items-end
             gap-8
-            lg:gap-10
+            lg:gap-8
+            xl:gap-10
             "
           >
             {/* LEFT */}
-            <div className="max-w-3xl">
+            <div className="min-w-0 max-w-3xl">
               {/* LIVE BADGE */}
               <motion.div
                 initial={{
@@ -288,7 +498,7 @@ const DashboardInsights = ({
                   }
                 `}
               >
-                <span className="relative flex h-3 w-3">
+                <span className="relative flex h-3 w-3 shrink-0">
                   <span
                     className="
                     animate-ping
@@ -317,7 +527,7 @@ const DashboardInsights = ({
                   text-[9px]
                   sm:text-[11px]
                   uppercase
-                  tracking-[0.22em]
+                  tracking-[0.18em]
                   sm:tracking-[0.35em]
                   font-black
                   text-green-500
@@ -345,10 +555,11 @@ const DashboardInsights = ({
                   mt-6
                   sm:mt-8
                   text-[2rem]
-                  sm:text-[3rem]
+                  sm:text-[2.7rem]
+                  md:text-[3.4rem]
                   lg:text-[4.3rem]
                   leading-[0.92]
-                  tracking-[-0.07em]
+                  tracking-[-0.06em]
                   sm:tracking-[-0.09em]
                   font-black
                 "
@@ -441,6 +652,9 @@ const DashboardInsights = ({
 
             {/* STATUS PANEL */}
             <motion.div
+              ref={statusRef}
+              onMouseMove={handleStatusMove}
+              onMouseLeave={handleStatusLeave}
               initial={{
                 opacity: 0,
                 scale: 0.92,
@@ -456,13 +670,17 @@ const DashboardInsights = ({
               whileHover={{
                 y: -4,
               }}
+              style={{
+                rotateX,
+                rotateY,
+                transformPerspective: 900,
+              }}
               className={`
                 relative
                 overflow-hidden
                 border
                 w-full
-                xl:max-w-[370px]
-                xl:min-w-[340px]
+                min-w-0
                 shadow-[0_30px_80px_rgba(0,0,0,0.08)]
                 ${
                   darkMode
@@ -491,31 +709,35 @@ const DashboardInsights = ({
 
               <div className="relative p-4 sm:p-6">
                 <div className="flex items-center gap-4 sm:gap-5">
-                  <motion.div
-                    animate={{
-                      rotate: [0, 10, -10, 0],
-                    }}
-                    transition={{
-                      duration: 5,
-                      repeat: Infinity,
-                    }}
-                    className="
-                    w-14
-                    h-14
-                    sm:w-16
-                    sm:h-16
-                    bg-green-500
-                    flex
-                    items-center
-                    justify-center
-                    text-white
-                    text-2xl
-                    sm:text-3xl
-                    shadow-[0_20px_60px_rgba(34,197,94,0.35)]
-                    "
-                  >
-                    <FiCpu />
-                  </motion.div>
+                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0">
+                    <RadarRing />
+
+                    <motion.div
+                      animate={{
+                        rotate: [0, 10, -10, 0],
+                      }}
+                      transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                      }}
+                      className="
+                      relative
+                      z-10
+                      w-full
+                      h-full
+                      bg-green-500
+                      flex
+                      items-center
+                      justify-center
+                      text-white
+                      text-2xl
+                      sm:text-3xl
+                      shadow-[0_20px_60px_rgba(34,197,94,0.35)]
+                      "
+                    >
+                      <FiCpu />
+                    </motion.div>
+                  </div>
 
                   <div className="min-w-0">
                     <p
@@ -561,11 +783,13 @@ const DashboardInsights = ({
                   {[
                     {
                       label: "Active Scans",
-                      value: "12.4K",
+                      raw: 12400,
+                      format: formatCompact,
                     },
                     {
                       label: "AI Accuracy",
-                      value: AI_ACCURACY_STATIC,
+                      raw: AI_ACCURACY_NUM,
+                      format: (n) => `${Math.round(n)}%`,
                     },
                   ].map((item, index) => (
                     <motion.div
@@ -610,8 +834,9 @@ const DashboardInsights = ({
                       <h3
                         className={`
                           mt-2
-                          text-2xl
-                          sm:text-3xl
+                          text-xl
+                          sm:text-2xl
+                          md:text-3xl
                           font-black
                           tracking-[-0.08em]
                           ${
@@ -621,7 +846,10 @@ const DashboardInsights = ({
                           }
                         `}
                       >
-                        {item.value}
+                        <CountUp
+                          value={item.raw}
+                          format={item.format}
+                        />
                       </h3>
                     </motion.div>
                   ))}
@@ -637,6 +865,7 @@ const DashboardInsights = ({
             sm:mt-12
             grid
             grid-cols-1
+            lg:grid-cols-2
             xl:grid-cols-[1.15fr_0.85fr]
             gap-5
             sm:gap-7
@@ -697,38 +926,44 @@ const DashboardInsights = ({
                 absolute
                 -top-20
                 -right-20
-                w-60
-                h-60
-                sm:w-80
-                sm:h-80
+                w-48
+                h-48
+                sm:w-64
+                sm:h-64
+                lg:w-80
+                lg:h-80
                 bg-green-500/10
-                blur-[100px]
-                sm:blur-[120px]
+                blur-[80px]
+                sm:blur-[100px]
+                lg:blur-[120px]
                 "
               />
 
               <div className="relative p-5 sm:p-7 lg:p-9">
                 {/* TOP */}
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                    <div
-                      className="
-                      w-14
-                      h-14
-                      sm:w-16
-                      sm:h-16
-                      bg-green-500
-                      flex
-                      items-center
-                      justify-center
-                      text-white
-                      text-2xl
-                      sm:text-3xl
-                      shadow-[0_20px_60px_rgba(34,197,94,0.35)]
-                      flex-shrink-0
-                      "
-                    >
-                      <FiShield />
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0">
+                      <RadarRing />
+
+                      <div
+                        className="
+                        relative
+                        z-10
+                        w-full
+                        h-full
+                        bg-green-500
+                        flex
+                        items-center
+                        justify-center
+                        text-white
+                        text-2xl
+                        sm:text-3xl
+                        shadow-[0_20px_60px_rgba(34,197,94,0.35)]
+                        "
+                      >
+                        <FiShield />
+                      </div>
                     </div>
 
                     <div className="min-w-0">
@@ -748,8 +983,9 @@ const DashboardInsights = ({
                       <h3
                         className={`
                           mt-2
-                          text-[1.8rem]
-                          sm:text-4xl
+                          text-[1.5rem]
+                          sm:text-3xl
+                          md:text-4xl
                           leading-tight
                           font-black
                           tracking-[-0.08em]
@@ -782,7 +1018,18 @@ const DashboardInsights = ({
                     shadow-[0_20px_50px_rgba(34,197,94,0.35)]
                     "
                   >
-                    <FiRadio />
+                    <motion.span
+                      animate={{
+                        opacity: [1, 0.4, 1],
+                      }}
+                      transition={{
+                        duration: 1.4,
+                        repeat: Infinity,
+                      }}
+                      className="flex"
+                    >
+                      <FiRadio />
+                    </motion.span>
                     LIVE
                   </div>
                 </div>
@@ -798,8 +1045,9 @@ const DashboardInsights = ({
                       repeat: Infinity,
                     }}
                     className={`
-                    text-[52px]
+                    text-[46px]
                     sm:text-[54px]
+                    md:text-[62px]
                     lg:text-[72px]
                     leading-[0.92]
                     tracking-[-0.06em]
@@ -811,7 +1059,11 @@ const DashboardInsights = ({
                       }
                     `}
                   >
-                    {AI_ACCURACY_STATIC}
+                    <CountUp
+                      value={AI_ACCURACY_NUM}
+                      format={(n) => `${Math.round(n)}%`}
+                      duration={1.7}
+                    />
                   </motion.h1>
 
                   <motion.div
@@ -867,7 +1119,7 @@ const DashboardInsights = ({
                 </p>
 
                 {/* ALERTS */}
-                <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                   {liveAlerts.map((item, index) => (
                     <motion.div
                       key={index}
@@ -879,6 +1131,7 @@ const DashboardInsights = ({
                         stiffness: 120,
                       }}
                       className={`
+                        min-w-0
                         border
                         p-4
                         sm:p-5
@@ -900,8 +1153,8 @@ const DashboardInsights = ({
                     >
                       <div
                         className="
-                        w-12
-                        h-12
+                        w-11
+                        h-11
                         sm:w-14
                         sm:h-14
                         bg-green-500
@@ -909,7 +1162,7 @@ const DashboardInsights = ({
                         items-center
                         justify-center
                         text-white
-                        text-xl
+                        text-lg
                         sm:text-2xl
                         shadow-[0_15px_40px_rgba(34,197,94,0.3)]
                         "
@@ -919,12 +1172,16 @@ const DashboardInsights = ({
 
                       <h4
                         className={`
-                          mt-5
+                          mt-4
                           sm:mt-6
-                          text-2xl
-                          sm:text-3xl
+                          text-lg
+                          sm:text-2xl
+                          md:text-3xl
                           font-black
-                          tracking-[-0.08em]
+                          tracking-[-0.04em]
+                          sm:tracking-[-0.08em]
+                          break-words
+                          leading-tight
                           ${
                             darkMode
                               ? "text-white"
@@ -932,13 +1189,23 @@ const DashboardInsights = ({
                           }
                         `}
                       >
-                        {item.value}
+                        {loading ? (
+                          "—"
+                        ) : item.kind === "number" ? (
+                          <CountUp
+                            value={item.raw}
+                            format={item.format}
+                          />
+                        ) : (
+                          item.value
+                        )}
                       </h4>
 
                       <p
                         className={`
                           mt-2
-                          text-sm
+                          text-xs
+                          sm:text-sm
                           leading-relaxed
                           ${
                             darkMode
@@ -1013,8 +1280,9 @@ const DashboardInsights = ({
                     <h3
                       className={`
                         mt-2
-                        text-[1.8rem]
-                        sm:text-4xl
+                        text-[1.5rem]
+                        sm:text-3xl
+                        md:text-4xl
                         leading-tight
                         font-black
                         tracking-[-0.08em]
@@ -1167,21 +1435,32 @@ const DashboardInsights = ({
                   shadow-[0_25px_70px_rgba(34,197,94,0.35)]
                   "
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="text-[10px] sm:text-xs uppercase tracking-[0.15em] text-white/70">
                         Civic Performance
                       </p>
 
-                      <h4 className="mt-3 text-[3rem] sm:text-6xl leading-none font-black tracking-[-0.1em] text-white">
-                        {loading ? "—" : `${verificationRate}%`}
-                      </h4>
+                      <div className="mt-3 flex items-center gap-2 text-xs sm:text-sm font-black uppercase text-white">
+                        {verifiedGrowth >= 0 ? <FiZap /> : <FiTrendingDown />}
+                        {loading ? "—" : `${verifiedGrowth >= 0 ? "+" : ""}${verifiedGrowth}%`}
+                        <span className="font-medium normal-case text-white/70 tracking-normal">
+                          this week
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase text-white">
-                      {verifiedGrowth >= 0 ? <FiZap /> : <FiTrendingDown />}
-                      {loading ? "—" : `${verifiedGrowth >= 0 ? "+" : ""}${verifiedGrowth}%`}
-                    </div>
+                    {loading ? (
+                      <div className="w-24 h-24 flex items-center justify-center text-white/70 text-sm">
+                        —
+                      </div>
+                    ) : (
+                      <ProgressRing
+                        value={verificationRate}
+                        size={96}
+                        stroke={9}
+                      />
+                    )}
                   </div>
                 </motion.div>
               </div>

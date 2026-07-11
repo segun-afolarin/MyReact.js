@@ -18,6 +18,9 @@ export const getNearbyReports = () =>
 export const getReportStats = () =>
   api.get("/reports/stats").then((res) => res.data);
 
+export const getContributorRank = () =>
+  api.get("/reports/rank").then((res) => res.data);
+
 // The axios instance sets a default Content-Type: application/json header.
 // That default persists even for FormData requests unless we explicitly
 // clear it here — so we force it to undefined, letting the browser set
