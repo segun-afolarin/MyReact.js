@@ -79,7 +79,7 @@ const OFFLINE_REPLY =
 
 const IconBox = ({ icon: Icon, tone = "green" }) => (
   <div
-    className={`flex h-11 w-11 shrink-0 items-center justify-center text-lg ${
+    className={`flex h-9 w-9 shrink-0 items-center justify-center text-base sm:h-11 sm:w-11 sm:text-lg ${
       tone === "green"
         ? "bg-green-900 text-white"
         : "bg-stone-900 text-white"
@@ -90,7 +90,7 @@ const IconBox = ({ icon: Icon, tone = "green" }) => (
 );
 
 const StatusDot = ({ active }) => (
-  <span className="relative flex h-2 w-2">
+  <span className="relative flex h-2 w-2 shrink-0">
     {active && (
       <span className="absolute inline-flex h-full w-full animate-ping bg-green-500 opacity-75" />
     )}
@@ -149,7 +149,7 @@ const ConversationItem = ({
         </div>
 
         {!isRenaming && (
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <span
               className={`border px-1.5 py-0.5 text-[10px] font-semibold ${statusTone[chat.status] || "border-stone-200 bg-stone-50 text-stone-600"}`}
             >
@@ -168,7 +168,7 @@ const ConversationItem = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.12 }}
-          className="absolute right-2 top-10 z-10 w-48 border border-stone-200 bg-white shadow-lg"
+          className="absolute right-2 top-10 z-10 w-48 max-w-[calc(100vw-2.5rem)] border border-stone-200 bg-white shadow-lg"
         >
           <button
             onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
@@ -485,7 +485,10 @@ const HelpCenter = () => {
   const itemProps = (chat) => ({
     chat,
     isActive: activeChat === chat.id,
-    onSelect: () => setActiveChat(chat.id),
+    onSelect: () => {
+      setActiveChat(chat.id);
+      if (window.innerWidth < 1024) setSidebar(false);
+    },
     isRenaming: renamingId === chat.id,
     renameValue,
     onRenameChange: setRenameValue,
@@ -504,13 +507,13 @@ const HelpCenter = () => {
   });
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-stone-100">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-stone-100">
 
       {/* SIDEBAR */}
       <AnimatePresence>
         {sidebar && (
           <div className="contents">
-            {/* mobile scrim */}
+            {/* mobile/tablet scrim */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -524,11 +527,11 @@ const HelpCenter = () => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -320, opacity: 0 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed z-50 flex h-full w-[300px] flex-col border-r border-stone-200 bg-white lg:relative"
+              className="fixed z-50 flex h-[100dvh] w-[85vw] max-w-[300px] flex-col border-r border-stone-200 bg-white sm:w-[300px] lg:relative lg:h-full"
             >
               {/* TOP */}
-              <div className="border-b border-stone-100 p-6">
-                <div className="mb-6 flex items-center justify-between">
+              <div className="border-b border-stone-100 p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6">
+                <div className="mb-5 flex items-center justify-between sm:mb-6">
                   <Link
                     to="/"
                     className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-stone-500 transition-colors hover:text-green-800"
@@ -545,25 +548,25 @@ const HelpCenter = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-full bg-green-900">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-green-900 sm:h-12 sm:w-12">
                     <img src="/images/logo.png" alt="NationAura" className="h-full w-full object-cover" />
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold leading-tight text-stone-900">NationAura</h2>
-                    <p className="text-xs font-medium text-green-700">Civic Assistant</p>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-base font-bold leading-tight text-stone-900 sm:text-lg">NationAura</h2>
+                    <p className="truncate text-xs font-medium text-green-700">Civic Assistant</p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleNewConversation}
-                  className="mt-6 flex h-[48px] w-full items-center justify-center gap-2 bg-green-900 text-[14px] font-semibold text-white transition-colors hover:bg-green-800"
+                  className="mt-5 flex h-11 w-full items-center justify-center gap-2 bg-green-900 text-[13.5px] font-semibold text-white transition-colors hover:bg-green-800 sm:mt-6 sm:h-[48px] sm:text-[14px]"
                 >
                   <FiPlus className="h-4 w-4" /> New conversation
                 </button>
               </div>
 
               {/* SEARCH */}
-              <div className="p-5 pb-3">
+              <div className="p-4 pb-3 sm:p-5">
                 <div className="relative">
                   <FiSearch className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
@@ -625,14 +628,14 @@ const HelpCenter = () => {
       </AnimatePresence>
 
       {/* MAIN */}
-      <div className="flex h-full flex-1 flex-col">
+      <div className="flex h-full min-w-0 flex-1 flex-col">
 
         {/* HEADER */}
-        <div className="flex h-[76px] items-center justify-between border-b border-stone-200 bg-white px-5 md:px-8">
-          <div className="flex items-center gap-4">
+        <div className="flex h-[64px] min-w-0 items-center justify-between gap-2 border-b border-stone-200 bg-white px-3 pt-[env(safe-area-inset-top)] sm:h-[76px] sm:px-5 md:px-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
             <button
               onClick={() => setSidebar(!sidebar)}
-              className="flex h-10 w-10 items-center justify-center border border-stone-200 text-stone-600 hover:border-stone-300 lg:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center border border-stone-200 text-stone-600 hover:border-stone-300 sm:h-10 sm:w-10 lg:hidden"
               aria-label="Toggle sidebar"
             >
               <FiMenu />
@@ -640,9 +643,11 @@ const HelpCenter = () => {
 
             <IconBox icon={FiCpu} />
 
-            <div>
-              <h2 className="text-[15px] font-bold text-stone-900">NationAura Civic Assistant</h2>
-              <p className="flex items-center gap-1.5 text-xs text-stone-500">
+            <div className="min-w-0">
+              <h2 className="truncate text-[13.5px] font-bold text-stone-900 sm:text-[15px]">
+                NationAura Civic Assistant
+              </h2>
+              <p className="flex items-center gap-1.5 text-xs text-stone-500 max-[380px]:hidden">
                 <StatusDot active /> Online, replies in seconds
               </p>
             </div>
@@ -650,15 +655,15 @@ const HelpCenter = () => {
 
           <a
             href="mailto:support@nationaura.ng"
-            className="hidden items-center gap-2 border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-600 transition-colors hover:border-green-800 hover:text-green-800 md:flex"
+            className="hidden shrink-0 items-center gap-2 border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-600 transition-colors hover:border-green-800 hover:text-green-800 md:flex"
           >
             <FiPhone className="h-3.5 w-3.5" /> Contact support
           </a>
         </div>
 
         {/* CHAT BODY */}
-        <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-8 md:px-8">
-          <div className="mx-auto max-w-3xl space-y-6">
+        <div ref={chatRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-6 sm:px-4 sm:py-8 md:px-8">
+          <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6 2xl:max-w-4xl">
 
             {/* QUICK ACTIONS */}
             {messages.length === 1 && (
@@ -670,11 +675,11 @@ const HelpCenter = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => sendMessage(action.prompt)}
-                    className="flex items-start gap-3 border border-stone-200 bg-white p-4 text-left transition-colors hover:border-green-800 hover:bg-green-50"
+                    className="flex items-start gap-3 border border-stone-200 bg-white p-3.5 text-left transition-colors hover:border-green-800 hover:bg-green-50 sm:p-4"
                   >
                     <IconBox icon={action.icon} />
-                    <div>
-                      <h3 className="text-[13.5px] font-semibold text-stone-900">{action.title}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-[13px] font-semibold text-stone-900 sm:text-[13.5px]">{action.title}</h3>
                       <p className="mt-0.5 text-xs text-stone-500">{action.desc}</p>
                     </div>
                   </motion.button>
@@ -690,18 +695,19 @@ const HelpCenter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className={`flex max-w-[85%] gap-3 ${message.type === "user" ? "flex-row-reverse" : ""}`}>
+                <div className={`flex max-w-[92%] gap-2 sm:max-w-[85%] sm:gap-3 lg:max-w-[70%] ${message.type === "user" ? "flex-row-reverse" : ""}`}>
                   <IconBox
                     icon={message.type === "assistant" ? FiCpu : FiUser}
                     tone={message.type === "assistant" ? "green" : "dark"}
                   />
-                  <div className={message.type === "user" ? "flex flex-col items-end" : ""}>
+                  <div className={`min-w-0 ${message.type === "user" ? "flex flex-col items-end" : ""}`}>
                     <div
-                      className={`border px-5 py-3.5 text-[14.5px] leading-relaxed ${
+                      className={`border px-4 py-3 text-[14px] leading-relaxed sm:px-5 sm:py-3.5 sm:text-[14.5px] ${
                         message.type === "assistant"
                           ? "border-stone-200 bg-white text-stone-700"
                           : "border-green-900 bg-green-900 text-white"
                       }`}
+                      style={{ overflowWrap: "anywhere" }}
                     >
                       {message.text}
                     </div>
@@ -735,10 +741,10 @@ const HelpCenter = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2 sm:gap-3"
                 >
                   <IconBox icon={FiCpu} />
-                  <div className="flex items-center gap-1.5 border border-stone-200 bg-white px-5 py-4">
+                  <div className="flex items-center gap-1.5 border border-stone-200 bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                     <span className="h-1.5 w-1.5 animate-bounce bg-green-700 [animation-delay:-0.3s]" />
                     <span className="h-1.5 w-1.5 animate-bounce bg-green-700 [animation-delay:-0.15s]" />
                     <span className="h-1.5 w-1.5 animate-bounce bg-green-700" />
@@ -750,14 +756,14 @@ const HelpCenter = () => {
         </div>
 
         {/* INPUT */}
-        <div className="border-t border-stone-200 bg-white px-4 py-5 md:px-8">
-          <div className="mx-auto max-w-3xl">
-            <div className="flex items-center gap-3">
+        <div className="border-t border-stone-200 bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 sm:pb-5 md:px-8">
+          <div className="mx-auto max-w-3xl 2xl:max-w-4xl">
+            <div className="flex items-center gap-2 sm:gap-3">
               {micSupported && (
                 <button
                   onClick={toggleListening}
                   aria-label={listening ? "Stop voice typing" : "Speak your message"}
-                  className={`flex h-[52px] w-[52px] shrink-0 items-center justify-center border transition-colors ${
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center border transition-colors sm:h-[52px] sm:w-[52px] ${
                     listening
                       ? "border-red-600 bg-red-50 text-red-600"
                       : "border-stone-200 text-stone-500 hover:border-green-800 hover:text-green-800"
@@ -775,19 +781,19 @@ const HelpCenter = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") sendMessage(input);
                 }}
-                placeholder={listening ? "Listening... speak now" : "Message NationAura Civic Assistant..."}
-                className="h-[52px] flex-1 border border-stone-200 bg-white px-4 text-[14.5px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-green-800"
+                placeholder={listening ? "Listening... speak now" : "Message NationAura..."}
+                className="h-11 min-w-0 flex-1 border border-stone-200 bg-white px-3.5 text-[14px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-green-800 sm:h-[52px] sm:px-4 sm:text-[14.5px]"
               />
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || typing}
                 aria-label="Send message"
-                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center bg-green-900 text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-11 w-11 shrink-0 items-center justify-center bg-green-900 text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-40 sm:h-[52px] sm:w-[52px]"
               >
                 <FiSend className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2.5 text-center text-[11px] text-stone-400">
+            <p className="mt-2 px-1 text-center text-[10.5px] text-stone-400 sm:mt-2.5 sm:text-[11px]">
               {micSupported ? "Tap the mic to speak instead of typing. " : ""}
               For life-threatening emergencies, contact local emergency services directly. We never ask for your password here.
             </p>
