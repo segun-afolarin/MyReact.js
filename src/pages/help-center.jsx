@@ -5,7 +5,8 @@ import {
   FiSend, FiCpu, FiUser, FiMenu, FiPlus, FiSearch,
   FiArrowLeft, FiMapPin, FiActivity, FiUsers, FiPhone,
   FiX, FiChevronRight, FiMoreVertical, FiBookmark,
-  FiEdit2, FiArchive, FiTrash2,
+  FiEdit2, FiArchive, FiTrash2, FiMic, FiMicOff,
+  FiVolume2, FiVolumeX,
 } from "react-icons/fi";
 
 // ---------------------------------------------------------------------------
@@ -22,8 +23,8 @@ const quickActions = [
   {
     icon: FiActivity,
     title: "Track a report",
-    desc: "Check status on something you filed",
-    prompt: "Track my report",
+    desc: "Check status with your reference code",
+    prompt: "I want to track a report",
   },
   {
     icon: FiUsers,
@@ -55,29 +56,15 @@ const statusTone = {
   Active: "text-green-700 bg-green-50 border-green-200",
 };
 
+const VOICE_LANG = "en-NG";
+
 const formatTime = (d) =>
   d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
 
-const formatReply = (text) => {
-  const t = text.toLowerCase();
-
-  if (t.includes("report") && !t.includes("track"))
-    return "To report an issue: open Report Incident, add your location (auto-detected or dropped on the map), attach a photo if you have one, and describe what's wrong. It's routed to the right local agency automatically.";
-
-  if (t.includes("track"))
-    return "Every report moves through five stages: Submitted, Verified, Assigned, In Progress, Resolved. You'll get a notification each time it moves. Open Dashboard, then My Reports to see where yours stands.";
-
-  if (t.includes("guideline"))
-    return "Report real infrastructure problems only — roads, drainage, bridges, power, water. No duplicate filings, no personal disputes, and evidence should be your own photos or footage from the affected area.";
-
-  if (t.includes("support") || t.includes("contact") || t.includes("human"))
-    return "I've flagged this for our support team — they typically respond within a few hours. You can also reach them directly at support@nationaura.ng.";
-
-  if (t.includes("emergency"))
-    return "If this is a life-threatening emergency, please contact local emergency services directly first. NationAura routes civic infrastructure reports, not emergency dispatch.";
-
-  return "NationAura helps citizens report and track infrastructure issues in real time. Ask me about filing a report, checking a status, or reaching a person on the team.";
-};
+// Fallback used only if the chat request itself fails (network/server error) —
+// not for normal conversation, which is handled server-side by the AI.
+const OFFLINE_REPLY =
+  "Sorry, I couldn't reach the assistant just now. Please try again in a moment, or reach our support team at support@nationaura.ng.";
 
 // ---------------------------------------------------------------------------
 // Small building blocks
@@ -212,6 +199,27 @@ const ConversationItem = ({
   </div>
 );
 
+// Speaker button shown under an assistant bubble — tap to hear it, tap again to stop.
+const ListenButton = ({ text, index, speakingIndex, onToggle, supported }) => {
+  if (!supported) return null;
+  const isSpeaking = speakingIndex === index;
+
+  return (
+    <button
+      onClick={() => onToggle(text, index)}
+      aria-label={isSpeaking ? "Stop reading reply aloud" : "Read reply aloud"}
+      className={`mt-1.5 flex items-center gap-1.5 border px-2 py-1 text-[11px] font-semibold transition-colors ${
+        isSpeaking
+          ? "border-green-800 bg-green-50 text-green-800"
+          : "border-stone-200 text-stone-500 hover:border-green-800 hover:text-green-800"
+      }`}
+    >
+      {isSpeaking ? <FiVolumeX className="h-3 w-3" /> : <FiVolume2 className="h-3 w-3" />}
+      {isSpeaking ? "Stop" : "Listen"}
+    </button>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -226,7 +234,7 @@ const HelpCenter = () => {
 
   // null = a fresh, unsaved conversation — nothing added to history until
   // the user actually sends a message.
-  const [activeChat, setActiveChat] = useState(1);
+  const [activeChat, setActiveChat] = useState(null);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
@@ -235,11 +243,16 @@ const HelpCenter = () => {
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
 
-  const [chatHistory, setChatHistory] = useState([
-    { id: 1, title: "Road Damage — Yakubu Gowon Way", status: "Resolved", when: "2h ago", pinned: true, archived: false },
-    { id: 2, title: "Water Supply Report", status: "In Progress", when: "Yesterday", pinned: false, archived: false },
-    { id: 3, title: "Electricity Complaint", status: "Assigned", when: "3 days ago", pinned: false, archived: false },
-  ]);
+  // Starts empty — real conversations are added to this as the user actually
+  // chats (see sendMessage). Nothing here is seeded or hardcoded.
+  const [chatHistory, setChatHistory] = useState([]);
+
+  // ── Voice: input (speech-to-text) and output (text-to-speech) ──────────
+  const [listening, setListening] = useState(false);
+  const [micSupported, setMicSupported] = useState(true);
+  const [speakerSupported, setSpeakerSupported] = useState(true);
+  const [speakingIndex, setSpeakingIndex] = useState(null);
+  const recognitionRef = useRef(null);
 
   const chatRef = useRef(null);
   const inputRef = useRef(null);
@@ -268,11 +281,103 @@ const HelpCenter = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const sendMessage = (text) => {
+  // Set up speech recognition once. Falls back gracefully (mic button just
+  // won't render) on browsers that don't support it — mainly older Safari.
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setMicSupported(false);
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = VOICE_LANG;
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInput(transcript);
+      };
+      recognition.onend = () => setListening(false);
+      recognition.onerror = () => setListening(false);
+
+      recognitionRef.current = recognition;
+    }
+
+    if (!window.speechSynthesis) {
+      setSpeakerSupported(false);
+    }
+
+    return () => {
+      recognitionRef.current?.stop();
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
+
+  const toggleListening = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+
+    if (listening) {
+      recognition.stop();
+      setListening(false);
+      return;
+    }
+
+    setInput("");
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      // start() throws if called while already running — ignore, state stays in sync via onend.
+    }
+  };
+
+  const pickVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+    return (
+      voices.find((v) => v.lang === VOICE_LANG) ||
+      voices.find((v) => v.lang === "en-GB") ||
+      voices.find((v) => v.lang?.startsWith("en")) ||
+      voices[0]
+    );
+  };
+
+  const toggleSpeak = (text, index) => {
+    if (!window.speechSynthesis) return;
+
+    if (speakingIndex === index) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel(); // only one reply reads at a time
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = VOICE_LANG;
+    const voice = pickVoice();
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.95;
+    utterance.onend = () => setSpeakingIndex(null);
+    utterance.onerror = () => setSpeakingIndex(null);
+
+    setSpeakingIndex(index);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const sendMessage = async (text) => {
     const clean = text.trim();
     if (!clean || typing) return;
 
-    setMessages((prev) => [...prev, { type: "user", text: clean, time: new Date() }]);
+    if (listening) toggleListening();
+
+    const userMsg = { type: "user", text: clean, time: new Date() };
+    const messagesSoFar = [...messages, userMsg];
+
+    setMessages(messagesSoFar);
     setInput("");
     setTyping(true);
 
@@ -288,13 +393,37 @@ const HelpCenter = () => {
       setActiveChat(newId);
     }
 
-    setTimeout(() => {
-      setTyping(false);
+    try {
+      // Send a little context so the assistant can follow the thread, but
+      // keep the payload small. The backend is stateless and public — it
+      // never has a session, so this is the only context it gets.
+      const history = messagesSoFar
+        .slice(0, -1)
+        .slice(-10)
+        .map((m) => ({ role: m.type === "assistant" ? "assistant" : "user", text: m.text }));
+
+      const res = await fetch("/api/help-center/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: clean, history }),
+      });
+
+      if (!res.ok) throw new Error(`Chat request failed (${res.status})`);
+
+      const data = await res.json();
+
       setMessages((prev) => [
         ...prev,
-        { type: "assistant", text: formatReply(clean), time: new Date() },
+        { type: "assistant", text: data.reply || OFFLINE_REPLY, time: new Date() },
       ]);
-    }, 1100 + Math.random() * 500);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { type: "assistant", text: OFFLINE_REPLY, time: new Date() },
+      ]);
+    } finally {
+      setTyping(false);
+    }
   };
 
   const handleNewConversation = () => {
@@ -559,7 +688,7 @@ const HelpCenter = () => {
                     icon={message.type === "assistant" ? FiCpu : FiUser}
                     tone={message.type === "assistant" ? "green" : "dark"}
                   />
-                  <div>
+                  <div className={message.type === "user" ? "flex flex-col items-end" : ""}>
                     <div
                       className={`border px-5 py-3.5 text-[14.5px] leading-relaxed ${
                         message.type === "assistant"
@@ -569,6 +698,17 @@ const HelpCenter = () => {
                     >
                       {message.text}
                     </div>
+
+                    {message.type === "assistant" && (
+                      <ListenButton
+                        text={message.text}
+                        index={index}
+                        speakingIndex={speakingIndex}
+                        onToggle={toggleSpeak}
+                        supported={speakerSupported}
+                      />
+                    )}
+
                     <p
                       className={`mt-1.5 text-[10.5px] text-stone-400 ${
                         message.type === "user" ? "text-right" : ""
@@ -606,6 +746,20 @@ const HelpCenter = () => {
         <div className="border-t border-stone-200 bg-white px-4 py-5 md:px-8">
           <div className="mx-auto max-w-3xl">
             <div className="flex items-center gap-3">
+              {micSupported && (
+                <button
+                  onClick={toggleListening}
+                  aria-label={listening ? "Stop voice typing" : "Speak your message"}
+                  className={`flex h-[52px] w-[52px] shrink-0 items-center justify-center border transition-colors ${
+                    listening
+                      ? "border-red-600 bg-red-50 text-red-600"
+                      : "border-stone-200 text-stone-500 hover:border-green-800 hover:text-green-800"
+                  }`}
+                >
+                  {listening ? <FiMicOff className="h-4 w-4" /> : <FiMic className="h-4 w-4" />}
+                </button>
+              )}
+
               <input
                 ref={inputRef}
                 type="text"
@@ -614,7 +768,7 @@ const HelpCenter = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") sendMessage(input);
                 }}
-                placeholder="Message NationAura Civic Assistant..."
+                placeholder={listening ? "Listening... speak now" : "Message NationAura Civic Assistant..."}
                 className="h-[52px] flex-1 border border-stone-200 bg-white px-4 text-[14.5px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-green-800"
               />
               <button
@@ -627,7 +781,8 @@ const HelpCenter = () => {
               </button>
             </div>
             <p className="mt-2.5 text-center text-[11px] text-stone-400">
-              For life-threatening emergencies, contact local emergency services directly.
+              {micSupported ? "Tap the mic to speak instead of typing. " : ""}
+              For life-threatening emergencies, contact local emergency services directly. We never ask for your password here.
             </p>
           </div>
         </div>
