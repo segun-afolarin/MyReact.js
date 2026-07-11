@@ -58,6 +58,13 @@ const statusTone = {
 
 const VOICE_LANG = "en-NG";
 
+// Frontend (Vercel) and backend (Railway) are on different domains, so this
+// must be an absolute URL — a relative "/api/..." path would hit Vercel's
+// own domain instead of the Laravel backend. Set VITE_API_URL in Vercel's
+// environment variables to override this without touching code later.
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://backend-production-89f5.up.railway.app/api";
+
 const formatTime = (d) =>
   d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
 
@@ -402,7 +409,7 @@ const HelpCenter = () => {
         .slice(-10)
         .map((m) => ({ role: m.type === "assistant" ? "assistant" : "user", text: m.text }));
 
-      const res = await fetch("/api/help-center/chat", {
+      const res = await fetch(`${API_BASE_URL}/help-center/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: clean, history }),
