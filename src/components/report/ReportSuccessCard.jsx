@@ -53,11 +53,11 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 z-[9999] overflow-y-auto"
+        className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {/* CENTERING WRAPPER — min-h full so short content still centers */}
-        <div className="min-h-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="min-h-full flex items-center justify-center p-3 sm:p-6 lg:p-8">
           <motion.div
             key="modal"
             initial={{ opacity: 0, scale: 0.88, y: 40 }}
@@ -76,11 +76,11 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
             `}
           >
             {/* GRID BG */}
-            <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)] bg-[size:45px_45px]" />
+            <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#22c55e_1px,transparent_1px),linear-gradient(to_bottom,#22c55e_1px,transparent_1px)] bg-[size:32px_32px] sm:bg-[size:45px_45px]" />
 
             {/* GLOWS */}
-            <div className="absolute top-[-80px] right-[-80px] w-[220px] h-[220px] bg-green-500/20 blur-3xl rounded-full" />
-            <div className="absolute bottom-[-120px] left-[-80px] w-[200px] h-[200px] bg-emerald-500/10 blur-3xl rounded-full" />
+            <div className="absolute top-[-80px] right-[-80px] w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] bg-green-500/20 blur-3xl rounded-full" />
+            <div className="absolute bottom-[-120px] left-[-80px] w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] bg-emerald-500/10 blur-3xl rounded-full" />
 
             {/* TOP ACCENT LINE */}
             <div className="absolute top-0 left-0 h-[3px] w-full bg-gradient-to-r from-green-500 via-emerald-400 to-transparent" />
@@ -90,8 +90,8 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
               onClick={onClose}
               aria-label="Close"
               className={`
-                absolute top-4 right-4 z-20
-                w-10 h-10 flex items-center justify-center
+                absolute top-3 right-3 sm:top-4 sm:right-4 z-20
+                w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center
                 border transition-all duration-200
                 ${darkMode
                   ? "border-white/10 bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/10"
@@ -103,41 +103,41 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
             </button>
 
             {/* CONTENT */}
-            <div className="relative z-10 p-6 sm:p-8">
+            <div className="relative z-10 p-4 sm:p-8">
 
               {/* SUCCESS ICON */}
               <div className="relative flex items-center justify-center">
                 <motion.div
                   animate={{ scale: [1, 1.15, 1] }}
                   transition={{ repeat: Infinity, duration: 2.5 }}
-                  className="absolute w-28 h-28 rounded-full bg-green-500/10 blur-2xl"
+                  className="absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-green-500/10 blur-2xl"
                 />
                 <motion.div
                   initial={{ scale: 0, rotate: -20 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative w-24 h-24 rounded-full bg-green-500 flex items-center justify-center text-white text-5xl shadow-[0_0_60px_rgba(34,197,94,0.35)]"
+                  className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-green-500 flex items-center justify-center text-white text-3xl sm:text-5xl shadow-[0_0_60px_rgba(34,197,94,0.35)]"
                 >
                   <FiCheckCircle />
                 </motion.div>
               </div>
 
               {/* TITLE */}
-              <div className="mt-8 text-center">
+              <div className="mt-6 sm:mt-8 text-center px-1">
                 <motion.div
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                   className={`
-                    inline-flex items-center gap-2 px-4 py-2 border mb-5
+                    inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 border mb-4 sm:mb-5
                     ${darkMode
                       ? "bg-green-500/10 border-green-500/20 text-green-400"
                       : "bg-green-50 border-green-200 text-green-700"
                     }
                   `}
                 >
-                  <FiRadio />
-                  <span className="text-[10px] uppercase tracking-[0.18em] font-black">
+                  <FiRadio className="shrink-0" />
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.18em] font-black whitespace-nowrap">
                     Emergency Report Active
                   </span>
                 </motion.div>
@@ -147,7 +147,8 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
                   className={`
-                    text-[2.1rem] sm:text-[2.7rem] leading-[0.92] tracking-[-0.06em] font-black
+                    text-[1.6rem] sm:text-[2.4rem] md:text-[2.7rem]
+                    leading-[0.95] sm:leading-[0.92] tracking-[-0.04em] sm:tracking-[-0.06em] font-black
                     ${darkMode ? "text-white" : "text-black"}
                   `}
                 >
@@ -160,7 +161,7 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.32 }}
                   className={`
-                    mt-4 max-w-lg mx-auto text-sm sm:text-base leading-relaxed
+                    mt-3 sm:mt-4 max-w-lg mx-auto text-[13px] sm:text-base leading-relaxed
                     ${darkMode ? "text-gray-400" : "text-gray-600"}
                   `}
                 >
@@ -175,44 +176,44 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.38 }}
                 className={`
-                  mt-7 border overflow-hidden
+                  mt-6 sm:mt-7 border overflow-hidden
                   ${darkMode ? "border-white/10 bg-[#071017]" : "border-gray-200 bg-[#FAFAFA]"}
                 `}
               >
-                <div className="flex items-center justify-between gap-4 p-5 flex-wrap">
-                  <div>
-                    <p className={`text-[10px] uppercase tracking-[0.18em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                <div className="flex items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 flex-wrap">
+                  <div className="min-w-0">
+                    <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.18em] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                       Tracking Reference
                     </p>
-                    <h3 className={`mt-2 text-[1.8rem] font-black tracking-[-0.05em] ${darkMode ? "text-white" : "text-black"}`}>
+                    <h3 className={`mt-1.5 sm:mt-2 text-[1.4rem] sm:text-[1.8rem] font-black tracking-[-0.04em] sm:tracking-[-0.05em] truncate ${darkMode ? "text-white" : "text-black"}`}>
                       NA-48291-XR
                     </h3>
                   </div>
-                  <div className="flex items-center gap-3 text-green-500 text-sm font-semibold">
-                    <FiActivity />
+                  <div className="flex items-center gap-2 sm:gap-3 text-green-500 text-xs sm:text-sm font-semibold whitespace-nowrap">
+                    <FiActivity className="shrink-0" />
                     Live Monitoring Enabled
                   </div>
                 </div>
               </motion.div>
 
               {/* TRACKING FLOW */}
-              <div className="mt-7">
-                <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+              <div className="mt-6 sm:mt-7">
+                <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5 flex-wrap">
                   <div>
-                    <h3 className={`text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+                    <h3 className={`text-base sm:text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
                       Response Tracking
                     </h3>
-                    <p className={`mt-1 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    <p className={`mt-1 text-xs sm:text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                       Real-time incident processing workflow.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-green-500 text-sm font-semibold">
-                    <FiTrendingUp />
+                  <div className="flex items-center gap-2 text-green-500 text-xs sm:text-sm font-semibold">
+                    <FiTrendingUp className="shrink-0" />
                     Processing
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {trackingSteps.map((item, index) => (
                     <motion.div
                       key={index}
@@ -220,7 +221,7 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.42 + index * 0.1 }}
                       className={`
-                        relative overflow-hidden border p-4
+                        relative overflow-hidden border p-3 sm:p-4
                         ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-gray-200 bg-gray-50"}
                       `}
                     >
@@ -232,11 +233,11 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                         />
                       )}
 
-                      <div className="relative z-10 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
+                      <div className="relative z-10 flex items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                           <div
                             className={`
-                              relative w-10 h-10 flex items-center justify-center text-base shrink-0
+                              relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-sm sm:text-base shrink-0
                               ${item.status === "completed"
                                 ? "bg-green-500 text-white"
                                 : item.status === "active"
@@ -264,14 +265,14 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                             )}
                           </div>
 
-                          <h4 className={`text-sm font-bold ${darkMode ? "text-white" : "text-black"}`}>
+                          <h4 className={`text-xs sm:text-sm font-bold leading-snug ${darkMode ? "text-white" : "text-black"}`}>
                             {item.title}
                           </h4>
                         </div>
 
                         <div
                           className={`
-                            px-3 py-1.5 text-[9px] uppercase tracking-[0.18em] font-black shrink-0
+                            px-2 py-1 sm:px-3 sm:py-1.5 text-[8px] sm:text-[9px] uppercase tracking-[0.14em] sm:tracking-[0.18em] font-black shrink-0
                             ${item.status === "completed"
                               ? "bg-green-500 text-white"
                               : item.status === "active"
@@ -291,7 +292,7 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
               </div>
 
               {/* RESPONSE DETAILS */}
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { icon: FiShield, title: "AI Verification",  desc: "Automated incident analysis running."   },
                   { icon: FiMapPin, title: "Location Routing", desc: "Emergency teams locating report."       },
@@ -304,19 +305,19 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.7 + index * 0.1 }}
                       className={`
-                        relative overflow-hidden border p-4
+                        relative overflow-hidden border p-3 sm:p-4
                         ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-gray-200 bg-gray-50"}
                       `}
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-green-500/10 flex items-center justify-center text-green-400 text-xl shrink-0">
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500/10 flex items-center justify-center text-green-400 text-lg sm:text-xl shrink-0">
                           <Icon />
                         </div>
-                        <div>
-                          <h4 className={`text-base font-black ${darkMode ? "text-white" : "text-black"}`}>
+                        <div className="min-w-0">
+                          <h4 className={`text-sm sm:text-base font-black ${darkMode ? "text-white" : "text-black"}`}>
                             {item.title}
                           </h4>
-                          <p className={`mt-1 text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                          <p className={`mt-1 text-xs sm:text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                             {item.desc}
                           </p>
                         </div>
@@ -331,16 +332,17 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.85 }}
-                className="mt-7"
+                className="mt-6 sm:mt-7"
               >
                 <Link
                   to="/reports"
                   onClick={onClose}
                   className="
-                    group relative overflow-hidden w-full h-14
+                    group relative overflow-hidden w-full h-12 sm:h-14
                     bg-green-500 hover:bg-green-400
-                    text-white font-black uppercase tracking-[0.18em]
-                    flex items-center justify-center gap-4
+                    text-white font-black uppercase tracking-[0.1em] sm:tracking-[0.18em]
+                    text-xs sm:text-base
+                    flex items-center justify-center gap-2 sm:gap-4
                     transition-all duration-300
                     shadow-[0_10px_40px_rgba(34,197,94,0.25)]
                   "
@@ -351,7 +353,7 @@ const ReportSuccessCard = ({ darkMode, onClose }) => {
                     className="absolute inset-0 bg-white/10 skew-x-12 pointer-events-none"
                   />
                   <span className="relative z-10">Track Your Report</span>
-                  <FiArrowRight className="relative z-10 text-lg transition-transform duration-300 group-hover:translate-x-1" />
+                  <FiArrowRight className="relative z-10 text-base sm:text-lg transition-transform duration-300 group-hover:translate-x-1 shrink-0" />
                 </Link>
               </motion.div>
 
