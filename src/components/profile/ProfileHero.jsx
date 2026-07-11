@@ -81,14 +81,17 @@ const ProfileHero = ({ darkMode }) => {
   // contributing user, instead of guessed/static values. ──────────────────
   const [rankData, setRankData] = useState(null);
   const [rankLoading, setRankLoading] = useState(true);
+  const [rankError, setRankError] = useState(false);
 
   const fetchRank = useCallback(async () => {
     setRankLoading(true);
+    setRankError(false);
     try {
       const data = await getContributorRank();
       setRankData(data);
     } catch (e) {
       setRankData(null);
+      setRankError(true);
     } finally {
       setRankLoading(false);
     }
@@ -99,9 +102,9 @@ const ProfileHero = ({ darkMode }) => {
   }, [fetchRank]);
 
   const nationAuraScore = rankData?.score ?? 0;
-  const rank = rankData?.rank; // null if user hasn't submitted any reports yet
+  const rank = rankData?.rank ?? null; // null if unranked OR if the fetch failed — both should render the same fallback
   const totalContributors = rankData?.totalContributors ?? 0;
-  const topPercent = rankData?.topPercent; // null if unranked
+  const topPercent = rankData?.topPercent ?? null; // same as above
 
   const displayValue = (n) => (loading ? "—" : `${n}`);
   const displayPercent = (n) => (loading ? "—%" : `${n}%`);
@@ -234,6 +237,11 @@ const ProfileHero = ({ darkMode }) => {
                     <FiAward />
                     Top {topPercent}% Contributor
                   </div>
+                ) : !rankLoading && rankError ? (
+                  <div className="flex items-center gap-2 px-3 py-2 border border-red-500/20 bg-red-500/5 text-sm opacity-70">
+                    <FiAward />
+                    Couldn't load rank
+                  </div>
                 ) : !rankLoading ? (
                   <div className="flex items-center gap-2 px-3 py-2 border border-gray-500/20 bg-gray-500/5 text-sm opacity-70">
                     <FiAward />
@@ -265,7 +273,7 @@ const ProfileHero = ({ darkMode }) => {
                     number if this user hasn't submitted a report yet. */}
                 <p className="text-xs text-gray-500 uppercase">National Rank</p>
                 <h4 className="text-xl sm:text-2xl font-black">
-                  {rankLoading ? "—" : rank !== null ? `#${rank}` : "Unranked"}
+                  {rankLoading ? "—" : rankError ? "—" : rank !== null ? `#${rank}` : "Unranked"}
                 </h4>
                 {!rankLoading && rank !== null && totalContributors > 0 && (
                   <p className="text-[11px] text-gray-500 mt-0.5">of {totalContributors.toLocaleString()} contributors</p>
