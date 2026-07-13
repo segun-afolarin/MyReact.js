@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -11,72 +12,113 @@ import {
   FiStar,
 } from "react-icons/fi";
 
+import { getMyReports, getConfirmedReports, getContributorRank } from "../../utils/api";
+
 const ProfileBadges = ({ darkMode }) => {
+  // ── Live personal data — badges are computed from real reports,
+  // confirmations given to others, and nationwide rank. There's no
+  // "badges" table in the schema, so "earned" thresholds below are a
+  // design choice, not extracted values — adjust freely. ────────────────
+  const [myReports, setMyReports] = useState([]);
+  const [confirmedReports, setConfirmedReports] = useState([]);
+  const [rankData, setRankData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [mine, confirmed, rank] = await Promise.all([
+        getMyReports().catch(() => ({ reports: [] })),
+        getConfirmedReports().catch(() => ({ reports: [] })),
+        getContributorRank().catch(() => null),
+      ]);
+      setMyReports(mine.reports || []);
+      setConfirmedReports(confirmed.reports || []);
+      setRankData(rank);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const verifiedCount = myReports.filter((r) => r.status === "Resolved" || r.status === "In Progress").length;
+  const hasHighQualityEvidence = myReports.some((r) => (parseInt(r.score, 10) || 0) >= 80);
+  const confirmedOthersCount = confirmedReports.length;
+  const topPercent = rankData?.topPercent ?? null;
+
   const badges = [
     {
       title: "First Report",
-      description:
-        "Successfully submitted your first verified report.",
+      description: "Successfully submitted your first verified report.",
       icon: FiStar,
-      earned: true,
+      earned: totalReports >= 1,
     },
-
     {
       title: "Evidence Expert",
-      description:
-        "Uploaded high-quality evidence that passed verification.",
+      description: "Uploaded high-quality evidence that passed verification.",
       icon: FiCamera,
-      earned: true,
+      // "High quality" = at least one report with a strong AI confidence score.
+      earned: hasHighQualityEvidence,
     },
-
     {
       title: "Community Guardian",
-      description:
-        "Helped protect and improve local communities.",
+      description: "Helped protect and improve local communities.",
       icon: FiShield,
-      earned: true,
+      // Guardian = has confirmed at least one OTHER citizen's report, not just your own.
+      earned: confirmedOthersCount >= 1,
     },
-
     {
       title: "Change Catalyst",
-      description:
-        "Triggered meaningful action through reporting.",
+      description: "Triggered meaningful action through reporting.",
       icon: FiZap,
-      earned: true,
+      // At least one of your reports passed the community-verification threshold.
+      earned: verifiedCount >= 1,
     },
-
     {
       title: "Impact Leader",
-      description:
-        "Reached a major civic influence milestone.",
+      description: "Reached a major civic influence milestone.",
       icon: FiTrendingUp,
-      earned: true,
+      // Top 20% nationally by Nation Aura Score.
+      earned: topPercent !== null && topPercent <= 20,
     },
-
     {
       title: "Resolution Champion",
-      description:
-        "Multiple reports successfully resolved.",
+      description: "Multiple reports successfully resolved.",
       icon: FiCheckCircle,
-      earned: true,
+      // "Multiple" = at least 3 resolved reports.
+      earned: resolvedCount >= 3,
     },
-
     {
       title: "National Contributor",
-      description:
-        "Recognized for nationwide impact.",
+      description: "Recognized for nationwide impact.",
       icon: FiAward,
-      earned: false,
+      // Top 5% nationally.
+      earned: topPercent !== null && topPercent <= 5,
     },
-
     {
       title: "Legend of Accountability",
-      description:
-        "Reserved for the most impactful citizens.",
+      description: "Reserved for the most impactful citizens.",
       icon: FiTarget,
-      earned: false,
+      // Top 1% nationally.
+      earned: topPercent !== null && topPercent <= 1,
     },
   ];
+
+  const earnedCount = badges.filter((b) => b.earned).length;
+  const totalBadges = badges.length;
+  const progressPct = Math.round((earnedCount / totalBadges) * 100);
+
+  const summaryMessage =
+    topPercent !== null && topPercent <= 50
+      ? "You are among the most active contributors on the platform."
+      : topPercent !== null
+      ? "Keep contributing to climb the ranks and unlock more badges."
+      : "Submit your first report to start earning badges.";
 
   return (
     <section
@@ -224,7 +266,7 @@ const ProfileBadges = ({ darkMode }) => {
                   }
                 `}
               >
-                6 / 8 Earned
+                {loading ? "—" : `${earnedCount} / ${totalBadges} Earned`}
               </h3>
             </div>
 
@@ -243,7 +285,7 @@ const ProfileBadges = ({ darkMode }) => {
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{
-                    width: "75%",
+                    width: `${loading ? 0 : progressPct}%`,
                   }}
                   viewport={{
                     once: true,
@@ -272,9 +314,7 @@ const ProfileBadges = ({ darkMode }) => {
                   }
                 `}
               >
-                You are among the most
-                active contributors on the
-                platform.
+                {loading ? "Checking your achievements..." : summaryMessage}
               </p>
             </div>
           </div>
@@ -392,7 +432,24 @@ const ProfileBadges = ({ darkMode }) => {
                 </p>
 
                 <div className="mt-5">
-                  {badge.earned ? (
+                  {loading ? (
+                    <span
+                      className="
+                        inline-flex
+                        items-center
+                        px-3
+                        py-1
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        bg-gray-500/10
+                        text-gray-400
+                      "
+                    >
+                      Checking...
+                    </span>
+                  ) : badge.earned ? (
                     <span
                       className="
                         inline-flex

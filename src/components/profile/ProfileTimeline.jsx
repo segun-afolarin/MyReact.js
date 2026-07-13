@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -7,72 +8,93 @@ import {
   FiActivity,
   FiCheckCircle,
   FiTrendingUp,
+  FiPlusCircle,
 } from "react-icons/fi";
+
+import { getMyReports, getContributorRank } from "../../utils/api";
+
+const formatDate = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+  });
+};
+
+// Icon + description per real status — no fabricated per-stage dates,
+// just an honest read of where each of the user's actual reports stands.
+const STATUS_META = {
+  Pending: {
+    icon: FiMapPin,
+    description: "Submitted and awaiting community verification.",
+  },
+  "In Progress": {
+    icon: FiActivity,
+    description: "Verified by citizens and escalated to the relevant authority.",
+  },
+  Resolved: {
+    icon: FiCheckCircle,
+    description: "Issue resolved and confirmed fixed by the community.",
+  },
+};
 
 const ProfileTimeline = ({
   darkMode,
 }) => {
-  const timeline = [
-    {
-      date: "May 02, 2026",
-      title:
-        "Road Damage Report Submitted",
-      description:
-        "Reported severe road deterioration with geo-tagged evidence.",
-      icon: FiMapPin,
-      status: "completed",
-    },
+  // ── Live personal data. There's no status-change history table in the
+  // schema (only created_at is stored per report), so this timeline is
+  // built from the real chronological list of the user's own reports and
+  // their real current status — not a fabricated multi-stage saga for a
+  // single report. ─────────────────────────────────────────────────────
+  const [myReports, setMyReports] = useState([]);
+  const [rankData, setRankData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    {
-      date: "May 03, 2026",
-      title:
-        "Evidence Verified",
-      description:
-        "AI and community validators confirmed authenticity.",
-      icon: FiCamera,
-      status: "completed",
-    },
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [mine, rank] = await Promise.all([
+        getMyReports().catch(() => ({ reports: [] })),
+        getContributorRank().catch(() => null),
+      ]);
+      const sorted = [...(mine.reports || [])].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      setMyReports(sorted);
+      setRankData(rank);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    {
-      date: "May 06, 2026",
-      title:
-        "Agency Escalation",
-      description:
-        "Report forwarded to responsible government agency.",
-      icon: FiShield,
-      status: "completed",
-    },
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
-    {
-      date: "May 14, 2026",
-      title:
-        "Public Engagement Surge",
-      description:
-        "Community members confirmed and amplified visibility.",
-      icon: FiActivity,
-      status: "completed",
-    },
+  const timeline = myReports.map((r) => {
+    const meta = STATUS_META[r.status] || STATUS_META.Pending;
+    return {
+      date: formatDate(r.createdAt),
+      title: r.title,
+      description: meta.description,
+      icon: meta.icon,
+      status: r.status === "Resolved" ? "highlight" : "completed",
+    };
+  });
 
-    {
-      date: "May 28, 2026",
-      title:
-        "Issue Resolved",
-      description:
-        "Road repairs completed and verified by citizens.",
-      icon: FiCheckCircle,
-      status: "completed",
-    },
-
-    {
-      date: "June 01, 2026",
-      title:
-        "Impact Recorded",
-      description:
-        "Resolution contributed to your Nation Aura score and civic legacy.",
+  // Real capstone entry — uses the actual Nation Aura Score / rank instead
+  // of a fabricated "Impact Recorded" summary.
+  const hasRank = rankData && rankData.rank !== null;
+  if (!loading && hasRank) {
+    timeline.push({
+      date: "Current Standing",
+      title: "Impact Recorded",
+      description: `Your civic contributions have earned a Nation Aura Score of ${rankData.score.toLocaleString()}, ranking #${rankData.rank} of ${rankData.totalContributors.toLocaleString()} contributors nationwide.`,
       icon: FiTrendingUp,
       status: "highlight",
-    },
-  ];
+    });
+  }
 
   return (
     <section
@@ -173,159 +195,186 @@ const ProfileTimeline = ({
           </p>
         </div>
 
-        {/* TIMELINE */}
-        <div
-          className="
-            relative
-            mt-12
-          "
-        >
-          {/* CENTER LINE */}
+        {/* TIMELINE / LOADING / EMPTY */}
+        {loading ? (
+          <div className="mt-12 space-y-6">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex gap-5 animate-pulse">
+                <div className={`h-10 w-10 rounded-full flex-shrink-0 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
+                <div className={`flex-1 border p-5 ${darkMode ? "bg-white/[0.03] border-white/10" : "bg-[#F8FAF9] border-gray-200"}`}>
+                  <div className={`h-4 w-1/3 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
+                  <div className={`h-3 w-2/3 mt-3 ${darkMode ? "bg-white/10" : "bg-gray-200"}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : timeline.length === 0 ? (
+          <div className={`mt-10 border p-8 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+            <FiPlusCircle className="mx-auto text-green-500" size={22} />
+            <p className={`mt-3 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+              Your Civic Journey Starts Here
+            </p>
+            <p className={`mt-2 text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              You haven't submitted a report yet. Submit your first one to begin building your impact timeline.
+            </p>
+          </div>
+        ) : (
           <div
             className="
-              absolute
-              left-[20px]
-              top-0
-              bottom-0
-              w-[2px]
-              bg-gradient-to-b
-              from-green-500
-              via-green-400
-              to-transparent
+              relative
+              mt-12
             "
-          />
+          >
+            {/* CENTER LINE */}
+            <div
+              className="
+                absolute
+                left-[20px]
+                top-0
+                bottom-0
+                w-[2px]
+                bg-gradient-to-b
+                from-green-500
+                via-green-400
+                to-transparent
+              "
+            />
 
-          <div className="space-y-8">
-            {timeline.map(
-              (item, index) => {
-                const Icon =
-                  item.icon;
+            <div className="space-y-8">
+              {timeline.map(
+                (item, index) => {
+                  const Icon =
+                    item.icon;
 
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{
-                      opacity: 0,
-                      x: -20,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      x: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      duration: 0.4,
-                    }}
-                    className="
-                      relative
-                      flex
-                      gap-5
-                    "
-                  >
-                    {/* ICON */}
-                    <div
-                      className={`
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{
+                        opacity: 0,
+                        x: -20,
+                      }}
+                      whileInView={{
+                        opacity: 1,
+                        x: 0,
+                      }}
+                      viewport={{
+                        once: true,
+                      }}
+                      transition={{
+                        duration: 0.4,
+                      }}
+                      className="
                         relative
-                        z-10
-                        h-10
-                        w-10
-                        flex-shrink-0
-                        rounded-full
                         flex
-                        items-center
-                        justify-center
-                        ${
-                          item.status ===
-                          "highlight"
-                            ? "bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.4)]"
-                            : darkMode
-                            ? "bg-[#102131] text-green-400"
-                            : "bg-green-100 text-green-700"
-                        }
-                      `}
+                        gap-5
+                      "
                     >
-                      <Icon />
-                    </div>
-
-                    {/* CONTENT */}
-                    <div
-                      className={`
-                        flex-1
-                        border
-                        p-5
-                        ${
-                          item.status ===
-                          "highlight"
-                            ? darkMode
-                              ? "bg-green-500/10 border-green-500/20"
-                              : "bg-green-50 border-green-200"
-                            : darkMode
-                            ? "bg-white/[0.03] border-white/10"
-                            : "bg-[#F8FAF9] border-gray-200"
-                        }
-                      `}
-                    >
+                      {/* ICON */}
                       <div
-                        className="
-                          flex
-                          flex-col
-                          md:flex-row
-                          md:items-center
-                          md:justify-between
-                          gap-2
-                        "
-                      >
-                        <h3
-                          className={`
-                            text-xl
-                            font-black
-                            ${
-                              darkMode
-                                ? "text-white"
-                                : "text-black"
-                            }
-                          `}
-                        >
-                          {item.title}
-                        </h3>
-
-                        <span
-                          className="
-                            text-xs
-                            uppercase
-                            tracking-[0.2em]
-                            text-green-500
-                            font-bold
-                          "
-                        >
-                          {item.date}
-                        </span>
-                      </div>
-
-                      <p
                         className={`
-                          mt-3
-                          leading-relaxed
+                          relative
+                          z-10
+                          h-10
+                          w-10
+                          flex-shrink-0
+                          rounded-full
+                          flex
+                          items-center
+                          justify-center
                           ${
-                            darkMode
-                              ? "text-gray-400"
-                              : "text-gray-600"
+                            item.status ===
+                            "highlight"
+                              ? "bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.4)]"
+                              : darkMode
+                              ? "bg-[#102131] text-green-400"
+                              : "bg-green-100 text-green-700"
                           }
                         `}
                       >
-                        {
-                          item.description
-                        }
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              }
-            )}
+                        <Icon />
+                      </div>
+
+                      {/* CONTENT */}
+                      <div
+                        className={`
+                          flex-1
+                          border
+                          p-5
+                          min-w-0
+                          ${
+                            item.status ===
+                            "highlight"
+                              ? darkMode
+                                ? "bg-green-500/10 border-green-500/20"
+                                : "bg-green-50 border-green-200"
+                              : darkMode
+                              ? "bg-white/[0.03] border-white/10"
+                              : "bg-[#F8FAF9] border-gray-200"
+                          }
+                        `}
+                      >
+                        <div
+                          className="
+                            flex
+                            flex-col
+                            md:flex-row
+                            md:items-center
+                            md:justify-between
+                            gap-2
+                          "
+                        >
+                          <h3
+                            className={`
+                              text-xl
+                              font-black
+                              break-words
+                              ${
+                                darkMode
+                                  ? "text-white"
+                                  : "text-black"
+                              }
+                            `}
+                          >
+                            {item.title}
+                          </h3>
+
+                          <span
+                            className="
+                              text-xs
+                              uppercase
+                              tracking-[0.2em]
+                              text-green-500
+                              font-bold
+                              shrink-0
+                            "
+                          >
+                            {item.date}
+                          </span>
+                        </div>
+
+                        <p
+                          className={`
+                            mt-3
+                            leading-relaxed
+                            ${
+                              darkMode
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            }
+                          `}
+                        >
+                          {
+                            item.description
+                          }
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                }
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* IMPACT SUMMARY */}
         <div

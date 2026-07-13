@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -7,18 +8,113 @@ import {
   FiShield,
   FiZap,
   FiArrowUpRight,
+  FiTrendingDown,
 } from "react-icons/fi";
+
+import { getMyReports, getContributorRank } from "../../utils/api";
 
 const ProfileImpactMeter = ({
   darkMode,
 }) => {
+  // ── Live personal data ───────────────────────────────────────────────
+  const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [rankData, setRankData] = useState(null);
+  const [rankLoading, setRankLoading] = useState(true);
+
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyReports();
+      setMyReports(data.reports || []);
+    } catch (e) {
+      setMyReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchRank = useCallback(async () => {
+    setRankLoading(true);
+    try {
+      const data = await getContributorRank();
+      setRankData(data);
+    } catch (e) {
+      setRankData(null);
+    } finally {
+      setRankLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    fetchRank();
+  }, [fetchReports, fetchRank]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const resolutionRate = totalReports > 0 ? Math.round((resolvedCount / totalReports) * 100) : 0;
+
+  // "Lives Impacted" — same real proxy used elsewhere on the profile:
+  // total citizen confirmations received across this user's own reports.
+  const livesImpacted = myReports.reduce((sum, r) => sum + (r.confirmations ?? 0), 0);
+
+  // "Projects Triggered" — reports that actually reached resolution
+  // (government action taken), i.e. the real resolvedCount. This is the
+  // one metric on the original card that maps cleanly onto real data.
+  const projectsTriggered = resolvedCount;
+
+  // "Community Trust" — same composite formula used across the profile
+  // (resolution rate + confirmation-fulfillment rate), not a stored value.
+  const avgConfirmationRate =
+    totalReports > 0
+      ? Math.round(
+          myReports.reduce(
+            (sum, r) => sum + Math.min((r.confirmations ?? 0) / (r.requiredConfirmations || 5), 1) * 100,
+            0
+          ) / totalReports
+        )
+      : 0;
+  const trustScore = totalReports > 0 ? Math.round((resolutionRate + avgConfirmationRate) / 2) : 0;
+
+  // Month-over-month submission growth — real, using each report's actual
+  // createdAt. This is what backs the "+X% this month" figure below.
+  const now = Date.now();
+  const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
+  const twoMonthsAgo = now - 60 * 24 * 60 * 60 * 1000;
+  const thisMonthCount = myReports.filter((r) => r.createdAt && new Date(r.createdAt).getTime() >= monthAgo).length;
+  const lastMonthCount = myReports.filter((r) => {
+    if (!r.createdAt) return false;
+    const t = new Date(r.createdAt).getTime();
+    return t >= twoMonthsAgo && t < monthAgo;
+  }).length;
+  const monthGrowth =
+    lastMonthCount > 0
+      ? Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100)
+      : thisMonthCount > 0
+      ? 100
+      : 0;
+
+  // "Influence Score" — using the same 0-100 Trust Score composite as the
+  // fill scale, so the progress bar and stage labels (New Contributor /
+  // Change Maker / National Leader) stay meaningful as a 0-100 range.
+  const influenceScore = trustScore;
+
+  const displayValue = (n) => (loading ? "—" : n.toLocaleString());
+  const displayPercent = (n) => (loading ? "—%" : `${n}%`);
+
+  // NOTE: "Estimated Savings" stays static. There's no per-category
+  // cost-of-inaction data anywhere in the schema to compute a real naira
+  // figure — inventing one here would be a financial claim with literally
+  // nothing behind it, a step beyond the other approximated metrics.
   const metrics = [
     {
       icon: FiUsers,
-      value: "1,247",
+      value: displayValue(livesImpacted),
       label: "Lives Impacted",
       description:
-        "Citizens positively affected by resolved community reports.",
+        "Citizens who confirmed your reported issues.",
     },
 
     {
@@ -31,15 +127,15 @@ const ProfileImpactMeter = ({
 
     {
       icon: FiZap,
-      value: "14",
+      value: displayValue(projectsTriggered),
       label: "Projects Triggered",
       description:
-        "Verified reports that led to action and intervention.",
+        "Your reports that reached resolution and government action.",
     },
 
     {
       icon: FiShield,
-      value: "96%",
+      value: displayPercent(trustScore),
       label: "Community Trust",
       description:
         "Confidence score earned from consistent quality reporting.",
@@ -190,22 +286,22 @@ const ProfileImpactMeter = ({
                 tracking-tight
               "
             >
-              92
+              {loading ? "—" : influenceScore}
             </h3>
 
             <div
-              className="
+              className={`
                 mt-2
                 flex
                 items-center
                 gap-2
-                text-green-500
                 font-bold
                 text-sm
-              "
+                ${monthGrowth >= 0 ? "text-green-500" : "text-red-400"}
+              `}
             >
-              <FiArrowUpRight />
-              +18% this month
+              {monthGrowth >= 0 ? <FiArrowUpRight /> : <FiTrendingDown />}
+              {loading ? "—" : `${monthGrowth >= 0 ? "+" : ""}${monthGrowth}% this month`}
             </div>
           </div>
         </div>
@@ -228,7 +324,7 @@ const ProfileImpactMeter = ({
                 width: 0,
               }}
               whileInView={{
-                width: "92%",
+                width: `${loading ? 0 : influenceScore}%`,
               }}
               viewport={{
                 once: true,
