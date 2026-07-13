@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -15,6 +15,7 @@ import {
   FiCalendar,
   FiCheck,
   FiLink,
+  FiFileText,
 } from "react-icons/fi";
 import {
   FaWhatsapp,
@@ -22,184 +23,91 @@ import {
   FaFacebookF,
 } from "react-icons/fa6";
 
+import { getMyReports } from "../../utils/api";
+
+const formatDate = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const daysBetween = (startIso, endIso) => {
+  if (!startIso || !endIso) return null;
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
+};
+
+// Build the real "Verification Journey" for a report from data we actually
+// have (createdAt, current confirmations vs required, updatedAt for
+// resolved reports) — no fabricated intermediate dates or agency names,
+// since there's no status-history table logging when each stage happened.
+const buildTimeline = (report) => {
+  const steps = [
+    {
+      label: "Report submitted",
+      detail: "Filed with photo evidence and location.",
+      date: formatDate(report.createdAt),
+    },
+    {
+      label: "Community verified",
+      detail: `${report.confirmations} of ${report.requiredConfirmations} required citizen confirmations received.`,
+      date: null, // exact verification date isn't tracked — only the running total is
+    },
+  ];
+
+  if (report.status === "Resolved") {
+    steps.push({
+      label: "Issue resolved",
+      detail: "Confirmed fixed by the community.",
+      date: formatDate(report.updatedAt),
+    });
+  }
+
+  return steps;
+};
+
 const ProfileImpactPortfolio = ({
   darkMode,
 }) => {
   const [activeStory, setActiveStory] =
     useState(null);
 
-  // NOTE: each project carries a `story` object.
-  // This is the exact shape the backend endpoint
-  // (e.g. GET /api/reports/:id/story) should return —
-  // swap the hardcoded arrays below for a fetch keyed
-  // on project.id once the API is live.
-  const projects = [
-    {
-      id: "road-rehab-amac",
-      title:
-        "Road Rehabilitation Initiative",
-      location:
-        "Abuja Municipal Area Council",
-      status: "Resolved",
-      impact: "12,400",
-      savings: "₦4.2M",
-      score: "94",
-      image:
-        "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80",
-      story: {
-        summary:
-          "A pothole cluster on the AMAC feeder road had caused repeated accidents and daily gridlock. This report triggered community verification, official inspection, and a full repair within 26 days.",
-        reportedOn: "Mar 2, 2026",
-        resolvedOn: "Mar 28, 2026",
-        timeline: [
-          {
-            label: "Report submitted",
-            detail:
-              "Citizen report filed with photo evidence and GPS location.",
-            date: "Mar 2",
-          },
-          {
-            label: "Community verified",
-            detail:
-              "1,843 nearby residents confirmed the issue and upvoted the report.",
-            date: "Mar 6",
-          },
-          {
-            label: "Agency assigned",
-            detail:
-              "AMAC Works Department opened a case and scheduled a site visit.",
-            date: "Mar 11",
-          },
-          {
-            label: "Repairs completed",
-            detail:
-              "Road resurfaced and reopened to traffic.",
-            date: "Mar 28",
-          },
-        ],
-        gallery: [
-          "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80",
-          "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&q=80",
-          "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80",
-        ],
-        testimonial: {
-          quote:
-            "We used this road every day and feared for our children. Seeing it fixed within a month restored our trust in the process.",
-          name: "Resident, Abuja Municipal",
-        },
-      },
-    },
+  // ── Live personal data — real resolved reports only. No fabricated
+  // testimonials (no feedback/testimonial system exists in the schema —
+  // that section is removed rather than replaced with invented quotes). ──
+  const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    {
-      id: "school-kubwa",
-      title:
-        "School Facility Restoration",
-      location: "Kubwa",
-      status: "Resolved",
-      impact: "3,800",
-      savings: "₦1.7M",
-      score: "89",
-      image:
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80",
-      story: {
-        summary:
-          "A collapsed classroom roof at a Kubwa primary school put pupils at risk during rainy season. Verified reporting pushed emergency restoration through.",
-        reportedOn: "Jan 14, 2026",
-        resolvedOn: "Feb 9, 2026",
-        timeline: [
-          {
-            label: "Report submitted",
-            detail:
-              "Parent-teacher association filed a structural hazard report.",
-            date: "Jan 14",
-          },
-          {
-            label: "Community verified",
-            detail:
-              "612 local guardians confirmed the risk.",
-            date: "Jan 17",
-          },
-          {
-            label: "Agency assigned",
-            detail:
-              "SUBEB flagged the school for emergency works.",
-            date: "Jan 24",
-          },
-          {
-            label: "Repairs completed",
-            detail:
-              "Roof rebuilt ahead of the new term.",
-            date: "Feb 9",
-          },
-        ],
-        gallery: [
-          "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
-          "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",
-          "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",
-        ],
-        testimonial: {
-          quote:
-            "Our pupils can finally sit through a rainy day without moving desks across the room.",
-          name: "Headteacher, Kubwa Primary",
-        },
-      },
-    },
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyReports();
+      setMyReports(data.reports || []);
+    } catch (e) {
+      setMyReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    {
-      id: "water-lugbe",
-      title:
-        "Community Water Access",
-      location: "Lugbe",
-      status: "Completed",
-      impact: "8,200",
-      savings: "₦2.8M",
-      score: "91",
-      image:
-        "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=1200&q=80",
-      story: {
-        summary:
-          "A borehole serving three Lugbe streets had been non-functional for months, forcing residents to walk over a kilometre for water. Citizen escalation restored access within weeks.",
-        reportedOn: "Apr 18, 2026",
-        resolvedOn: "May 12, 2026",
-        timeline: [
-          {
-            label: "Report submitted",
-            detail:
-              "Broken borehole reported with usage history.",
-            date: "Apr 18",
-          },
-          {
-            label: "Community verified",
-            detail:
-              "1,205 residents confirmed the outage.",
-            date: "Apr 22",
-          },
-          {
-            label: "Agency assigned",
-            detail:
-              "FCT Water Board scheduled a repair crew.",
-            date: "Apr 30",
-          },
-          {
-            label: "Access restored",
-            detail:
-              "Pump repaired and water flow tested by residents.",
-            date: "May 12",
-          },
-        ],
-        gallery: [
-          "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=800&q=80",
-          "https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=800&q=80",
-          "https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=800&q=80",
-        ],
-        testimonial: {
-          quote:
-            "My daughters used to miss school to fetch water. Now that time goes back to their studies.",
-          name: "Resident, Lugbe",
-        },
-      },
-    },
-  ];
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+
+  const resolvedReports = myReports
+    .filter((r) => r.status === "Resolved")
+    .map((r) => ({
+      ...r,
+      scoreNum: parseInt(r.score, 10) || 0,
+      daysToResolve: daysBetween(r.createdAt, r.updatedAt),
+      gallery: r.images && r.images.length > 0 ? r.images : r.image ? [r.image] : [],
+    }))
+    .sort((a, b) => b.scoreNum - a.scoreNum); // highest AI score first
+
+  const featured = resolvedReports[0] || null;
 
   const [downloadState, setDownloadState] =
     useState("idle"); // idle | loading | done
@@ -220,9 +128,9 @@ const ProfileImpactPortfolio = ({
     setCopied(false);
   };
 
-  const openStory = (project) => {
+  const openStory = (report) => {
     resetActionState();
-    setActiveStory(project);
+    setActiveStory(report);
   };
 
   const closeStory = () => {
@@ -230,11 +138,12 @@ const ProfileImpactPortfolio = ({
     resetActionState();
   };
 
-  // NOTE: swap this simulated timer for
-  // the real PDF generation request, e.g.
-  // POST /api/reports/:id/export — keep the
-  // same progress/done state transitions so
-  // the UI doesn't need to change.
+  // NOTE: this is still a simulated progress bar, not a real PDF export —
+  // there's no backend endpoint that generates one yet (e.g.
+  // POST /api/reports/:id/export). Flagging this explicitly rather than
+  // pretending it produces a real file. Wire this up to a real request
+  // once that endpoint exists; the progress/done state transitions here
+  // are already shaped to drop straight into that flow.
   const handleDownload = () => {
     if (downloadState !== "idle") return;
     setDownloadState("loading");
@@ -268,15 +177,27 @@ const ProfileImpactPortfolio = ({
       requestAnimationFrame(tick);
   };
 
+  const shareUrl = `https://nationaura.app/reports/${activeStory?.reportId ?? ""}`;
+  const shareText = activeStory ? `${activeStory.title} — verified by citizens on NationAura` : "";
+
+  const handleShareClick = (platform) => {
+    let url = "";
+    if (platform === "whatsapp") {
+      url = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+    } else if (platform === "x") {
+      url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    } else if (platform === "facebook") {
+      url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    }
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const handleCopyLink = () => {
-    const url = `https://nationaura.app/reports/${
-      activeStory?.id ?? ""
-    }`;
     if (
       navigator?.clipboard?.writeText
     ) {
       navigator.clipboard
-        .writeText(url)
+        .writeText(shareUrl)
         .catch(() => {});
     }
     setCopied(true);
@@ -379,357 +300,359 @@ const ProfileImpactPortfolio = ({
               }
             `}
           >
-            These are the projects and
-            reports that generated the
-            greatest measurable change in
-            communities through citizen
-            participation, verification,
-            and accountability.
+            These are your reports that reached resolution — verified by citizens
+            and acted on, one real record at a time.
           </p>
         </div>
 
-        {/* FEATURED CONTRIBUTION */}
-        <div
-          className={`
-            mt-8
-            border
-            overflow-hidden
-            ${
-              darkMode
-                ? `
-                  bg-green-500/[0.05]
-                  border-green-500/20
-                `
-                : `
-                  bg-green-50
-                  border-green-200
-                `
-            }
-          `}
-        >
-          <div
-            className="
-              p-6
-              lg:p-8
-            "
-          >
+        {/* LOADING */}
+        {loading && (
+          <div className={`mt-8 border p-8 text-center animate-pulse ${darkMode ? "border-white/10" : "border-gray-200"}`}>
+            <p className={darkMode ? "text-gray-500" : "text-gray-400"}>Loading your resolved reports...</p>
+          </div>
+        )}
+
+        {/* EMPTY STATE */}
+        {!loading && resolvedReports.length === 0 && (
+          <div className={`mt-8 border p-8 text-center ${darkMode ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
+            <FiFileText className="mx-auto text-green-500" size={22} />
+            <p className={`mt-3 text-lg font-black ${darkMode ? "text-white" : "text-black"}`}>
+              No Resolved Reports Yet
+            </p>
+            <p className={`mt-2 text-sm max-w-md mx-auto ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Once one of your reports is confirmed by the community and marked resolved, it'll show up here as an impact story.
+            </p>
+          </div>
+        )}
+
+        {!loading && featured && (
+          <>
+            {/* FEATURED CONTRIBUTION */}
             <div
-              className="
-                flex
-                items-center
-                gap-2
-                text-green-500
-                font-black
-                uppercase
-                tracking-[0.2em]
-                text-xs
-              "
-            >
-              <FiAward />
-              Most Impactful Contribution
-            </div>
-
-            <h3
-              className="
-                mt-4
-                text-3xl
-                lg:text-4xl
-                font-black
-              "
-            >
-              Road Rehabilitation
-              Initiative
-            </h3>
-
-            <p
               className={`
-                mt-4
-                max-w-3xl
-                leading-relaxed
+                mt-8
+                border
+                overflow-hidden
                 ${
                   darkMode
-                    ? "text-gray-300"
-                    : "text-gray-700"
+                    ? `
+                      bg-green-500/[0.05]
+                      border-green-500/20
+                    `
+                    : `
+                      bg-green-50
+                      border-green-200
+                    `
                 }
               `}
             >
-              This report initiated public
-              awareness, community
-              verification, government
-              review, and successful road
-              repairs within 26 days,
-              improving safety and
-              accessibility for thousands
-              of citizens.
-            </p>
-
-            <div
-              className="
-                mt-6
-                grid
-                grid-cols-2
-                lg:grid-cols-4
-                gap-4
-              "
-            >
-              {[
-                {
-                  label:
-                    "Citizens Impacted",
-                  value: "12,400",
-                },
-
-                {
-                  label:
-                    "Community Votes",
-                  value: "1,843",
-                },
-
-                {
-                  label:
-                    "Estimated Savings",
-                  value: "₦4.2M",
-                },
-
-                {
-                  label:
-                    "Impact Score",
-                  value: "94",
-                },
-              ].map((item, index) => (
+              <div
+                className="
+                  p-6
+                  lg:p-8
+                "
+              >
                 <div
-                  key={index}
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    text-green-500
+                    font-black
+                    uppercase
+                    tracking-[0.2em]
+                    text-xs
+                  "
+                >
+                  <FiAward />
+                  Most Impactful Contribution
+                </div>
+
+                <h3
+                  className="
+                    mt-4
+                    text-3xl
+                    lg:text-4xl
+                    font-black
+                  "
+                >
+                  {featured.title}
+                </h3>
+
+                <p
                   className={`
-                    p-4
-                    border
+                    mt-4
+                    max-w-3xl
+                    leading-relaxed
                     ${
                       darkMode
-                        ? `
-                          bg-white/[0.03]
-                          border-white/10
-                        `
-                        : `
-                          bg-white
-                          border-green-100
-                        `
+                        ? "text-gray-300"
+                        : "text-gray-700"
                     }
                   `}
                 >
-                  <p
-                    className="
-                      text-xs
-                      uppercase
-                      text-green-500
-                      font-bold
-                    "
-                  >
-                    {item.label}
-                  </p>
+                  {featured.description}
+                </p>
 
-                  <h4
-                    className="
-                      mt-2
-                      text-2xl
-                      font-black
-                    "
-                  >
-                    {item.value}
-                  </h4>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* PROJECTS */}
-        <div
-          className="
-            mt-8
-            grid
-            grid-cols-1
-            xl:grid-cols-3
-            gap-5
-          "
-        >
-          {projects.map(
-            (project, index) => (
-              <motion.div
-                key={project.id}
-                whileHover={{
-                  y: -6,
-                }}
-                className={`
-                  overflow-hidden
-                  border
-                  ${
-                    darkMode
-                      ? `
-                        bg-white/[0.03]
-                        border-white/10
-                      `
-                      : `
-                        bg-[#F8FAF9]
-                        border-gray-200
-                      `
-                  }
-                `}
-              >
-                <img
-                  src={project.image}
-                  alt={project.title}
+                <div
                   className="
-                    h-52
-                    w-full
-                    object-cover
+                    mt-6
+                    grid
+                    grid-cols-2
+                    lg:grid-cols-4
+                    gap-4
                   "
-                />
-
-                <div className="p-5">
-                  <div
-                    className="
-                      flex
-                      items-center
-                      justify-between
-                    "
-                  >
-                    <span
-                      className="
-                        px-3
-                        py-1
-                        bg-green-500/10
-                        text-green-500
-                        text-xs
-                        font-bold
-                      "
+                >
+                  {[
+                    {
+                      label: "Community Votes",
+                      value: `${featured.confirmations}`,
+                    },
+                    {
+                      label: "Impact Score",
+                      value: `${featured.scoreNum}%`,
+                    },
+                    {
+                      label: "Days to Resolve",
+                      value: featured.daysToResolve !== null ? `${featured.daysToResolve}` : "—",
+                    },
+                    {
+                      label: "Status",
+                      value: "Resolved",
+                    },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      className={`
+                        p-4
+                        border
+                        ${
+                          darkMode
+                            ? `
+                              bg-white/[0.03]
+                              border-white/10
+                            `
+                            : `
+                              bg-white
+                              border-green-100
+                            `
+                        }
+                      `}
                     >
-                      {project.status}
-                    </span>
-
-                    <span
-                      className="
-                        text-green-500
-                        font-black
-                      "
-                    >
-                      {project.score}
-                    </span>
-                  </div>
-
-                  <h3
-                    className="
-                      mt-4
-                      text-xl
-                      font-black
-                    "
-                  >
-                    {project.title}
-                  </h3>
-
-                  <div
-                    className="
-                      mt-2
-                      flex
-                      items-center
-                      gap-2
-                      text-sm
-                      text-green-500
-                    "
-                  >
-                    <FiMapPin />
-                    {project.location}
-                  </div>
-
-                  <div
-                    className="
-                      mt-5
-                      grid
-                      grid-cols-2
-                      gap-3
-                    "
-                  >
-                    <div>
-                      <div
-                        className="
-                          flex
-                          items-center
-                          gap-2
-                          text-green-500
-                        "
-                      >
-                        <FiUsers />
-                        <span>
-                          Impact
-                        </span>
-                      </div>
-
                       <p
                         className="
-                          mt-1
+                          text-xs
+                          uppercase
+                          text-green-500
+                          font-bold
+                        "
+                      >
+                        {item.label}
+                      </p>
+
+                      <h4
+                        className="
+                          mt-2
+                          text-2xl
                           font-black
                         "
                       >
-                        {
-                          project.impact
-                        }
-                      </p>
+                        {item.value}
+                      </h4>
                     </div>
-
-                    <div>
-                      <div
-                        className="
-                          flex
-                          items-center
-                          gap-2
-                          text-green-500
-                        "
-                      >
-                        <FiTrendingUp />
-                        <span>
-                          Savings
-                        </span>
-                      </div>
-
-                      <p
-                        className="
-                          mt-1
-                          font-black
-                        "
-                      >
-                        {
-                          project.savings
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      openStory(project)
-                    }
-                    className="
-                      mt-6
-                      w-full
-                      flex
-                      items-center
-                      justify-center
-                      gap-2
-                      py-3
-                      bg-green-500
-                      text-white
-                      font-bold
-                      transition-transform
-                      active:scale-[0.98]
-                      hover:bg-green-600
-                    "
-                  >
-                    View Impact Story
-                    <FiArrowUpRight />
-                  </button>
+                  ))}
                 </div>
-              </motion.div>
-            )
-          )}
-        </div>
+              </div>
+            </div>
+
+            {/* PROJECTS */}
+            <div
+              className="
+                mt-8
+                grid
+                grid-cols-1
+                xl:grid-cols-3
+                gap-5
+              "
+            >
+              {resolvedReports.map(
+                (report) => (
+                  <motion.div
+                    key={report.reportId}
+                    whileHover={{
+                      y: -6,
+                    }}
+                    className={`
+                      overflow-hidden
+                      border
+                      ${
+                        darkMode
+                          ? `
+                            bg-white/[0.03]
+                            border-white/10
+                          `
+                          : `
+                            bg-[#F8FAF9]
+                            border-gray-200
+                          `
+                      }
+                    `}
+                  >
+                    <img
+                      src={report.image || "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80"}
+                      alt={report.title}
+                      className="
+                        h-52
+                        w-full
+                        object-cover
+                      "
+                    />
+
+                    <div className="p-5">
+                      <div
+                        className="
+                          flex
+                          items-center
+                          justify-between
+                        "
+                      >
+                        <span
+                          className="
+                            px-3
+                            py-1
+                            bg-green-500/10
+                            text-green-500
+                            text-xs
+                            font-bold
+                          "
+                        >
+                          Resolved
+                        </span>
+
+                        <span
+                          className="
+                            text-green-500
+                            font-black
+                          "
+                        >
+                          {report.scoreNum}%
+                        </span>
+                      </div>
+
+                      <h3
+                        className="
+                          mt-4
+                          text-xl
+                          font-black
+                          break-words
+                        "
+                      >
+                        {report.title}
+                      </h3>
+
+                      <div
+                        className="
+                          mt-2
+                          flex
+                          items-center
+                          gap-2
+                          text-sm
+                          text-green-500
+                        "
+                      >
+                        <FiMapPin />
+                        <span className="truncate">{report.location}</span>
+                      </div>
+
+                      <div
+                        className="
+                          mt-5
+                          grid
+                          grid-cols-2
+                          gap-3
+                        "
+                      >
+                        <div>
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              text-green-500
+                            "
+                          >
+                            <FiUsers />
+                            <span>
+                              Votes
+                            </span>
+                          </div>
+
+                          <p
+                            className="
+                              mt-1
+                              font-black
+                            "
+                          >
+                            {report.confirmations}
+                          </p>
+                        </div>
+
+                        <div>
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              text-green-500
+                            "
+                          >
+                            <FiTrendingUp />
+                            <span>
+                              Days
+                            </span>
+                          </div>
+
+                          <p
+                            className="
+                              mt-1
+                              font-black
+                            "
+                          >
+                            {report.daysToResolve !== null ? report.daysToResolve : "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          openStory(report)
+                        }
+                        className="
+                          mt-6
+                          w-full
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
+                          py-3
+                          bg-green-500
+                          text-white
+                          font-bold
+                          transition-transform
+                          active:scale-[0.98]
+                          hover:bg-green-600
+                        "
+                      >
+                        View Impact Story
+                        <FiArrowUpRight />
+                      </button>
+                    </div>
+                  </motion.div>
+                )
+              )}
+            </div>
+          </>
+        )}
 
         {/* LEGACY */}
         <div
@@ -852,7 +775,7 @@ const ProfileImpactPortfolio = ({
               <div className="relative h-36 sm:h-44 lg:h-48 w-full overflow-hidden">
                 <img
                   src={
-                    activeStory.image
+                    activeStory.image || "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80"
                   }
                   alt={
                     activeStory.title
@@ -908,16 +831,16 @@ const ProfileImpactPortfolio = ({
                       font-bold
                     "
                   >
-                    {activeStory.status}
+                    Resolved
                   </span>
 
-                  <h3 className="mt-2 text-xl sm:text-2xl lg:text-3xl font-black text-white leading-tight">
+                  <h3 className="mt-2 text-xl sm:text-2xl lg:text-3xl font-black text-white leading-tight break-words">
                     {activeStory.title}
                   </h3>
 
                   <div className="mt-1 flex items-center gap-2 text-sm text-green-300">
                     <FiMapPin />
-                    {activeStory.location}
+                    <span className="truncate">{activeStory.location}</span>
                   </div>
                 </div>
               </div>
@@ -927,19 +850,16 @@ const ProfileImpactPortfolio = ({
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     {
-                      label: "Impacted",
-                      value:
-                        activeStory.impact,
-                    },
-                    {
-                      label: "Savings",
-                      value:
-                        activeStory.savings,
+                      label: "Votes",
+                      value: `${activeStory.confirmations}`,
                     },
                     {
                       label: "Score",
-                      value:
-                        activeStory.score,
+                      value: `${activeStory.scoreNum}%`,
+                    },
+                    {
+                      label: "Days",
+                      value: activeStory.daysToResolve !== null ? `${activeStory.daysToResolve}` : "—",
                     },
                   ].map((s, i) => (
                     <motion.div
@@ -978,7 +898,7 @@ const ProfileImpactPortfolio = ({
                   ))}
                 </div>
 
-                {/* summary */}
+                {/* summary — the report's real description */}
                 <motion.p
                   initial={{
                     opacity: 0,
@@ -999,10 +919,7 @@ const ProfileImpactPortfolio = ({
                     }
                   `}
                 >
-                  {
-                    activeStory.story
-                      .summary
-                  }
+                  {activeStory.description}
                 </motion.p>
 
                 <div
@@ -1020,19 +937,10 @@ const ProfileImpactPortfolio = ({
                   `}
                 >
                   <FiCalendar />
-                  Reported{" "}
-                  {
-                    activeStory.story
-                      .reportedOn
-                  }{" "}
-                  &middot; Resolved{" "}
-                  {
-                    activeStory.story
-                      .resolvedOn
-                  }
+                  Reported {formatDate(activeStory.createdAt)} &middot; Resolved {formatDate(activeStory.updatedAt)}
                 </div>
 
-                {/* timeline */}
+                {/* timeline — built from real data only */}
                 <h4 className="mt-7 text-sm font-black uppercase tracking-[0.2em] text-green-500">
                   Verification Journey
                 </h4>
@@ -1053,7 +961,7 @@ const ProfileImpactPortfolio = ({
                     `}
                   />
 
-                  {activeStory.story.timeline.map(
+                  {buildTimeline(activeStory).map(
                     (step, i) => (
                       <motion.div
                         key={
@@ -1101,11 +1009,13 @@ const ProfileImpactPortfolio = ({
                               step.label
                             }
                           </p>
-                          <span className="text-xs text-green-500 font-bold whitespace-nowrap">
-                            {
-                              step.date
-                            }
-                          </span>
+                          {step.date && (
+                            <span className="text-xs text-green-500 font-bold whitespace-nowrap">
+                              {
+                                step.date
+                              }
+                            </span>
+                          )}
                         </div>
 
                         <p
@@ -1129,78 +1039,50 @@ const ProfileImpactPortfolio = ({
                   )}
                 </div>
 
-                {/* gallery */}
-                <h4 className="mt-2 text-sm font-black uppercase tracking-[0.2em] text-green-500">
-                  Evidence Gallery
-                </h4>
+                {/* gallery — this report's real uploaded evidence photos */}
+                {activeStory.gallery.length > 0 && (
+                  <>
+                    <h4 className="mt-2 text-sm font-black uppercase tracking-[0.2em] text-green-500">
+                      Evidence Gallery
+                    </h4>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {activeStory.story.gallery.map(
-                    (img, i) => (
-                      <motion.img
-                        key={i}
-                        src={img}
-                        alt={`${activeStory.title} evidence ${i + 1}`}
-                        initial={{
-                          opacity: 0,
-                          scale: 0.9,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          scale: 1,
-                        }}
-                        transition={{
-                          delay:
-                            0.25 +
-                            i * 0.06,
-                        }}
-                        className="h-24 sm:h-28 lg:h-32 w-full object-cover"
-                      />
-                    )
-                  )}
-                </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {activeStory.gallery.map(
+                        (img, i) => (
+                          <motion.img
+                            key={i}
+                            src={img}
+                            alt={`${activeStory.title} evidence ${i + 1}`}
+                            initial={{
+                              opacity: 0,
+                              scale: 0.9,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              scale: 1,
+                            }}
+                            transition={{
+                              delay:
+                                0.25 +
+                                i * 0.06,
+                            }}
+                            className="h-24 sm:h-28 lg:h-32 w-full object-cover"
+                          />
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
 
-                {/* testimonial */}
-                <div
-                  className={`
-                    mt-6
-                    border-l-4
-                    border-green-500
-                    pl-4
-                    py-1
-                  `}
-                >
-                  <p
-                    className={`
-                      italic
-                      leading-relaxed
-                      ${
-                        darkMode
-                          ? "text-gray-300"
-                          : "text-gray-700"
-                      }
-                    `}
-                  >
-                    "
-                    {
-                      activeStory.story
-                        .testimonial
-                        .quote
-                    }
-                    "
-                  </p>
-                  <p className="mt-2 text-xs font-bold text-green-500">
-                    {
-                      activeStory.story
-                        .testimonial
-                        .name
-                    }
-                  </p>
-                </div>
+                {/* NOTE: testimonial section intentionally removed — there's
+                    no feedback/testimonial system in the schema, so there's
+                    no real quote to show here. Fabricating one and
+                    attributing it to "a resident" would be inventing
+                    content, not approximating a number. */}
 
                 {/* actions */}
                 <div className="mt-7 flex flex-col sm:flex-row gap-3">
-                  {/* SHARE — expands into a social row */}
+                  {/* SHARE — expands into a social row, now functional */}
                   <div className="flex-1 relative">
                     <AnimatePresence
                       mode="wait"
@@ -1288,6 +1170,7 @@ const ProfileImpactPortfolio = ({
                               ),
                               label:
                                 "WhatsApp",
+                              platform: "whatsapp",
                             },
                             {
                               icon: (
@@ -1299,6 +1182,7 @@ const ProfileImpactPortfolio = ({
                               ),
                               label:
                                 "X",
+                              platform: "x",
                             },
                             {
                               icon: (
@@ -1310,6 +1194,7 @@ const ProfileImpactPortfolio = ({
                               ),
                               label:
                                 "Facebook",
+                              platform: "facebook",
                             },
                           ].map(
                             (
@@ -1320,6 +1205,7 @@ const ProfileImpactPortfolio = ({
                                 key={
                                   item.label
                                 }
+                                onClick={() => handleShareClick(item.platform)}
                                 aria-label={`Share on ${item.label}`}
                                 initial={{
                                   opacity: 0,
@@ -1473,7 +1359,7 @@ const ProfileImpactPortfolio = ({
                     </AnimatePresence>
                   </div>
 
-                  {/* DOWNLOAD — live progress fill */}
+                  {/* DOWNLOAD — simulated progress; not a real PDF export yet, see note above */}
                   <button
                     onClick={
                       handleDownload
