@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -10,28 +11,80 @@ import {
   FiShield,
 } from "react-icons/fi";
 
+import { getMyReports, getContributorRank } from "../../utils/api";
+
 const ProfileRanking = ({
   darkMode,
 }) => {
+  // ── Live data: getContributorRank() for real nationwide + state
+  // rankings, getMyReports() for the Reputation Score composite (same
+  // formula used elsewhere on the profile). ──────────────────────────────
+  const [myReports, setMyReports] = useState([]);
+  const [rankData, setRankData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [mine, rank] = await Promise.all([
+        getMyReports().catch(() => ({ reports: [] })),
+        getContributorRank().catch(() => null),
+      ]);
+      setMyReports(mine.reports || []);
+      setRankData(rank);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const totalReports = myReports.length;
+  const resolvedCount = myReports.filter((r) => r.status === "Resolved").length;
+  const resolutionRate = totalReports > 0 ? Math.round((resolvedCount / totalReports) * 100) : 0;
+  const avgConfirmationRate =
+    totalReports > 0
+      ? Math.round(
+          myReports.reduce(
+            (sum, r) => sum + Math.min((r.confirmations ?? 0) / (r.requiredConfirmations || 5), 1) * 100,
+            0
+          ) / totalReports
+        )
+      : 0;
+  // "Reputation Score" — same composite used across the profile (resolution
+  // rate + confirmation-fulfillment rate), not a stored value.
+  const reputationScore = totalReports > 0 ? Math.round((resolutionRate + avgConfirmationRate) / 2) : 0;
+
+  const stateName = rankData?.state ?? null;
+  const nationalRank = rankData?.rank ?? null;
+  const nationalTopPercent = rankData?.topPercent ?? null;
+  const nationalTotal = rankData?.totalContributors ?? 0;
+
+  const stateRank = rankData?.stateRank ?? null;
+  const stateTopPercent = rankData?.stateTopPercent ?? null;
+  const stateTotal = rankData?.stateTotalContributors ?? 0;
+
+  const isRanked = nationalRank !== null;
+
+  // "Percentile toward the top" — reused as the progress-bar fill and the
+  // featured "Top X%" banner, since that's the one real percentile figure
+  // this data actually supports (there's no separate milestone system).
+  const nationalOutperform = nationalTopPercent !== null ? 100 - nationalTopPercent : null;
+  const stateOutperform = stateTopPercent !== null ? 100 - stateTopPercent : null;
+
   const rankings = [
     {
-      title: "Abuja Ranking",
-      value: "#12",
-      progress: "92%",
+      title: stateName ? `${stateName} Ranking` : "State Ranking",
+      value: stateRank !== null ? `#${stateRank}` : "—",
+      progressPct: stateOutperform,
       icon: FiMapPin,
     },
-
-    {
-      title: "FCT Ranking",
-      value: "#48",
-      progress: "84%",
-      icon: FiTarget,
-    },
-
     {
       title: "National Ranking",
-      value: "#324",
-      progress: "76%",
+      value: nationalRank !== null ? `#${nationalRank}` : "—",
+      progressPct: nationalOutperform,
       icon: FiGlobe,
     },
   ];
@@ -172,7 +225,7 @@ const ProfileRanking = ({
               "
             >
               <FiAward />
-              Elite Contributor
+              {isRanked && nationalTopPercent <= 10 ? "Elite Contributor" : "Contributor Standing"}
             </div>
 
             <h3
@@ -184,7 +237,7 @@ const ProfileRanking = ({
                 tracking-tight
               "
             >
-              Top 2%
+              {loading ? "—" : isRanked ? `Top ${nationalTopPercent}%` : "Unranked"}
             </h3>
 
             <p
@@ -199,26 +252,17 @@ const ProfileRanking = ({
                 }
               `}
             >
-              You are performing better
-              than 98% of active Nation
-              Aura contributors based on
-              trust, verification quality,
-              and real-world impact.
+              {loading
+                ? "Calculating your standing..."
+                : isRanked
+                ? `You are performing better than ${nationalOutperform}% of active Nation Aura contributors nationwide, out of ${nationalTotal.toLocaleString()} total.`
+                : "Submit your first report to join the rankings."}
             </p>
 
-            <div
-              className="
-                mt-6
-                flex
-                items-center
-                gap-2
-                text-green-500
-                font-bold
-              "
-            >
-              <FiArrowUpRight />
-              Rising 18 positions this month
-            </div>
+            {/* NOTE: "Rising X positions this month" removed — there's no
+                historical rank-snapshot table in the schema, so a real
+                month-over-month position change isn't computable. Would
+                need a scheduled job storing periodic rank snapshots. */}
           </div>
         </div>
 
@@ -228,7 +272,7 @@ const ProfileRanking = ({
             mt-8
             grid
             grid-cols-1
-            lg:grid-cols-3
+            sm:grid-cols-2
             gap-5
           "
         >
@@ -284,7 +328,7 @@ const ProfileRanking = ({
                       font-black
                     "
                   >
-                    {item.value}
+                    {loading ? "—" : item.value}
                   </h3>
 
                   <p
@@ -318,8 +362,7 @@ const ProfileRanking = ({
                           width: 0,
                         }}
                         whileInView={{
-                          width:
-                            item.progress,
+                          width: `${loading ? 0 : item.progressPct ?? 0}%`,
                         }}
                         viewport={{
                           once: true,
@@ -345,8 +388,11 @@ const ProfileRanking = ({
                         font-semibold
                       "
                     >
-                      {item.progress} toward
-                      next milestone
+                      {loading
+                        ? "—"
+                        : item.progressPct !== null
+                        ? `Outperforming ${item.progressPct}% of ${index === 0 ? "contributors in your state" : "contributors nationwide"}`
+                        : "Not yet ranked"}
                     </p>
                   </div>
                 </motion.div>
@@ -419,7 +465,7 @@ const ProfileRanking = ({
                   font-black
                 "
               >
-                96 / 100
+                {loading ? "—" : `${reputationScore} / 100`}
               </h3>
             </div>
           </div>
